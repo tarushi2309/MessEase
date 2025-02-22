@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../pages/user.dart';
-
 class Header extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
 
@@ -22,10 +20,7 @@ class Header extends StatelessWidget {
         IconButton(
           icon: Icon(Icons.person, color: Colors.black), // Profile icon
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => UserScreen()),
-            );
+            Navigator.pushNamed(context, '/user'); // Navigates to '/profile'
           },
         ),
       ],

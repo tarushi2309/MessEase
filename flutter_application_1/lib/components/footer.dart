@@ -1,16 +1,7 @@
 import 'package:flutter/material.dart';
 
-<<<<<<< HEAD
 class CustomNavigationBar extends StatelessWidget {
   final int selectedIndex;
-=======
-class CustomNavigationBar extends StatefulWidget {
-  const CustomNavigationBar({super.key});
-
-  @override
-  _CustomNavigationBarState createState() => _CustomNavigationBarState();
-}
->>>>>>> origin/test
 
   const CustomNavigationBar({Key? key, required this.selectedIndex}) : super(key: key);
 
