@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/signup.dart';
 import 'pages/signin.dart';
+import 'pages/RebateForm.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         fontFamily: "Roboto",
       ),
       home: const SignInScreen(),
+      //home: RebateFormPage(),
     );
   }
 }
