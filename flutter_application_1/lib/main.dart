@@ -1,6 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 
+import 'firebase_options.dart';
 import 'pages/RebateForm.dart';
 import 'pages/home.dart';
 import 'pages/messmenu.dart';
@@ -8,11 +9,6 @@ import 'pages/rebate_history.dart';
 import 'pages/signin.dart';
 import 'pages/signup.dart';
 import 'pages/user.dart';
-=======
-import 'pages/signup.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
->>>>>>> origin/test
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +46,7 @@ class MyApp extends StatelessWidget {
         '/rebate-history': (context) => RebateHistoryScreen(),
         '/mess-menu': (context) => MessMenuScreen(),
         '/rebate-form': (context) => RebateFormPage(),
-        '/user': (context) => UserScreen(),
+        '/user': (context) => UserPage(),
         '/signin': (context) => SignInScreen(),
         '/signup': (context) => SignUpScreen(),
       },
