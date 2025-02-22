@@ -5,7 +5,7 @@ import '../pages/user.dart';
 class Header extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const Header({Key? key, required this.scaffoldKey}) : super(key: key);
+  const Header({super.key, required this.scaffoldKey});
 
   @override
   Widget build(BuildContext context) {

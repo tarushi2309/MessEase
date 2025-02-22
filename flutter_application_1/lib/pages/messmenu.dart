@@ -5,6 +5,8 @@ import '../components/header.dart';
 import '../components/navbar.dart'; 
 
 class MessMenuScreen extends StatelessWidget {
+  const MessMenuScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
