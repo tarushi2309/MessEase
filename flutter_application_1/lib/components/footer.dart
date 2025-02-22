@@ -9,9 +9,9 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   int _selectedIndex = 0;
 
   final List<Map<String, dynamic>> _navItems = [
-    {'icon': Icons.home, 'label': 'Home'},
-    {'icon': Icons.history, 'label': 'Rebate History'},
-    {'icon': Icons.restaurant_menu, 'label': 'Mess Menu'},
+    {'icon': Icons.home, 'label': 'Home', 'route': '/home'},
+    {'icon': Icons.history, 'label': 'Rebate History', 'route': '/rebate-history'},
+    {'icon': Icons.restaurant_menu, 'label': 'Mess Menu', 'route': '/mess-menu'},
     {'icon': Icons.chat, 'label': 'Chat'},
   ];
 

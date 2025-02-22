@@ -26,21 +26,21 @@ class Navbar extends StatelessWidget {
                   leading: Icon(Icons.home),
                   title: Text('Home'),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pushReplacementNamed(context, '/home'); 
                   },
                 ),
                 ListTile(
                   leading: Icon(Icons.history),
                   title: Text('Rebate History'),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pushReplacementNamed(context, '/rebate-history');
                   },
                 ),
                 ListTile(
                   leading: Icon(Icons.menu_book),
                   title: Text('Mess Menu'),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pushReplacementNamed(context, '/mess-menu');
                   },
                 ),
                 ListTile(

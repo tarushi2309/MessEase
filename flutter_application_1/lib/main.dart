@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'pages/signup.dart';
-import 'pages/signin.dart';
+
 import 'pages/RebateForm.dart';
+import 'pages/home.dart';
+import 'pages/messmenu.dart';
+import 'pages/rebate_history.dart';
+import 'pages/signin.dart';
+import 'pages/signup.dart';
+import 'pages/user.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,8 +34,16 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      home: const SignInScreen(),
-      //home: RebateFormPage(),
+      initialRoute: '/home',  // Default screen when app starts
+      routes: {
+        '/home': (context) => HomeScreen(),
+        '/rebate-history': (context) => RebateHistoryScreen(),
+        '/mess-menu': (context) => MessMenuScreen(),
+        '/rebate-form': (context) => RebateFormPage(),
+        '/user': (context) => UserScreen(),
+        '/signin': (context) => SignInScreen(),
+        '/signup': (context) => SignUpScreen(),
+      },
     );
   }
 }

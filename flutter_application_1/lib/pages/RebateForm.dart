@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../components/header.dart'; // Import your header
+
 import '../components/footer.dart'; // Import your footer
+import '../components/header.dart'; // Import your header
 
 class RebateFormPage extends StatefulWidget {
   @override
@@ -40,7 +41,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
       key: _scaffoldKey,
       body: Column(
         children: [
-          Header(scaffoldKey: _scaffoldKey), // Pass scaffoldKey to Header
+          Header(scaffoldKey: _scaffoldKey), // Ensure header is added
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
