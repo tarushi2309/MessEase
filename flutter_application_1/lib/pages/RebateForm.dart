@@ -116,7 +116,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
               ),
             ),
           ),
-          CustomNavigationBar(), // Footer
+          CustomNavigationBar(selectedIndex: 1), // Footer
         ],
       ),
     );

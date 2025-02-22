@@ -246,7 +246,7 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: CustomNavigationBar(selectedIndex: 2),
     );
   }
 }

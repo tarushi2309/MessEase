@@ -107,7 +107,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: CustomNavigationBar(selectedIndex: 1),
     );
   }
 
