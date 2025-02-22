@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/signup.dart';
+import 'pages/signin.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,8 +26,9 @@ class MyApp extends StatelessWidget {
           800: Color(0xFFA04527),
           900: Color(0xFF80351F),
         }),
+        fontFamily: "Roboto",
       ),
-      home: const SignUpScreen(),
+      home: const SignInScreen(),
     );
   }
 }
