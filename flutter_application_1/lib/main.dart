@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
           900: Color(0xFF80351F),
         }),
       ),
-      home: const SignUp(),
+      home: const SignUpScreen(),
     );
   }
 }
