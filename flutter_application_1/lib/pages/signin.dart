@@ -73,7 +73,8 @@ class SignInForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
+    return Scaffold(
+      body: Form(
       child: Column(
         children: [
           // Email Field
@@ -135,7 +136,7 @@ class SignInForm extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 }
 

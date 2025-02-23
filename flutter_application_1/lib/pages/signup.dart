@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import './signin.dart';
@@ -64,18 +65,57 @@ class SignUpForm extends StatefulWidget {
 }
 
 class _SignUpFormState extends State<SignUpForm> {
+  String email = "", password = "", name = "",degree="",entry_no="",year="";
+  TextEditingController namecontroller = new TextEditingController();
+  TextEditingController passwordcontroller = new TextEditingController();
+  TextEditingController mailcontroller = new TextEditingController();
+
+  final _formkey = GlobalKey<FormState>();
+
+  registration() async {
+    if (password != null&& namecontroller.text!=""&& mailcontroller.text!="") {
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+          "Registered Successfully",
+          style: TextStyle(fontSize: 20.0),
+        )));
+        // ignore: use_build_context_synchronously
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => SignInForm()));
+      } on FirebaseAuthException catch (e) {
+         if (e.code == "email-already-in-use") {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "Account Already exists",
+                style: TextStyle(fontSize: 18.0),
+              )));
+        }
+      }
+    }
+  }
+
   String? selectedDegree;
   final List<String> degreeOptions = ['Btech', 'Mtech', 'Phd', 'Others'];
 
   @override
   Widget build(BuildContext context) {
-    return Form(
+     return Form(
+      key: _formkey,
       child: Column(
-        children: [
+        children: <Widget>[
           // Name Field
           TextFormField(
-            onSaved: (name) {},
-            onChanged: (name) {},
+            validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Name';
+                          }
+                          return null;
+                        },
+            controller: namecontroller,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: "Enter your Name",
@@ -94,8 +134,13 @@ class _SignUpFormState extends State<SignUpForm> {
           const SizedBox(height: 16),
           // Email Field
           TextFormField(
-            onSaved: (email) {},
-            onChanged: (email) {},
+            validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Email';
+                          }
+                          return null;
+                        },
+            controller: mailcontroller,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: "Enter your email",
@@ -114,8 +159,13 @@ class _SignUpFormState extends State<SignUpForm> {
           const SizedBox(height: 16),
           // Password Field
           TextFormField(
-            onSaved: (password) {},
-            onChanged: (password) {},
+            validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Password';
+                          }
+                          return null;
+                        },
+                        controller: passwordcontroller,
             obscureText: true,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
@@ -223,60 +273,59 @@ class _SignUpFormState extends State<SignUpForm> {
           ),
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: () {}, //add functionality here
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: const Color(0xFFF0753C),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 48),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
-              ),
-            ),
-              child: const Text("Register"),
-          ),
+                  onPressed: () {
+                    final formState = _formkey.currentState;
+                    print(formState);
+                    if (formState != null && formState.validate()) {
+                      setState(() {
+                        email = mailcontroller.text;
+                        name = namecontroller.text;
+                        password = passwordcontroller.text;
+                      });
+                      registration();
+                    } else {
+                      // Optionally handle the case when formState is null.
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Form is not ready")),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFFF7643),
+                    padding: const EdgeInsets.symmetric(vertical: 13.0, horizontal: 30.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    minimumSize: Size(MediaQuery.of(context).size.width, 48),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "Sign Up",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+        Text( '' )  
         ],
+      
       ),
-    );
+      
+      );
+    
   }
 }
 
-class SocalCard extends StatelessWidget {
-  const SocalCard({
-    super.key,
-    required this.icon,
-    required this.press,
-  });
-
-  final Widget icon;
-  final VoidCallback press;
+class AccountExists extends StatelessWidget {
+  const AccountExists({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: press,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        height: 56,
-        width: 56,
-        decoration: const BoxDecoration(
-          color: Color(0xFFF5F6F9),
-          shape: BoxShape.circle,
-        ),
-        child: icon,
-      ),
-    );
-  }
-}
-
-class NoAccountText extends StatelessWidget {
-  const NoAccountText({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
+    return Scaffold(
+      body: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Padding(
@@ -302,7 +351,7 @@ class NoAccountText extends StatelessWidget {
           ),
         ),
       ],
-    );
+    ),);
   }
 }
 
