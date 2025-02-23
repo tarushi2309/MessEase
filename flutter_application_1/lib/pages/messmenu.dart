@@ -5,6 +5,8 @@ import '../components/header.dart';
 import '../components/navbar.dart';
 
 class MessMenuScreen extends StatefulWidget {
+  const MessMenuScreen({super.key});
+
   @override
   _MessMenuScreenState createState() => _MessMenuScreenState();
 }
@@ -217,7 +219,7 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
                     ),
                   ),
                   children: [
-                    Container(
+                    SizedBox(
                       height: 120,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,

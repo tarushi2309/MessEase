@@ -4,6 +4,8 @@ import '../components/footer.dart'; // Import your footer
 import '../components/header.dart'; // Import your header
 
 class RebateFormPage extends StatefulWidget {
+  const RebateFormPage({super.key});
+
   @override
   _RebateFormPageState createState() => _RebateFormPageState();
 }

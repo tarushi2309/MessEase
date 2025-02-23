@@ -5,6 +5,8 @@ import  '../components/header.dart'; // Import your header
 import  '../components/navbar.dart'; // Import your navbar
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();

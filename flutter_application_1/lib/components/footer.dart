@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CustomNavigationBar extends StatelessWidget {
   final int selectedIndex;
 
-  const CustomNavigationBar({Key? key, required this.selectedIndex}) : super(key: key);
+  const CustomNavigationBar({super.key, required this.selectedIndex});
 
   void _onItemTapped(BuildContext context, int index) {
     if (index == selectedIndex) return; // Prevent reloading the same page
@@ -26,7 +26,7 @@ class CustomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> _navItems = [
+    final List<Map<String, dynamic>> navItems = [
       {'icon': Icons.home, 'label': 'Home'},
       {'icon': Icons.history, 'label': 'Rebate History'},
       {'icon': Icons.restaurant_menu, 'label': 'Mess Menu'},
@@ -39,7 +39,7 @@ class CustomNavigationBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(
-          _navItems.length,
+          navItems.length,
           (index) => GestureDetector(
             onTap: () => _onItemTapped(context, index),
             child: AnimatedContainer(
@@ -52,7 +52,7 @@ class CustomNavigationBar extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    _navItems[index]['icon'],
+                    navItems[index]['icon'],
                     color: index == selectedIndex ? Colors.white : Colors.white70,
                     size: 24,
                   ),
@@ -60,7 +60,7 @@ class CustomNavigationBar extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.only(left: 8),
                       child: Text(
-                        _navItems[index]['label'],
+                        navItems[index]['label'],
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,

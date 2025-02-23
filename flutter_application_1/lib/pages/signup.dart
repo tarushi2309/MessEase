@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/student.dart';
+import 'package:flutter_application_1/services/database.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import './signin.dart';
 
@@ -66,17 +68,32 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   String email = "", password = "", name = "",degree="",entry_no="",year="";
-  TextEditingController namecontroller = new TextEditingController();
-  TextEditingController passwordcontroller = new TextEditingController();
-  TextEditingController mailcontroller = new TextEditingController();
+  TextEditingController namecontroller = TextEditingController();
+  TextEditingController passwordcontroller = TextEditingController();
+  TextEditingController mailcontroller = TextEditingController();
+  TextEditingController entry_nocontroller = TextEditingController();
+  TextEditingController yearcontroller = TextEditingController();
+  String? selectedDegree;
 
   final _formkey = GlobalKey<FormState>();
 
-  registration() async {
-    if (password != null&& namecontroller.text!=""&& mailcontroller.text!="") {
+  Future<dynamic> registration() async {
+    if (namecontroller.text!=""&& mailcontroller.text!=""&& passwordcontroller.text!=""&& selectedDegree!=""&& yearcontroller.text!=""&& entry_nocontroller.text!="") {
       try {
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
+
+        final DatabaseModel dbService = DatabaseModel(uid: userCredential.user!.uid);
+        StudentModel student=StudentModel(uid: userCredential.user!.uid,
+          name: namecontroller.text,
+          email: mailcontroller.text,
+          degree: selectedDegree ?? '',
+          entryNumber: entry_nocontroller.text,
+          year: int.tryParse(yearcontroller.text) ?? 0,
+          password: password,);
+
+        await dbService.addStudentDetails(student);
+
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(
           "Registered Successfully",
@@ -98,7 +115,7 @@ class _SignUpFormState extends State<SignUpForm> {
     }
   }
 
-  String? selectedDegree;
+  
   final List<String> degreeOptions = ['Btech', 'Mtech', 'Phd', 'Others'];
 
   @override
@@ -206,6 +223,12 @@ class _SignUpFormState extends State<SignUpForm> {
           const SizedBox(height: 16),
           // Degree Type Drop-Down Field
           DropdownButtonFormField<String>(
+             validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Select Degree Type';
+                          }
+                          return null;
+                        },
             decoration: InputDecoration(
               labelText: 'Degree Type',
               floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -233,8 +256,13 @@ class _SignUpFormState extends State<SignUpForm> {
           const SizedBox(height: 16),
           // Year Field
           TextFormField(
-            onSaved: (year) {},
-            onChanged: (year) {},
+            validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Year';
+                          }
+                          return null;
+                        },
+                        controller: yearcontroller,
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
@@ -254,8 +282,13 @@ class _SignUpFormState extends State<SignUpForm> {
           const SizedBox(height: 16),
           // Entry Number Field
           TextFormField(
-            onSaved: (entryNumber) {},
-            onChanged: (entryNumber) {},
+            validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Entry Number';
+                          }
+                          return null;
+                        },
+                        controller: entry_nocontroller,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               hintText: "Enter your Entry Number",
@@ -275,7 +308,6 @@ class _SignUpFormState extends State<SignUpForm> {
           ElevatedButton(
                   onPressed: () {
                     final formState = _formkey.currentState;
-                    print(formState);
                     if (formState != null && formState.validate()) {
                       setState(() {
                         email = mailcontroller.text;

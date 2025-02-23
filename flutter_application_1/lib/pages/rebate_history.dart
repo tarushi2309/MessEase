@@ -6,6 +6,8 @@ import '../components/navbar.dart';
 import '../pages/RebateForm.dart';
 
 class RebateHistoryScreen extends StatefulWidget {
+  const RebateHistoryScreen({super.key});
+
   @override
   _RebateHistoryScreenState createState() => _RebateHistoryScreenState();
 }
@@ -65,7 +67,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
             SizedBox(height: 16),
             
             // Hardcoded Entries
-            ...rebateHistory.map((rebate) => buildRebateCard(rebate)).toList(),
+            ...rebateHistory.map((rebate) => buildRebateCard(rebate)),
             
             // Fetched Entries from Database
             FutureBuilder(

@@ -1,14 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'pages/signup.dart';
 
 import 'firebase_options.dart';
-import 'pages/RebateForm.dart';
+/*import 'pages/RebateForm.dart';
 import 'pages/home.dart';
 import 'pages/messmenu.dart';
 import 'pages/rebate_history.dart';
 import 'pages/signin.dart';
 import 'pages/signup.dart';
-import 'pages/user.dart';
+import 'pages/user.dart';*/
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,16 +41,16 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      initialRoute: '/home',  // Default screen when app starts
+      home: const SignUpScreen(),
+      /*initialRoute: '/home',  // Default screen when app starts
       routes: {
         '/home': (context) => HomeScreen(),
         '/rebate-history': (context) => RebateHistoryScreen(),
         '/mess-menu': (context) => MessMenuScreen(),
         '/rebate-form': (context) => RebateFormPage(),
-        '/user': (context) => UserPage(),
         '/signin': (context) => SignInScreen(),
         '/signup': (context) => SignUpScreen(),
-      },
+      },*/
     );
   }
 }
