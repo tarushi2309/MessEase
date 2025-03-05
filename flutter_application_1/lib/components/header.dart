@@ -21,7 +21,7 @@ class Header extends StatelessWidget {
 
   Widget _buildCustomAppBar(BuildContext context) {
     return Positioned(
-      top: 35,
+      top: 38,
       left: 16,
       right: 16,
       child: Row(

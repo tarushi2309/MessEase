@@ -88,16 +88,14 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Text(
-                "Rebate Tracker",
+              Text(
+                "REBATE TRACKER",
                 style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w400,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
                   color: Colors.black87,
                 ),
               ),
-            ),
             const SizedBox(height: 10),
             
             RebateSummaryCard(rebateDays: rebateHistory.fold(0, (sum, rebate) => sum + ((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400))),

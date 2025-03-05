@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../pages/home.dart';
 import '../pages/messmenu.dart';
 import '../pages/rebate_history.dart';
-//import '../pages/chat.dart';
+import '../pages/chat.dart';
 
 
 class CustomNavigationBar extends StatefulWidget {
@@ -20,7 +20,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
     {'icon': Icons.home, 'label': 'Home', 'route': HomeScreen()},
     {'icon': Icons.history, 'label': 'Rebate History', 'route': RebateHistoryScreen()},
     {'icon': Icons.restaurant_menu, 'label': 'Mess Menu', 'route': MessMenuScreen()},
-    //{'icon': Icons.chat, 'label': 'Chat', 'route': ChatScreen()},
+    {'icon': Icons.chat, 'label': 'Chat', 'route': ChatScreen()},
   ];
 
   void _onItemTapped(int index) {
