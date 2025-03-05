@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/rebate.dart';
 
-import '../components/footer.dart'; // Import your footer
-import '../components/header.dart'; // Import your header
+import '../components/footer.dart'; // Footer component
+import '../components/header.dart'; // Header component
+import '../models/rebate.dart';
 
 class RebateFormPage extends StatefulWidget {
   const RebateFormPage({super.key});
@@ -16,50 +16,48 @@ class _RebateFormPageState extends State<RebateFormPage> {
   final _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Controllers for text input
+  // Controllers
   TextEditingController hostelController = TextEditingController();
   TextEditingController roomController = TextEditingController();
   TextEditingController rebateFromController = TextEditingController();
   TextEditingController rebateToController = TextEditingController();
   TextEditingController daysController = TextEditingController();
-  TextEditingController startDateController = TextEditingController();
-  TextEditingController endDateController = TextEditingController();
   hostel? selectedHostel;
+  
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+  
 
   // Function to show Date Picker
   Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime(2023),
-        lastDate: DateTime(2100),
-      );
-      if (pickedDate != null) {
-        setState(() {
-          controller.text = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-        });
-      }
-    });
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2023),
+      lastDate: DateTime(2100),
+    );
+    if (pickedDate != null) {
+      setState(() {
+        controller.text = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+      });
+    }
   }
 
-  void submitRebateForm() async{
-    if(_formKey.currentState!.validate()){
+  void submitRebateForm() async {
+    if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
       DocumentReference studentRef = _firestore.collection('students').doc('student_id_here');
+
       // Convert date format
-      List<String> startParts = startDateController.text.split('/');
-      List<String> endParts = endDateController.text.split('/');
-      
-      Timestamp startDate = Timestamp.fromDate(DateTime(
-        int.parse(startParts[2]), int.parse(startParts[1]), int.parse(startParts[0])
-      ));
-      Timestamp endDate = Timestamp.fromDate(DateTime(
-        int.parse(endParts[2]), int.parse(endParts[1]), int.parse(endParts[0])
-      ));
+      List<String> startParts = rebateFromController.text.split('/');
+      List<String> endParts = rebateToController.text.split('/');
+
+      Timestamp startDate = Timestamp.fromDate(
+        DateTime(int.parse(startParts[2]), int.parse(startParts[1]), int.parse(startParts[0])),
+      );
+      Timestamp endDate = Timestamp.fromDate(
+        DateTime(int.parse(endParts[2]), int.parse(endParts[1]), int.parse(endParts[0])),
+      );
 
       Rebate rebate = Rebate(
         req_id: '',
@@ -71,85 +69,127 @@ class _RebateFormPageState extends State<RebateFormPage> {
       );
 
       DocumentReference docRef = await _firestore.collection('rebates').add(rebate.toFirestore());
-
       await docRef.update({'req_id': docRef.id});
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Rebate request submitted successfully!')),
-      );
+      /*ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rebate request submitted successfully!')),
+      );*/
 
+       showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Success'),
+            content: const Text('Rebate request submitted successfully!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      try{
+        setState(() {
+          selectedHostel = null;
+          hostelController.clear();
+          roomController.clear();
+          rebateFromController.clear();
+          rebateToController.clear();
+          daysController.clear();
+        });
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
+      key: _scaffoldKey,  // Assign the GlobalKey to Scaffold
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.orange),
+              child: Text("Menu", style: TextStyle(color: Colors.white, fontSize: 24)),
+            ),
+            ListTile(
+              title: const Text("Home"),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
       body: Column(
         children: [
-          Header(scaffoldKey: _scaffoldKey), // Ensure header is added
+          Header(scaffoldKey: _scaffoldKey), // Correct usage of Header
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
                   child: Container(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
+                        BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           "Rebate Form",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         Form(
                           key: _formKey,
                           child: Column(
                             children: [
-                              buildTextField("Hostel Name", hostelController),
+                              DropdownButtonFormField<hostel>(
+                              value: selectedHostel,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  selectedHostel = newValue;
+                                });
+                              },
+                              items: hostel.values.map((hostel h) {
+                                return DropdownMenuItem<hostel>(
+                                  value: h,
+                                  child: Text(h.name.toUpperCase()), // Display names in uppercase
+                                );
+                              }).toList(),
+                              decoration: InputDecoration(
+                                labelText: 'Select Hostel',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
                               buildTextField("Room Number", roomController),
                               buildDateField("Rebate From", rebateFromController),
                               buildDateField("Rebate To", rebateToController),
-                              buildTextField("Number of Days", daysController,
-                                  keyboardType: TextInputType.number),
-                              SizedBox(height: 20),
+                              buildTextField("Number of Days", daysController, keyboardType: TextInputType.number),
+                              const SizedBox(height: 20),
                               ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Form Submitted")),
-                                    );
-                                  }
-                                },
+                                onPressed: submitRebateForm,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.orange,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 50, vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
-                                child: Text(
+                                child: const Text(
                                   "Submit Form",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
@@ -201,7 +241,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
         readOnly: true,
         decoration: InputDecoration(
           labelText: label,
-          suffixIcon: Icon(Icons.calendar_today, color: Colors.orange),
+          suffixIcon: const Icon(Icons.calendar_today, color: Colors.orange),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           filled: true,
           fillColor: Colors.white,
