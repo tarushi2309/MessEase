@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/home.dart';
@@ -9,7 +10,7 @@ import 'pages/rebate_history.dart';
 import 'pages/signin.dart';
 import 'pages/signup.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -39,20 +40,39 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      home: SignUpScreen(),
-      initialRoute: '/signin',  // Default screen when app starts
-      home: HomeScreen(),
->>>>>>> e2207056860ee46fe12274ee450be87fbbd4a586
-      initialRoute: '/home',  // Default screen when app starts
-      routes: {
-        '/home': (context) => HomeScreen(),
-        '/rebate-history': (context) => RebateHistoryScreen(),
-        '/mess-menu': (context) => MessMenuScreen(),
-        '/rebate-form': (context) => RebateFormPage(),
-        '/signin': (context) => SignInScreen(),
-        '/signup': (context) => SignUpScreen(),
+      initialRoute: '/signin', // Default screen when app starts
+      onGenerateRoute: (settings) {
+        final user = FirebaseAuth.instance.currentUser;
+
+        switch (settings.name) {
+          case '/home':
+            return MaterialPageRoute(builder: (context) => HomeScreen());
+
+          case '/rebate-history':
+            if (user != null) {
+              return MaterialPageRoute(
+                builder: (context) => RebateHistoryScreen(userId: user.uid),
+              );
+            } else {
+              return MaterialPageRoute(builder: (context) => SignInScreen());
+            }
+
+          case '/mess-menu':
+            return MaterialPageRoute(builder: (context) => MessMenuScreen());
+
+          case '/rebate-form':
+            return MaterialPageRoute(builder: (context) => RebateFormPage());
+
+          case '/signin':
+            return MaterialPageRoute(builder: (context) => SignInScreen());
+
+          case '/signup':
+            return MaterialPageRoute(builder: (context) => SignUpScreen());
+
+          default:
+            return MaterialPageRoute(builder: (context) => SignInScreen());
+        }
       },
     );
   }
 }
-

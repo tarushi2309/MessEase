@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../components/footer.dart'; // Footer component
 import '../components/header.dart'; // Header component
+import '../components/navbar.dart'; // Navbar component
 import '../models/rebate.dart';
 
 class RebateFormPage extends StatefulWidget {
@@ -113,21 +114,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,  // Assign the GlobalKey to Scaffold
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.orange),
-              child: Text("Menu", style: TextStyle(color: Colors.white, fontSize: 24)),
-            ),
-            ListTile(
-              title: const Text("Home"),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
+      drawer: Navbar(),
       body: Column(
         children: [
           Header(scaffoldKey: _scaffoldKey), // Correct usage of Header

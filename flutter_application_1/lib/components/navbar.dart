@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import '../pages/user.dart';
-import '../pages/signup.dart';
-import '../pages/messmenu.dart';
-
-import '../pages/rebate_history.dart';
-import '../pages/home.dart';
-import '../pages/RebateForm.dart';
-=======
 
 import '../pages/RebateForm.dart';
 import '../pages/home.dart';
 import '../pages/messmenu.dart';
 import '../pages/rebate_history.dart';
 import '../pages/user.dart';
->>>>>>> e2207056860ee46fe12274ee450be87fbbd4a586
 
 class Navbar extends StatelessWidget {
   const Navbar({super.key});
@@ -48,13 +38,8 @@ class Navbar extends StatelessWidget {
                 children: [
                   _buildDrawerItem(Icons.receipt_long, 'Rebate Form', () {
                     Navigator.push(
-<<<<<<< HEAD
                       context,
                       MaterialPageRoute(builder: (context) => RebateFormPage()),
-=======
-                       context,
-                       MaterialPageRoute(builder: (context) => RebateFormPage()),
->>>>>>> e2207056860ee46fe12274ee450be87fbbd4a586
                     );
                   }),
                   _buildDrawerItem(Icons.restaurant_menu, 'Mess Menu', () {
