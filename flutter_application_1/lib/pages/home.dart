@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
 import 'package:flutter_application_1/pages/rebate_history.dart';
+
 //import 'package:flutter_application_1/pages/RebateForm.dart';
 import '../components/footer.dart';
-import '../pages/profile.dart'; // Import Profile Page
+import '../pages/user.dart'; // Import Profile Page
 
 class HomeScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
@@ -269,7 +270,7 @@ class HomeScreen extends StatelessWidget {
                   _buildDrawerItem(Icons.person, 'Profile', () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ProfileScreen()),
+                      MaterialPageRoute(builder: (context) => UserPage()),
                     );
                   }),
                 ],
@@ -318,7 +319,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ProfileScreen()),
+                MaterialPageRoute(builder: (context) => UserPage()),
               );
             },
           ),

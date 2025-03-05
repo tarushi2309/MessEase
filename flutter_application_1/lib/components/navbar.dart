@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../pages/profile.dart';
-import '../pages/signup.dart';
+
+import '../pages/home.dart';
 import '../pages/messmenu.dart';
 // import '../pages/RebateForm.dart';
 import '../pages/rebate_history.dart';
-import '../pages/home.dart';
+import '../pages/user.dart';
 
 class Navbar extends StatelessWidget {
   const Navbar({Key? key}) : super(key: key);
@@ -64,7 +64,7 @@ class Navbar extends StatelessWidget {
                   _buildDrawerItem(Icons.person, 'Profile', () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ProfileScreen()),
+                      MaterialPageRoute(builder: (context) => UserPage()),
                     );
                   }),
                 ],

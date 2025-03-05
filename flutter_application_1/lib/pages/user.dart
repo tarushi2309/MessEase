@@ -135,7 +135,7 @@ class _UserScreenState extends State<UserScreen> {
                     ),
                   ),
           ),
-          CustomNavigationBar(selectedIndex: 0),
+          CustomNavigationBar(),
         ],
       ),
     );
@@ -279,7 +279,7 @@ class _UserPageState extends State<UserPage> {
               ),
             ),
           ),
-          CustomNavigationBar(selectedIndex: 0),
+          CustomNavigationBar(),
         ],
       ),
     );

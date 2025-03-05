@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../pages/profile.dart';
-import '../pages/home.dart';
-import 'navbar.dart';
+
+import '../pages/user.dart';
 
 class Header extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
@@ -44,7 +43,7 @@ class Header extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ProfileScreen()),
+                MaterialPageRoute(builder: (context) => UserPage()),
               );
             },
           ),
