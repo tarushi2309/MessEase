@@ -1,75 +1,75 @@
 import 'package:flutter/material.dart';
+import '../pages/home.dart';
+import '../pages/messmenu.dart';
+import '../pages/rebate_history.dart';
+import '../pages/chat.dart';
 
-class CustomNavigationBar extends StatelessWidget {
-  final int selectedIndex;
 
-  const CustomNavigationBar({super.key, required this.selectedIndex});
+class CustomNavigationBar extends StatefulWidget {
+  @override
+  _CustomNavigationBarState createState() => _CustomNavigationBarState();
+}
 
-  void _onItemTapped(BuildContext context, int index) {
-    if (index == selectedIndex) return; // Prevent reloading the same page
+class _CustomNavigationBarState extends State<CustomNavigationBar> {
+  int _selectedIndex = 0;
 
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/home');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(context, '/rebate-history');
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, '/mess-menu');
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/chat');
-        break;
-    }
+  final List<Map<String, dynamic>> _navItems = [
+    {'icon': Icons.home, 'label': 'Home', 'route': HomeScreen()},
+    {'icon': Icons.history, 'label': 'Rebate History', 'route': RebateHistoryScreen()},
+    {'icon': Icons.restaurant_menu, 'label': 'Mess Menu', 'route': MessMenuScreen()},
+    {'icon': Icons.chat, 'label': 'Chat', 'route': ChatScreen()},
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Navigate to the respective screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => _navItems[index]['route']),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> navItems = [
-      {'icon': Icons.home, 'label': 'Home'},
-      {'icon': Icons.history, 'label': 'Rebate History'},
-      {'icon': Icons.restaurant_menu, 'label': 'Mess Menu'},
-      {'icon': Icons.chat, 'label': 'Chat'},
-    ];
-
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      color: Color(0xFFF0753C),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 243, 242, 242), // Background color
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(
-          navItems.length,
-          (index) => GestureDetector(
-            onTap: () => _onItemTapped(context, index),
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 300),
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-              decoration: BoxDecoration(
-                color: index == selectedIndex ? Colors.black87 : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    navItems[index]['icon'],
-                    color: index == selectedIndex ? Colors.white : Colors.white70,
-                    size: 24,
+          _navItems.length,
+              (index) => GestureDetector(
+            onTap: () => _onItemTapped(index),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: () => _onItemTapped(index),
+                  icon: Icon(
+                    _navItems[index]['icon'],
+                    color: index == _selectedIndex ? Colors.orange : Colors.grey[700],
+                    size: 28,
                   ),
-                  if (index == selectedIndex)
-                    Padding(
-                      padding: EdgeInsets.only(left: 8),
-                      child: Text(
-                        navItems[index]['label'],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                ),
+                SizedBox(height: 5), // Spacing between icon and text
+                Text(
+                  _navItems[index]['label'],
+                  style: TextStyle(
+                    color: index == _selectedIndex ? Color(0xFFF0753C) : Colors.black54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
