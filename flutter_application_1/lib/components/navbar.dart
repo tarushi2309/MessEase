@@ -7,7 +7,7 @@ import '../pages/rebate_history.dart';
 import '../pages/user.dart';
 
 class Navbar extends StatelessWidget {
-  const Navbar({Key? key}) : super(key: key);
+  const Navbar({super.key});
 
   @override
   Widget build(BuildContext context) {

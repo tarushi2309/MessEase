@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-
 import '../pages/user.dart';
+import '../pages/home.dart';
+import 'navbar.dart';
 
 class Header extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const Header({Key? key, required this.scaffoldKey}) : super(key: key);
+  const Header({super.key, required this.scaffoldKey});
 
   @override
   Widget build(BuildContext context) {
