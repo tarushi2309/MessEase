@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/rebate.dart';
 
 import '../components/footer.dart'; // Import your footer
 import '../components/header.dart'; // Import your header
@@ -20,20 +22,62 @@ class _RebateFormPageState extends State<RebateFormPage> {
   TextEditingController rebateFromController = TextEditingController();
   TextEditingController rebateToController = TextEditingController();
   TextEditingController daysController = TextEditingController();
+  TextEditingController startDateController = TextEditingController();
+  TextEditingController endDateController = TextEditingController();
+  hostel? selectedHostel;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 
   // Function to show Date Picker
-  Future<void> _selectDate(
-      BuildContext context, TextEditingController controller) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2023),
-      lastDate: DateTime(2100),
-    );
-    if (pickedDate != null) {
-      setState(() {
-        controller.text = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-      });
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2023),
+        lastDate: DateTime(2100),
+      );
+      if (pickedDate != null) {
+        setState(() {
+          controller.text = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+        });
+      }
+    });
+  }
+
+  void submitRebateForm() async{
+    if(_formKey.currentState!.validate()){
+      _formKey.currentState!.save();
+
+      DocumentReference studentRef = _firestore.collection('students').doc('student_id_here');
+      // Convert date format
+      List<String> startParts = startDateController.text.split('/');
+      List<String> endParts = endDateController.text.split('/');
+      
+      Timestamp startDate = Timestamp.fromDate(DateTime(
+        int.parse(startParts[2]), int.parse(startParts[1]), int.parse(startParts[0])
+      ));
+      Timestamp endDate = Timestamp.fromDate(DateTime(
+        int.parse(endParts[2]), int.parse(endParts[1]), int.parse(endParts[0])
+      ));
+
+      Rebate rebate = Rebate(
+        req_id: '',
+        student_id: studentRef,
+        start_date: startDate,
+        end_date: endDate,
+        status_: status.pending,
+        hostel_: selectedHostel!,
+      );
+
+      DocumentReference docRef = await _firestore.collection('rebates').add(rebate.toFirestore());
+
+      await docRef.update({'req_id': docRef.id});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rebate request submitted successfully!')),
+      );
+
     }
   }
 
