@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      home: SignUpScreen(),
+      home: HomeScreen(),
       initialRoute: '/home',  // Default screen when app starts
       routes: {
         '/home': (context) => HomeScreen(),

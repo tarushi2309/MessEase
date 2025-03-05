@@ -10,7 +10,7 @@ enum hostel {
   raavi,
   chenab,
   brahmaputra,
-  beas,
+  beas, 
   satluj,
 }
 class Rebate {

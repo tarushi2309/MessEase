@@ -5,10 +5,31 @@ class DatabaseModel{
 
   DatabaseModel({required this.uid});
 
-   Future<dynamic> addStudentDetails(StudentModel student) async {
+  Future<dynamic> addStudentDetails(StudentModel student) async {
     return await FirebaseFirestore.instance
         .collection("students")
         .doc(uid)
         .set(student.toJson());
+  }
+
+  Future<void> addRebateFormDetails({
+    required String hostelName,
+    required DateTime rebateFrom,
+    required DateTime rebateTo,
+    required int numDays,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection("rebates").add({
+        "userId": uid,
+        "hostelName": hostelName,
+        "rebateFrom": rebateFrom.toIso8601String(),
+        "rebateTo": rebateTo.toIso8601String(),
+        "numDays": numDays,
+        "timestamp": FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error adding rebate form: $e");
+      throw e;
+    }
   }
 }
