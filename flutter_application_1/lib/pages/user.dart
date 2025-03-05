@@ -158,16 +158,22 @@ class _UserScreenState extends State<UserScreen> {
 
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/components/user_provider.dart';
+import 'package:flutter_application_1/models/student.dart';
+import 'package:flutter_application_1/models/user.dart';
+import 'package:flutter_application_1/services/database.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:provider/provider.dart';
 
 import '../components/footer.dart';
 import '../components/header.dart';
-
 class UserPage extends StatefulWidget {
-  const UserPage({super.key});
+  const UserPage({super.key, });
 
   @override
   _UserPageState createState() => _UserPageState();
@@ -176,6 +182,19 @@ class UserPage extends StatefulWidget {
 class _UserPageState extends State<UserPage> {
   File? _image;
   final picker = ImagePicker();
+
+  late UserModel user;
+  late StudentModel student;
+  Future<void> initState() async {
+    String? uid = Provider.of<UserProvider>(context).uid;
+    // Initialize the DatabaseModel to fetch user and student data
+    if(uid!=null){
+    DatabaseModel dbService = DatabaseModel(uid: uid);
+    DocumentSnapshot user_info = await dbService.getUserInfo(uid);
+    DocumentSnapshot student_info = await dbService.getStudentInfo(uid);
+    user = UserModel.fromJson(user_info.data() as Map<String, dynamic>);
+    student= StudentModel.fromJson(student_info.data() as Map<String, dynamic>);}
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -241,19 +260,18 @@ class _UserPageState extends State<UserPage> {
                       child: Icon(Icons.person, size: 50, color: Colors.white),
                     ),
                     SizedBox(height: 10),
-                    Text("Ananya Sethi", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text("${user.name}", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     SizedBox(height: 5),
-                    infoRow("Entry Number", "2025CS101"),
-                    infoRow("Degree", "B.Tech CSE"),
-                    infoRow("Year", "3rd Year"),
-                    infoRow("Mess", "Mess A"),
+                    infoRow("Entry Number", "${student.entryNumber}"),
+                    infoRow("Degree", "${student.degree}"),
+                    infoRow("Year", "${student.year}"),
+                    infoRow("Mess", "Konark Mess"),
                     SizedBox(height: 20),
                     ExpansionTile(
                       title: Text("Bank Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       children: [
-                        infoRow("Account Name", "Ananya Sethi"),
-                        infoRow("IFSC Code", "SBIN0001234"),
-                        infoRow("Bank Name", "State Bank of India"),
+                        infoRow("Account Number", "${student.bank_account_number}"),
+                        infoRow("IFSC Code", "${student.ifsc_code}"),
                       ],
                     ),
                     ExpansionTile(

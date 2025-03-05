@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
 import 'package:flutter_application_1/pages/rebate_history.dart';
@@ -11,8 +12,7 @@ import '../pages/user.dart'; // Import Profile Page
 
 class HomeScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
-  HomeScreen({super.key, User? user});
+  HomeScreen({super.key});
 
   @override
 Widget build(BuildContext context) {
