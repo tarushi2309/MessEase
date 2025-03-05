@@ -12,6 +12,7 @@ class RebateHistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
+      backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(56),
         child: Header(scaffoldKey: scaffoldKey),
@@ -22,16 +23,14 @@ class RebateHistoryScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Text(
-                "Rebate Tracker",
+              Text(
+                "REBATE TRACKER",
                 style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w400,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
                   color: Colors.black87,
                 ),
               ),
-            ),
             const SizedBox(height: 10),
             // Rebate Amount and Pie Chart
             RebateSummaryCard(rebateDays: 15),

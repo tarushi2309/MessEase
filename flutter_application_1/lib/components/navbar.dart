@@ -14,12 +14,14 @@ class Navbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topRight: Radius.circular(20),
-        bottomRight: Radius.circular(20),
-      ),
-      child: Drawer(
+    return Container(
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        child: Drawer(
+          backgroundColor: Colors.white,
         child: Column(
           children: [
             SizedBox(height: statusBarHeight),
@@ -74,6 +76,7 @@ class Navbar extends StatelessWidget {
           ],
         ),
       ),
+    )
     );
   }
 

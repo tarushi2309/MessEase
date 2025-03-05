@@ -18,6 +18,7 @@ class HomeScreen extends StatelessWidget {
 Widget build(BuildContext context) {
   return Scaffold(
     key: scaffoldKey,
+    backgroundColor: Colors.white,
     drawer: _buildDrawer(context),
     body: Stack(
       children: [
@@ -73,7 +74,7 @@ Widget build(BuildContext context) {
 
   Widget _buildContent(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -235,6 +236,7 @@ Widget build(BuildContext context) {
         bottomRight: Radius.circular(20),
       ),
       child: Drawer(
+        backgroundColor: Colors.white,
         child: Column(
           children: [
             SizedBox(height: statusBarHeight),

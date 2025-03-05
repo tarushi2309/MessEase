@@ -20,153 +20,153 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
   final List<Map<String, List<Map<String, String>>>> weeklyMenu = [
     //MONDAY
     {
-      "Breakfast": [
-        {"image": "assets/poha.png", "name": "Poha"},
-        {"image": "assets/omelette.png", "name": "Omelette"},
-        {"image": "assets/bread.png", "name": "Bread & Butter"},
-        {"image": "assets/tea.png", "name": "Tea"},
+      "BREAKFAST": [
+        {"image": "assets/addon.jpg", "name": "Poha"},
+        {"image": "assets/addon.jpg", "name": "Omelette"},
+        {"image": "assets/addon.jpg", "name": "Bread & Butter"},
+        {"image": "assets/addon.jpg", "name": "Tea"},
       ],
-      "Lunch": [
-        {"image": "assets/chapati.png", "name": "Chapati"},
-        {"image": "assets/dal.png", "name": "Dal"},
-        {"image": "assets/rice.png", "name": "Rice"},
-        {"image": "assets/salad.png", "name": "Salad"},
+      "LUNCH": [
+        {"image": "assets/addon.jpg", "name": "Chapati"},
+        {"image": "assets/addon.jpg", "name": "Dal"},
+        {"image": "assets/addon.jpg", "name": "Rice"},
+        {"image": "assets/addon.jpg", "name": "Salad"},
       ],
-      "Dinner": [
-        {"image": "assets/paneer.png", "name": "Paneer"},
-        {"image": "assets/roti.png", "name": "Roti"},
-        {"image": "assets/curd.png", "name": "Curd"},
-        {"image": "assets/sweet.png", "name": "Sweet"},
+      "DINNER": [
+        {"image": "assets/addon.jpg", "name": "Paneer"},
+        {"image": "assets/addon.jpg", "name": "Roti"},
+        {"image": "assets/addon.jpg", "name": "Curd"},
+        {"image": "assets/addon.jpg", "name": "Sweet"},
       ],
     },
 
     //TUESDAY
     {
-      "Breakfast": [
-        {"image": "assets/omelette.png", "name": "Omelette"},
-        {"image": "assets/bread.png", "name": "Bread & Butter"},
-        {"image": "assets/tea.png", "name": "Tea"},
+      "BREAKFAST": [
+        {"image": "assets/addon.jpg", "name": "Omelette"},
+        {"image": "assets/addon.jpg", "name": "Bread & Butter"},
+        {"image": "assets/addon.jpg", "name": "Tea"},
       ],
-      "Lunch": [
-        {"image": "assets/chapati.png", "name": "Chapati"},
-        {"image": "assets/dal.png", "name": "Dal"},
-        {"image": "assets/rice.png", "name": "Rice"},
-        {"image": "assets/salad.png", "name": "Salad"},
+      "LUNCH": [
+        {"image": "assets/addon.jpg", "name": "Chapati"},
+        {"image": "assets/addon.jpg", "name": "Dal"},
+        {"image": "assets/addon.jpg", "name": "Rice"},
+        {"image": "assets/addon.jpg", "name": "Salad"},
       ],
-      "Dinner": [
-        {"image": "assets/paneer.png", "name": "Paneer"},
-        {"image": "assets/roti.png", "name": "Roti"},
-        {"image": "assets/curd.png", "name": "Curd"},
-        {"image": "assets/sweet.png", "name": "Sweet"},
+      "DINNER": [
+        {"image": "assets/addon.jpg", "name": "Paneer"},
+        {"image": "assets/addon.jpg", "name": "Roti"},
+        {"image": "assets/addon.jpg", "name": "Curd"},
+        {"image": "assets/addon.jpg", "name": "Sweet"},
       ],
     },
 
     //WEDNESDAY
     {
-      "Breakfast": [
-        {"image": "assets/poha.png", "name": "Poha"},
-        {"image": "assets/omelette.png", "name": "Omelette"},
-        {"image": "assets/bread.png", "name": "Bread & Butter"},
-        {"image": "assets/tea.png", "name": "Tea"},
+      "BREAKFAST": [
+        {"image": "assets/addon.jpg", "name": "Poha"},
+        {"image": "assets/addon.jpg", "name": "Omelette"},
+        {"image": "assets/addon.jpg", "name": "Bread & Butter"},
+        {"image": "assets/addon.jpg", "name": "Tea"},
       ],
-      "Lunch": [
-        {"image": "assets/chapati.png", "name": "Chapati"},
-        {"image": "assets/dal.png", "name": "Dal"},
-        {"image": "assets/rice.png", "name": "Rice"},
-        {"image": "assets/salad.png", "name": "Salad"},
+      "LUNCH": [
+        {"image": "assets/addon.jpg", "name": "Chapati"},
+        {"image": "assets/addon.jpg", "name": "Dal"},
+        {"image": "assets/addon.jpg", "name": "Rice"},
+        {"image": "assets/addon.jpg", "name": "Salad"},
       ],
-      "Dinner": [
-        {"image": "assets/paneer.png", "name": "Paneer"},
-        {"image": "assets/roti.png", "name": "Roti"},
-        {"image": "assets/curd.png", "name": "Curd"},
-        {"image": "assets/sweet.png", "name": "Sweet"},
+      "DINNER": [
+        {"image": "assets/addon.jpg", "name": "Paneer"},
+        {"image": "assets/addon.jpg", "name": "Roti"},
+        {"image": "assets/addon.jpg", "name": "Curd"},
+        {"image": "assets/addon.jpg", "name": "Sweet"},
       ],
     },
 
     //THURSDAY
     {
-      "Breakfast": [
-        {"image": "assets/omelette.png", "name": "Omelette"},
-        {"image": "assets/bread.png", "name": "Bread & Butter"},
-        {"image": "assets/tea.png", "name": "Tea"},
+      "BREAKFAST": [
+        {"image": "assets/addon.jpg", "name": "Omelette"},
+        {"image": "assets/addon.jpg", "name": "Bread & Butter"},
+        {"image": "assets/addon.jpg", "name": "Tea"},
       ],
-      "Lunch": [
-        {"image": "assets/chapati.png", "name": "Chapati"},
-        {"image": "assets/dal.png", "name": "Dal"},
-        {"image": "assets/rice.png", "name": "Rice"},
-        {"image": "assets/salad.png", "name": "Salad"},
+      "LUNCH": [
+        {"image": "assets/addon.jpg", "name": "Chapati"},
+        {"image": "assets/addon.jpg", "name": "Dal"},
+        {"image": "assets/addon.jpg", "name": "Rice"},
+        {"image": "assets/addon.jpg", "name": "Salad"},
       ],
-      "Dinner": [
-        {"image": "assets/paneer.png", "name": "Paneer"},
-        {"image": "assets/roti.png", "name": "Roti"},
-        {"image": "assets/curd.png", "name": "Curd"},
-        {"image": "assets/sweet.png", "name": "Sweet"},
+      "DINNER": [
+        {"image": "assets/addon.jpg", "name": "Paneer"},
+        {"image": "assets/addon.jpg", "name": "Roti"},
+        {"image": "assets/addon.jpg", "name": "Curd"},
+        {"image": "assets/addon.jpg", "name": "Sweet"},
       ],
     },
-    
+
     //FRIDAY
     {
-      "Breakfast": [
-        {"image": "assets/poha.png", "name": "Poha"},
-        {"image": "assets/omelette.png", "name": "Omelette"},
-        {"image": "assets/bread.png", "name": "Bread & Butter"},
-        {"image": "assets/tea.png", "name": "Tea"},
+      "BREAKFAST": [
+        {"image": "assets/addon.jpg", "name": "Poha"},
+        {"image": "assets/addon.jpg", "name": "Omelette"},
+        {"image": "assets/addon.jpg", "name": "Bread & Butter"},
+        {"image": "assets/addon.jpg", "name": "Tea"},
       ],
-      "Lunch": [
-        {"image": "assets/chapati.png", "name": "Chapati"},
-        {"image": "assets/dal.png", "name": "Dal"},
-        {"image": "assets/rice.png", "name": "Rice"},
-        {"image": "assets/salad.png", "name": "Salad"},
+      "LUNCH": [
+        {"image": "assets/addon.jpg", "name": "Chapati"},
+        {"image": "assets/addon.jpg", "name": "Dal"},
+        {"image": "assets/addon.jpg", "name": "Rice"},
+        {"image": "assets/addon.jpg", "name": "Salad"},
       ],
-      "Dinner": [
-        {"image": "assets/paneer.png", "name": "Paneer"},
-        {"image": "assets/roti.png", "name": "Roti"},
-        {"image": "assets/curd.png", "name": "Curd"},
-        {"image": "assets/sweet.png", "name": "Sweet"},
+      "DINNER": [
+        {"image": "assets/addon.jpg", "name": "Paneer"},
+        {"image": "assets/addon.jpg", "name": "Roti"},
+        {"image": "assets/addon.jpg", "name": "Curd"},
+        {"image": "assets/addon.jpg", "name": "Sweet"},
       ],
     },
 
     //SATURDAY
     {
-      "Breakfast": [
-        {"image": "assets/poha.png", "name": "Poha"},
-        {"image": "assets/omelette.png", "name": "Omelette"},
-        {"image": "assets/bread.png", "name": "Bread & Butter"},
-        {"image": "assets/tea.png", "name": "Tea"},
+      "BREAKFAST": [
+        {"image": "assets/addon.jpg", "name": "Poha"},
+        {"image": "assets/addon.jpg", "name": "Omelette"},
+        {"image": "assets/addon.jpg", "name": "Bread & Butter"},
+        {"image": "assets/addon.jpg", "name": "Tea"},
       ],
-      "Lunch": [
-        {"image": "assets/chapati.png", "name": "Chapati"},
-        {"image": "assets/dal.png", "name": "Dal"},
-        {"image": "assets/rice.png", "name": "Rice"},
-        {"image": "assets/salad.png", "name": "Salad"},
+      "LUNCH": [
+        {"image": "assets/addon.jpg", "name": "Chapati"},
+        {"image": "assets/addon.jpg", "name": "Dal"},
+        {"image": "assets/addon.jpg", "name": "Rice"},
+        {"image": "assets/addon.jpg", "name": "Salad"},
       ],
-      "Dinner": [
-        {"image": "assets/paneer.png", "name": "Paneer"},
-        {"image": "assets/roti.png", "name": "Roti"},
-        {"image": "assets/curd.png", "name": "Curd"},
-        {"image": "assets/sweet.png", "name": "Sweet"},
+      "DINNER": [
+        {"image": "assets/addon.jpg", "name": "Paneer"},
+        {"image": "assets/addon.jpg", "name": "Roti"},
+        {"image": "assets/addon.jpg", "name": "Curd"},
+        {"image": "assets/addon.jpg", "name": "Sweet"},
       ],
     },
 
     //SUNDAY
     {
-      "Breakfast": [
-        {"image": "assets/poha.png", "name": "Poha"},
-        {"image": "assets/omelette.png", "name": "Omelette"},
-        {"image": "assets/bread.png", "name": "Bread & Butter"},
-        {"image": "assets/tea.png", "name": "Tea"},
+      "BREAKFAST": [
+        {"image": "assets/addon.jpg", "name": "Poha"},
+        {"image": "assets/addon.jpg", "name": "Omelette"},
+        {"image": "assets/addon.jpg", "name": "Bread & Butter"},
+        {"image": "assets/addon.jpg", "name": "Tea"},
       ],
-      "Lunch": [
-        {"image": "assets/chapati.png", "name": "Chapati"},
-        {"image": "assets/dal.png", "name": "Dal"},
-        {"image": "assets/rice.png", "name": "Rice"},
-        {"image": "assets/salad.png", "name": "Salad"},
+      "LUNCH": [
+        {"image": "assets/addon.jpg", "name": "Chapati"},
+        {"image": "assets/addon.jpg", "name": "Dal"},
+        {"image": "assets/addon.jpg", "name": "Rice"},
+        {"image": "assets/addon.jpg", "name": "Salad"},
       ],
-      "Dinner": [
-        {"image": "assets/paneer.png", "name": "Paneer"},
-        {"image": "assets/roti.png", "name": "Roti"},
-        {"image": "assets/curd.png", "name": "Curd"},
-        {"image": "assets/sweet.png", "name": "Sweet"},
+      "DINNER": [
+        {"image": "assets/addon.jpg", "name": "Paneer"},
+        {"image": "assets/addon.jpg", "name": "Roti"},
+        {"image": "assets/addon.jpg", "name": "Curd"},
+        {"image": "assets/addon.jpg", "name": "Sweet"},
       ],
     },
   ];
@@ -175,6 +175,7 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
+      backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(56),
         child: Header(scaffoldKey: scaffoldKey),
@@ -183,11 +184,10 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
       body: Column(
         children: [
           SizedBox(height: 10),
-          Container(
-            color: Color(0xFFF0753C),
-            padding: EdgeInsets.symmetric(vertical: 10),
+          Container( 
+            padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Even spacing
               children: List.generate(days.length, (index) {
                 return GestureDetector(
                   onTap: () {
@@ -198,8 +198,11 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
                   child: Text(
                     days[index],
                     style: TextStyle(
-                      color: selectedDay == index ? Colors.white : Colors.black,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16, // Adjust font size for a subtle look
+                      fontWeight: FontWeight.w400, // Medium font weight
+                      color: selectedDay == index
+                          ? Colors.black
+                          : Colors.grey, // Highlight selected day
                     ),
                   ),
                 );
@@ -208,40 +211,65 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
           ),
           Expanded(
             child: ListView(
+              padding: const EdgeInsets.all(10),
               children: weeklyMenu[selectedDay].entries.map((entry) {
-                return ExpansionTile(
-                  title: Text(
-                    entry.key,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFF0753C),
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  //elevation: 1,
+                  color: Colors.white,
+                  
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Meal Title
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            entry.key,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 20, 10, 4),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Horizontally Scrollable Food Items
+                        SizedBox(
+                          height: 110,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: entry.value.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Column(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 35,
+                                      backgroundImage:
+                                          AssetImage(entry.value[index]['image']!),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      entry.value[index]['name']!,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  children: [
-                    SizedBox(
-                      height: 120,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: entry.value.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundImage: AssetImage(entry.value[index]['image']!),
-                                ),
-                                SizedBox(height: 5),
-                                Text(entry.value[index]['name']!),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
                 );
               }).toList(),
             ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../components/footer.dart'; // Footer component
 import '../components/header.dart'; // Header component
+import '../components/navbar.dart'; // Navbar component
 import '../models/rebate.dart';
 
 class RebateFormPage extends StatefulWidget {
@@ -113,86 +114,91 @@ class _RebateFormPageState extends State<RebateFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,  // Assign the GlobalKey to Scaffold
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.orange),
-              child: Text("Menu", style: TextStyle(color: Colors.white, fontSize: 24)),
-            ),
-            ListTile(
-              title: const Text("Home"),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: Colors.white,
+      drawer: Navbar(), // Navbar
       body: Column(
         children: [
           Header(scaffoldKey: _scaffoldKey), // Correct usage of Header
           Expanded(
+            child: Center(
             child: SingleChildScrollView(
+              child: Center(
+                child: SizedBox(
+                  width: 400,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2),
-                      ],
-                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Text(
-                          "Rebate Form",
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        Center(
+                          child: Padding( 
+                            padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                            child: Text(
+                          "REBATE FORM",
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                        ),
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 30),
+                          child: const Text(
+                          "Enter the details below to submit a rebate request",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Color(0xFF757575)),
+                        ),
                         ),
                         const SizedBox(height: 20),
                         Form(
                           key: _formKey,
-                          child: Column(
-                            children: [
-                              DropdownButtonFormField<hostel>(
-                              value: selectedHostel,
-                              onChanged: (newValue) {
-                                setState(() {
-                                  selectedHostel = newValue;
-                                });
-                              },
-                              items: hostel.values.map((hostel h) {
-                                return DropdownMenuItem<hostel>(
-                                  value: h,
-                                  child: Text(h.name.toUpperCase()), // Display names in uppercase
-                                );
-                              }).toList(),
-                              decoration: InputDecoration(
-                                labelText: 'Select Hostel',
-                                border: OutlineInputBorder(),
+                          child: 
+                          Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding:EdgeInsets.symmetric(vertical: 10),
+                                 child: DropdownButtonFormField<hostel>(
+                                value: selectedHostel,
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    selectedHostel = newValue;
+                                  });
+                                },
+                                items: hostel.values.map((hostel h) {
+                                  return DropdownMenuItem<hostel>(
+                                    value: h,
+                                    child: Text(h.name.toUpperCase()), // Display names in uppercase
+                                  );
+                                }).toList(),
+                                decoration: InputDecoration(
+                                  labelText: 'Select Hostel',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                ),
                               ),
+                                buildTextField("Room Number", roomController),
+                                buildDateField("Rebate From", rebateFromController),
+                                buildDateField("Rebate To", rebateToController),
+                                buildTextField("Number of Days", daysController, keyboardType: TextInputType.number),
+                                const SizedBox(height: 20),
+                                ElevatedButton(
+                                  onPressed: submitRebateForm,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFFF0753C),
+                                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                  child: const Text(
+                                    "Submit Form",
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
                             ),
-                              buildTextField("Room Number", roomController),
-                              buildDateField("Rebate From", rebateFromController),
-                              buildDateField("Rebate To", rebateToController),
-                              buildTextField("Number of Days", daysController, keyboardType: TextInputType.number),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: submitRebateForm,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange,
-                                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                child: const Text(
-                                  "Submit Form",
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ],
@@ -201,6 +207,8 @@ class _RebateFormPageState extends State<RebateFormPage> {
                 ),
               ),
             ),
+            ),
+          ),
           ),
           CustomNavigationBar(), // Footer
         ],
@@ -218,7 +226,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
           filled: true,
           fillColor: Colors.white,
         ),
@@ -241,8 +249,8 @@ class _RebateFormPageState extends State<RebateFormPage> {
         readOnly: true,
         decoration: InputDecoration(
           labelText: label,
-          suffixIcon: const Icon(Icons.calendar_today, color: Colors.orange),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          suffixIcon: const Icon(Icons.calendar_today, color: Color.fromARGB(255, 8, 5, 0)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
           filled: true,
           fillColor: Colors.white,
         ),

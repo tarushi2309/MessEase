@@ -3,6 +3,7 @@ import 'package:flutter_application_1/models/student.dart';
 import 'package:flutter_application_1/models/user.dart';
 class DatabaseModel{
   final String uid;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DatabaseModel({required this.uid});
 
@@ -38,6 +39,20 @@ class DatabaseModel{
     } catch (e) {
       print("Error adding rebate form: $e");
       throw e;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRebateHistory(String userId) async{
+    try{
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('rebates')
+          .where('userId', isEqualTo: userId)
+          .orderBy('from', descending: true)
+          .get();
+      return querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+    } catch(e){
+      print("Error fetching the history: $e");
+      return [];
     }
   }
 }
