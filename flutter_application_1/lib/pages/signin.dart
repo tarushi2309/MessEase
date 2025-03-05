@@ -96,7 +96,7 @@ class _SignInFormState extends State<SignInForm> {
         // Navigate to your home screen after successful login.
         // Replace HomeScreen() with your actual home screen widget.
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) =>  HomeScreen(user:user)));
+            context, MaterialPageRoute(builder: (context) =>  HomeScreen()));
       } on FirebaseAuthException catch (e) {
         if (e.code == "user-not-found") {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

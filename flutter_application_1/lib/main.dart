@@ -39,8 +39,8 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      home: SignUpScreen(),
-      initialRoute: '/signin',  // Default screen when app starts
+      home: SignInScreen(),
+      initialRoute: '/home',  // Default screen when app starts
       routes: {
         '/home': (context) => HomeScreen(),
         '/rebate-history': (context) => RebateHistoryScreen(),

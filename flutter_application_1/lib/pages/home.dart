@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
 import 'package:flutter_application_1/pages/rebate_history.dart';
+import 'package:flutter_application_1/pages/rebateform.dart';
+import 'package:flutter_application_1/pages/user.dart';
 
 //import 'package:flutter_application_1/pages/RebateForm.dart';
 import '../components/footer.dart';
@@ -9,33 +12,40 @@ import '../pages/user.dart'; // Import Profile Page
 class HomeScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  HomeScreen({super.key});
+  HomeScreen({super.key, User? user});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      key: scaffoldKey,
-      drawer: _buildDrawer(context),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  SizedBox(height: 15,),
-                  _buildContent(context),
-                ],
+Widget build(BuildContext context) {
+  return Scaffold(
+    key: scaffoldKey,
+    drawer: _buildDrawer(context),
+    body: Stack(
+      children: [
+        Column(
+          children: [
+            _buildHeader(context), // Fixed header
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 15),
+                      _buildContent(context), // Scrollable content
+                    ],
+                  ),
+                ),
               ),
             ),
-          );
-        },
-      ),
-      bottomNavigationBar: CustomNavigationBar(),
-    );
-  }
+          ],
+        ),
+      ],
+    ),
+    bottomNavigationBar: const CustomNavigationBar(),
+  );
+}
 
   /// Builds the header section with the background image and custom app bar.
   Widget _buildHeader(BuildContext context) {
@@ -63,16 +73,16 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
             child: Text(
-              "Today's Menu",
+              "TODAY'S MENU",
               style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w400,
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
                 color: Colors.black87,
               ),
             ),
@@ -99,10 +109,10 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            "Today's Add-Ons",
+            "TODAY'S ADD-ONS",
             style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w400,
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
               color: Colors.black87,
             ),
           ),
@@ -111,14 +121,14 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: addOns.map((item) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Column(
                   children: [
                     Container(
                       padding: EdgeInsets.all(4), // Border thickness
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Color(0xFFFFCCB3), width: 1), // Border color & width
+                        border: Border.all(color: Color(0xFFF0753C), width: 1), // Border color & width
                       ),
                       child: ClipOval(
                         child: Image.asset(
@@ -187,7 +197,7 @@ class HomeScreen extends StatelessWidget {
         child: ExpansionTile(
           backgroundColor: bgColor,
           collapsedBackgroundColor: bgColor.withOpacity(0.8),
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -199,10 +209,10 @@ class HomeScreen extends StatelessWidget {
           children: items
               .map(
                 (item) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16,0,16,16),
               child: Row(
                 children: [
-                  const Icon(Icons.fastfood, color: Colors.orangeAccent, size: 20),
+                  const Icon(Icons.fastfood, color: Color(0xFFF0753C), size: 20),
                   const SizedBox(width: 10),
                   Text(item, style: const TextStyle(fontSize: 16)),
                 ],
@@ -243,10 +253,10 @@ class HomeScreen extends StatelessWidget {
               child: ListView(
                 children: [
                   _buildDrawerItem(Icons.receipt_long, 'Rebate Form', () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(builder: (context) => RebateFormPage()),
-                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RebateFormPage()),
+                    );
                   }),
                   _buildDrawerItem(Icons.restaurant_menu, 'Mess Menu', () {
                     Navigator.push(

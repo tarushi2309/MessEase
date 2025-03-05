@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../pages/user.dart';
 import '../pages/signup.dart';
 import '../pages/messmenu.dart';
-// import '../pages/RebateForm.dart';
+
 import '../pages/rebate_history.dart';
 import '../pages/home.dart';
+import '../pages/RebateForm.dart';
 
 class Navbar extends StatelessWidget {
   const Navbar({super.key});
@@ -37,10 +38,10 @@ class Navbar extends StatelessWidget {
               child: ListView(
                 children: [
                   _buildDrawerItem(Icons.receipt_long, 'Rebate Form', () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(builder: (context) => RebateFormPage()),
-                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RebateFormPage()),
+                    );
                   }),
                   _buildDrawerItem(Icons.restaurant_menu, 'Mess Menu', () {
                     Navigator.push(
