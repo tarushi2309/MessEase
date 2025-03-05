@@ -37,7 +37,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      padding: EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       decoration: BoxDecoration(
         color: const Color.fromARGB(255, 243, 242, 242), // Background color
         borderRadius: BorderRadius.only(
@@ -58,16 +58,17 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                   onPressed: () => _onItemTapped(index),
                   icon: Icon(
                     _navItems[index]['icon'],
-                    color: index == _selectedIndex ? Colors.orange : Colors.grey[700],
-                    size: 28,
+                    color:Colors.grey[700],
+                    size: 22,
                   ),
+                  constraints: const BoxConstraints(), // Removes extra padding from IconButton
+                  padding: EdgeInsets.zero,
                 ),
-                SizedBox(height: 5), // Spacing between icon and text
                 Text(
                   _navItems[index]['label'],
                   style: TextStyle(
-                    color: index == _selectedIndex ? Color(0xFFF0753C) : Colors.black54,
-                    fontSize: 12,
+                    color: Colors.black54,
+                    fontSize: 10,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
