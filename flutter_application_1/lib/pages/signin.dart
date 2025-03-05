@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/components/user_provider.dart';
+import 'package:flutter_application_1/pages/signup.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-import './signup.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 // Import your home screen or any other destination after sign in.
 import 'home.dart';
 
@@ -93,7 +95,8 @@ class _SignInFormState extends State<SignInForm> {
             style: TextStyle(fontSize: 20.0),
           ),
         ));
-        User? user = userCredential.user;
+        String uid = userCredential.user!.uid;
+        Provider.of<UserProvider>(context, listen: false).setUid(uid);
         // Navigate to your home screen after successful login.
         // Replace HomeScreen() with your actual home screen widget.
         Navigator.push(

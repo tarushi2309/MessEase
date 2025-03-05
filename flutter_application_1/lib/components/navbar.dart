@@ -37,10 +37,10 @@ class Navbar extends StatelessWidget {
               child: ListView(
                 children: [
                   _buildDrawerItem(Icons.receipt_long, 'Rebate Form', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => RebateFormPage()),
-                    );
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(builder: (context) => RebateFormPage()),
+                     );
                   }),
                   _buildDrawerItem(Icons.restaurant_menu, 'Mess Menu', () {
                     Navigator.push(

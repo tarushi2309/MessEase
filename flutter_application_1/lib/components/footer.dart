@@ -6,6 +6,7 @@ import '../pages/rebate_history.dart';
 
 
 class CustomNavigationBar extends StatefulWidget {
+
   const CustomNavigationBar({super.key});
 
   @override

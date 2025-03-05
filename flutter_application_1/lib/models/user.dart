@@ -21,14 +21,12 @@ class UserModel {
         'role': role_,
       };
 
-  factory UserModel.fromJson(DocumentSnapshot doc) {
-
+   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      uid: doc['uid'] as String,
-      name: doc['name'] as String,
-      email: doc['email'] as String,
-      role_: doc['role'] as String,
+      uid: json['uid'],
+      name: json['name'],
+      email: json['email'],
+      role_: json['role'],
     );
-    
   }
 }
