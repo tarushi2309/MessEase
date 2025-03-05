@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/pages/home.dart';
+import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
 import 'pages/RebateForm.dart';
@@ -14,7 +16,12 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => UserProvider(), // Provide the UserProvider globally
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -39,8 +46,8 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      home: SignInScreen(),
-      initialRoute: '/home',  // Default screen when app starts
+      home: SignUpScreen(),
+      initialRoute: '/signin',  // Default screen when app starts
       routes: {
         '/home': (context) => HomeScreen(),
         '/rebate-history': (context) => RebateHistoryScreen(),

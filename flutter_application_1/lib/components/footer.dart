@@ -6,6 +6,7 @@ import '../pages/chat.dart';
 
 
 class CustomNavigationBar extends StatefulWidget {
+
   const CustomNavigationBar({super.key});
 
   @override
