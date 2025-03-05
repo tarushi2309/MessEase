@@ -1,54 +1,12 @@
 import 'package:flutter/material.dart';
-
+import 'package:fl_chart/fl_chart.dart';
 import '../components/footer.dart';
 import '../components/header.dart';
 import '../components/navbar.dart';
-import '../pages/RebateForm.dart';
 
-class RebateHistoryScreen extends StatefulWidget {
-  const RebateHistoryScreen({super.key});
-
-  @override
-  _RebateHistoryScreenState createState() => _RebateHistoryScreenState();
-}
-
-class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
+class RebateHistoryScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
-  // Hardcoded data
-  List<Map<String, String>> rebateHistory = [
-    {
-      'from': '13/02/2025',
-      'to': '20/02/2025',
-      'days': '7',
-      'status': 'Approved'
-    },
-    {
-      'from': '05/01/2025',
-      'to': '12/01/2025',
-      'days': '7',
-      'status': 'Approved'
-    },
-  ];
-
-  // Simulated database fetch function
-  Future<List<Map<String, String>>> fetchRebateHistory() async {
-    await Future.delayed(Duration(seconds: 2)); // Simulating network delay
-    return [
-      {
-        'from': '01/12/2024',
-        'to': '08/12/2024',
-        'days': '7',
-        'status': 'Pending'
-      },
-      {
-        'from': '20/11/2024',
-        'to': '27/11/2024',
-        'days': '7',
-        'status': 'Approved'
-      }
-    ];
-  }
+  RebateHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,82 +18,162 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
       ),
       drawer: Navbar(),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text("Rebate History", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 16),
-            
-            // Hardcoded Entries
-            ...rebateHistory.map((rebate) => buildRebateCard(rebate)),
-            
-            // Fetched Entries from Database
-            FutureBuilder(
-              future: fetchRebateHistory(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text("Error fetching data"));
-                } else {
-                  List<Map<String, String>> fetchedData = snapshot.data as List<Map<String, String>>;
-                  return Column(
-                    children: fetchedData.map((rebate) => buildRebateCard(rebate)).toList(),
-                  );
-                }
-              },
-            ),
-            
-            Spacer(),
-            
-            // Apply Rebate Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFF0753C),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RebateFormPage()),
-                  );
-                },
-                child: Text("Apply Rebate", style: TextStyle(color: Colors.white, fontSize: 16)),
-              ),
-            )
-          ],
-        ),
-      ),
-      bottomNavigationBar: CustomNavigationBar(selectedIndex: 1),
-    );
-  }
-
-  // Widget for building a rebate history card
-  Widget buildRebateCard(Map<String, String> rebate) {
-    return Card(
-      color: Color(0xFFF0753C),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Center(
+              child: Text(
+                "Rebate Tracker",
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Rebate Amount and Pie Chart
+            RebateSummaryCard(rebateDays: 15),
+
+            const SizedBox(height: 20),
+
+            // Rebate History Title
+            Center(
+              child: Text(
+                "Rebate History",
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Rebate History Cards
+            Expanded(
+              child: ListView(
+                children: [
+                  _buildRebateCard('2024-01-01', '2024-01-10', 10, 'Approved'),
+                  _buildRebateCard('2024-02-05', '2024-02-15', 11, 'Pending'),
+                  _buildRebateCard('2024-03-01', '2024-03-07', 7, 'Approved'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: CustomNavigationBar(),
+    );
+  }
+
+  Widget _buildRebateCard(String from, String to, int days, String status) {
+    Color statusColor = status == 'Approved' ? Colors.green : Colors.orange;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListTile(
+          title: Text(
+            'From: $from \nTo: $to',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+          subtitle: Text('Number of days: $days'),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class RebateSummaryCard extends StatelessWidget {
+  final int rebateDays;
+
+  const RebateSummaryCard({super.key, required this.rebateDays});
+
+  @override
+  Widget build(BuildContext context) {
+    int rebateAmount = rebateDays * 130;
+    double filledPercentage = rebateDays / 21;
+    Color pieColor = Color(0xFFE06635);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Rebate Amount
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Your Rebate Amount',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '₹$rebateAmount', // Dynamic amount
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFF0753C),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Pie Chart
+            Column(
               children: [
-                Text("From -", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                Text(rebate['from']!, style: TextStyle(color: Colors.white)),
-                Text(rebate['status']!, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+                SizedBox(
+                  height: 100,
+                  width: 100,
+                  child: PieChart(
+                    PieChartData(
+                      sections: [
+                        PieChartSectionData(
+                          color: pieColor,
+                          value: rebateDays.toDouble(),
+                          radius: 30,
+                        ),
+                        PieChartSectionData(
+                          color: Colors.grey[300]!,
+                          value: (21 - rebateDays).toDouble(),
+                          radius: 30,
+                        ),
+                      ],
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 30,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  '$rebateDays / 21 Days',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                ),
               ],
             ),
-            SizedBox(height: 5),
-            Text("To - ${rebate['to']!}", style: TextStyle(color: Colors.white)),
-            SizedBox(height: 5),
-            Text("Days - ${rebate['days']!}", style: TextStyle(color: Colors.white)),
           ],
         ),
       ),
