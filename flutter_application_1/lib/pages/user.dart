@@ -1,161 +1,3 @@
-/*import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
-
-import '../components/footer.dart';
-import '../components/header.dart';
-
-class UserScreen extends StatefulWidget {
-  @override
-  _UserScreenState createState() => _UserScreenState();
-}
-
-class _UserScreenState extends State<UserScreen> {
-  Map<String, dynamic>? userData;
-  File? _image;
-  final picker = ImagePicker();
-
-  @override
-  void initState() {
-    super.initState();
-    fetchUserData();
-  }
-
-  Future<void> fetchUserData() async {
-    final response = await http.get(Uri.parse('https://your-backend-api.com/user-details'));
-    if (response.statusCode == 200) {
-      setState(() {
-        userData = json.decode(response.body);
-      });
-    } else {
-      print('Failed to load user data');
-    }
-  }
-
-  Future<void> _pickImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _uploadImage() async {
-    if (_image == null) return;
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('https://your-backend-api.com/upload-photo'),
-    );
-    request.files.add(
-      await http.MultipartFile.fromPath('photo', _image!.path),
-    );
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Upload Successful'),
-          content: Text('Photo uploaded successfully. Collect ID card from mess manager in 2-3 days.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      print('Failed to upload image');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Header(scaffoldKey: GlobalKey<ScaffoldState>()),
-          Expanded(
-            child: userData == null
-                ? Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                    padding: EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.grey[300],
-                          child: Icon(Icons.person, size: 50, color: Colors.black),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          userData!['name'],
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            buildUserInfoRow('Entry Number', userData!['entry_number']),
-                            buildUserInfoRow('Degree', userData!['degree']),
-                            buildUserInfoRow('Year', userData!['year'].toString()),
-                            buildUserInfoRow('Mess', userData!['mess']),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        ExpansionTile(
-                          title: Text('Bank Details', style: TextStyle(fontWeight: FontWeight.bold)),
-                          children: [
-                            buildUserInfoRow('Account Name', userData!['bank']['account_name']),
-                            buildUserInfoRow('IFSC Code', userData!['bank']['ifsc_code']),
-                            buildUserInfoRow('Bank Name', userData!['bank']['bank_name']),
-                          ],
-                        ),
-                        ExpansionTile(
-                          title: Text('Issue New Mess ID Card', style: TextStyle(fontWeight: FontWeight.bold)),
-                          children: [
-                            _image == null
-                                ? Text('No image selected')
-                                : Image.file(_image!, height: 150),
-                            ElevatedButton(
-                              onPressed: _pickImage,
-                              child: Text('Upload Photo'),
-                            ),
-                            ElevatedButton(
-                              onPressed: _uploadImage,
-                              child: Text('Submit'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
-          CustomNavigationBar(),
-        ],
-      ),
-    );
-  }
-
-  Widget buildUserInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(value),
-        ],
-      ),
-    );
-  }
-}
-*/
-
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -172,8 +14,9 @@ import 'package:provider/provider.dart';
 
 import '../components/footer.dart';
 import '../components/header.dart';
+
 class UserPage extends StatefulWidget {
-  const UserPage({super.key, });
+  const UserPage({super.key});
 
   @override
   _UserPageState createState() => _UserPageState();
@@ -185,15 +28,128 @@ class _UserPageState extends State<UserPage> {
 
   late UserModel user;
   late StudentModel student;
-  Future<void> initState() async {
-    String? uid = Provider.of<UserProvider>(context).uid;
+  bool isDataLoaded = false; // Track data loading state
+
+  
+  
+  // Separate method to handle async work
+  Future<void> _fetchUserData(String uid) async {
+
     // Initialize the DatabaseModel to fetch user and student data
-    if(uid!=null){
-    DatabaseModel dbService = DatabaseModel(uid: uid);
-    DocumentSnapshot user_info = await dbService.getUserInfo(uid);
-    DocumentSnapshot student_info = await dbService.getStudentInfo(uid);
-    user = UserModel.fromJson(user_info.data() as Map<String, dynamic>);
-    student= StudentModel.fromJson(student_info.data() as Map<String, dynamic>);}
+   
+      DatabaseModel dbService = DatabaseModel(uid: uid);
+      try {
+        DocumentSnapshot user_info = await dbService.getUserInfo(uid);
+        DocumentSnapshot student_info = await dbService.getStudentInfo(uid);
+
+        // Update the user and student models inside setState to rebuild the UI
+        setState(() {
+          user = UserModel.fromJson(user_info.data() as Map<String, dynamic>);
+          student = StudentModel.fromJson(student_info.data() as Map<String, dynamic>);
+          isDataLoaded = true; // Set the loading flag to true
+        });
+      } catch (e) {
+        print("Error fetching data: $e");
+        setState(() {
+          isDataLoaded = false; // Ensure data loading flag is set in case of error
+        });
+      }
+    }
+  
+
+  
+
+  @override
+  Widget build(BuildContext context) {
+    String? uid = Provider.of<UserProvider>(context).uid;
+
+    // If the UID is null, show an error message or loading indicator
+    if (uid == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('User Page')),
+        body: Center(
+          child: Text("No user found. Please log in."),
+        ),
+      );
+    }
+
+    // Fetch data if UID is available and not already loaded
+    if (!isDataLoaded) {
+      _fetchUserData(uid);
+    }
+    return Scaffold(
+      body: !isDataLoaded // Show a loading spinner while data is loading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Header(scaffoldKey: GlobalKey<ScaffoldState>()),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey.shade300,
+                            child: Icon(Icons.person, size: 50, color: Colors.white),
+                          ),
+                          SizedBox(height: 10),
+                          Text("${user.name}", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 5),
+                          infoRow("Entry Number", "${student.entryNumber}"),
+                          infoRow("Degree", "${student.degree}"),
+                          infoRow("Year", "${student.year}"),
+                          infoRow("Mess", "Konark Mess"),
+                          SizedBox(height: 20),
+                          ExpansionTile(
+                            title: Text("Bank Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            children: [
+                              infoRow("Account Number", "${student.bank_account_number}"),
+                              infoRow("IFSC Code", "${student.ifsc_code}"),
+                            ],
+                          ),
+                          ExpansionTile(
+                            title: Text("Issue New Mess ID Card", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            children: [
+                              _image == null
+                                  ? Text("No image selected.")
+                                  : Image.file(_image!, height: 100),
+                              SizedBox(height: 10),
+                              ElevatedButton(
+                                onPressed: _pickImage,
+                                child: Text("Upload Photo"),
+                              ),
+                              SizedBox(height: 10),
+                              ElevatedButton(
+                                onPressed: _uploadImage,
+                                child: Text("Submit"),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                CustomNavigationBar(),
+              ],
+            ),
+    );
+  }
+
+  Widget infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          Text(value, style: TextStyle(fontSize: 16)),
+        ],
+      ),
+    );
   }
 
   Future<void> _pickImage() async {
@@ -239,80 +195,5 @@ class _UserPageState extends State<UserPage> {
         },
       );
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Header(scaffoldKey: GlobalKey<ScaffoldState>()),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey.shade300,
-                      child: Icon(Icons.person, size: 50, color: Colors.white),
-                    ),
-                    SizedBox(height: 10),
-                    Text("${user.name}", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 5),
-                    infoRow("Entry Number", "${student.entryNumber}"),
-                    infoRow("Degree", "${student.degree}"),
-                    infoRow("Year", "${student.year}"),
-                    infoRow("Mess", "Konark Mess"),
-                    SizedBox(height: 20),
-                    ExpansionTile(
-                      title: Text("Bank Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      children: [
-                        infoRow("Account Number", "${student.bank_account_number}"),
-                        infoRow("IFSC Code", "${student.ifsc_code}"),
-                      ],
-                    ),
-                    ExpansionTile(
-                      title: Text("Issue New Mess ID Card", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      children: [
-                        _image == null
-                            ? Text("No image selected.")
-                            : Image.file(_image!, height: 100),
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: _pickImage,
-                          child: Text("Upload Photo"),
-                        ),
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: _uploadImage,
-                          child: Text("Submit"),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          CustomNavigationBar(),
-        ],
-      ),
-    );
-  }
-
-  Widget infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-          Text(value, style: TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
   }
 }

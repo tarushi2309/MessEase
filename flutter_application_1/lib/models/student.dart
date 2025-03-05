@@ -34,7 +34,7 @@ class StudentModel {
         'monthly_refund':0,
         'days_of_rebate':0,
         'bank_account_number':0,
-        'ifsc_code':0
+        'ifsc_code':""
       };
 
   // Create a UserModel instance from a Map.

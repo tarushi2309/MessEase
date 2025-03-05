@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
 import 'package:flutter_application_1/pages/rebate_history.dart';
 import 'package:flutter_application_1/pages/rebateform.dart';
 import 'package:flutter_application_1/pages/user.dart';
+import 'package:provider/provider.dart';
 
 //import 'package:flutter_application_1/pages/RebateForm.dart';
 import '../components/footer.dart';
@@ -14,8 +16,14 @@ class HomeScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   HomeScreen({super.key});
 
+  void didChangeDependencies(BuildContext context) {
+  String? uid = Provider.of<UserProvider>(context).uid;
+    print("user: $uid");
+  }
   @override
 Widget build(BuildContext context) {
+  String? uid = Provider.of<UserProvider>(context).uid;
+    print("\nuser is : $uid");
   return Scaffold(
     key: scaffoldKey,
     drawer: _buildDrawer(context),
