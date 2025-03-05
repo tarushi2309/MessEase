@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-
-import '../pages/home.dart';
+import '../pages/user.dart';
+import '../pages/signup.dart';
 import '../pages/messmenu.dart';
 // import '../pages/RebateForm.dart';
 import '../pages/rebate_history.dart';
-import '../pages/user.dart';
+import '../pages/home.dart';
 
 class Navbar extends StatelessWidget {
-  const Navbar({Key? key}) : super(key: key);
+  const Navbar({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-
 import '../pages/home.dart';
 import '../pages/messmenu.dart';
 import '../pages/rebate_history.dart';
+//import '../pages/chat.dart';
 
 
 class CustomNavigationBar extends StatefulWidget {
+  const CustomNavigationBar({super.key});
+
   @override
   _CustomNavigationBarState createState() => _CustomNavigationBarState();
 }
