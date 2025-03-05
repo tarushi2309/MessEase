@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/student.dart';
+import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/database.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import './signin.dart';
@@ -84,14 +85,17 @@ class _SignUpFormState extends State<SignUpForm> {
             .createUserWithEmailAndPassword(email: email, password: password);
 
         final DatabaseModel dbService = DatabaseModel(uid: userCredential.user!.uid);
-        StudentModel student=StudentModel(uid: userCredential.user!.uid,
+        UserModel user=UserModel(uid: userCredential.user!.uid,
           name: namecontroller.text,
           email: mailcontroller.text,
+          role_:"student",);
+        StudentModel student=StudentModel(uid: userCredential.user!.uid,
           degree: selectedDegree ?? '',
           entryNumber: entry_nocontroller.text,
           year: int.tryParse(yearcontroller.text) ?? 0,
           password: password,);
 
+        await dbService.addUserDetails(user);
         await dbService.addStudentDetails(student);
 
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

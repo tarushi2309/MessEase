@@ -9,7 +9,7 @@ import '../pages/user.dart'; // Import Profile Page
 class HomeScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  HomeScreen({Key? key}) : super(key: key);
+  HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

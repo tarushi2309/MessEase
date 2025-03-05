@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+// Import your home screen or any other destination after sign in.
+import 'home.dart';
 import './signup.dart';
+
+const authOutlineInputBorder = OutlineInputBorder(
+  borderSide: BorderSide(color: Color(0xFF757575)),
+  borderRadius: BorderRadius.all(Radius.circular(100)),
+);
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
@@ -63,24 +71,90 @@ class SignInScreen extends StatelessWidget {
   }
 }
 
-const authOutlineInputBorder = OutlineInputBorder(
-  borderSide: BorderSide(color: Color(0xFF757575)),
-  borderRadius: BorderRadius.all(Radius.circular(100)),
-);
-
-class SignInForm extends StatelessWidget {
+class SignInForm extends StatefulWidget {
   const SignInForm({super.key});
 
   @override
+  State<SignInForm> createState() => _SignInFormState();
+}
+
+class _SignInFormState extends State<SignInForm> {
+  // Define controllers for the email and password fields.
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  // This function authenticates the user using Firebase.
+  Future<void> signIn() async {
+    if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
+      try {
+        // Attempt to sign in using Firebase Authentication.
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+                email: emailController.text,
+                password: passwordController.text);
+
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+            "Sign In Successful",
+            style: TextStyle(fontSize: 20.0),
+          ),
+        ));
+
+        // Navigate to your home screen after successful login.
+        // Replace HomeScreen() with your actual home screen widget.
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) =>  HomeScreen()));
+      } on FirebaseAuthException catch (e) {
+        if (e.code == "user-not-found") {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "No user found with that email.",
+                style: TextStyle(fontSize: 18.0),
+              )));
+        } else if (e.code == "wrong-password") {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "Incorrect password.",
+                style: TextStyle(fontSize: 18.0),
+              )));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "Sign In Failed. Please try again.",
+                style: TextStyle(fontSize: 18.0),
+              )));
+        }
+      }
+    } else {
+      // If any of the fields are empty, inform the user.
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Colors.orangeAccent,
+          content: Text(
+            "Please fill in both email and password.",
+            style: TextStyle(fontSize: 18.0),
+          )));
+    }
+  }
+
+  @override
+  void dispose() {
+    // Clean up controllers when the widget is disposed.
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Form(
+    return Form(
       child: Column(
         children: [
           // Email Field
           TextFormField(
-            onSaved: (email) {},
-            onChanged: (email) {},
+            controller: emailController,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: "Enter your email",
@@ -88,21 +162,20 @@ class SignInForm extends StatelessWidget {
               floatingLabelBehavior: FloatingLabelBehavior.always,
               hintStyle: const TextStyle(color: Color(0xFF757575)),
               contentPadding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               suffix: SvgPicture.string(mailIcon),
               border: authOutlineInputBorder,
               enabledBorder: authOutlineInputBorder,
               focusedBorder: authOutlineInputBorder.copyWith(
                   borderSide:
-                  const BorderSide(color: Color(0xFFFF7643))),
+                      const BorderSide(color: Color(0xFFFF7643))),
             ),
           ),
           // Password Field
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: TextFormField(
-              onSaved: (password) {},
-              onChanged: (password) {},
+              controller: passwordController,
               obscureText: true,
               decoration: InputDecoration(
                 hintText: "Enter your password",
@@ -110,19 +183,19 @@ class SignInForm extends StatelessWidget {
                 floatingLabelBehavior: FloatingLabelBehavior.always,
                 hintStyle: const TextStyle(color: Color(0xFF757575)),
                 contentPadding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 suffix: SvgPicture.string(lockIcon),
                 border: authOutlineInputBorder,
                 enabledBorder: authOutlineInputBorder,
                 focusedBorder: authOutlineInputBorder.copyWith(
                     borderSide:
-                    const BorderSide(color: Color(0xFFFF7643))),
+                        const BorderSide(color: Color(0xFFFF7643))),
               ),
             ),
           ),
           // Continue Button
           ElevatedButton(
-            onPressed: () {},
+            onPressed: signIn,
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: const Color(0xFFFF7643),
@@ -136,7 +209,7 @@ class SignInForm extends StatelessWidget {
           ),
         ],
       ),
-    ),);
+    );
   }
 }
 
@@ -148,9 +221,9 @@ class NoAccountText extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: const Text(
+        const Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Text(
             "Don’t have an account? ",
             style: TextStyle(color: Color(0xFF757575)),
           ),
