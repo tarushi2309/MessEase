@@ -1,29 +1,55 @@
 import 'package:flutter/material.dart';
+import '../pages/profile.dart';
+import '../pages/home.dart';
+import 'navbar.dart';
 
 class Header extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const Header({super.key, required this.scaffoldKey});
+  const Header({Key? key, required this.scaffoldKey}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Color(0xFFF0753C), // Orange color
-      elevation: 0, // No shadow
-      leading: IconButton(
-        icon: Icon(Icons.menu, color: Colors.black), // 3-bar menu icon
-        onPressed: () {
-          scaffoldKey.currentState?.openDrawer(); // Open the navbar
-        },
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.person, color: Colors.black), // Profile icon
-          onPressed: () {
-            Navigator.pushNamed(context, '/user'); // Navigates to '/profile'
-          },
-        ),
+    return Stack(
+      children: [
+        _buildCustomAppBar(context),
       ],
+    );
+  }
+
+  Widget _buildCustomAppBar(BuildContext context) {
+    return Positioned(
+      top: 35,
+      left: 16,
+      right: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: () {
+              scaffoldKey.currentState?.openDrawer();
+            },
+            icon: const Icon(Icons.menu, color: Color(0xFFF0753C), size: 30),
+          ),
+          Center(
+            child: Image.asset(
+              'assets/MessEase.png',
+              height: 50,
+              width: 150,
+              fit: BoxFit.contain,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.account_circle, color: Color(0xFFF0753C), size: 30),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
