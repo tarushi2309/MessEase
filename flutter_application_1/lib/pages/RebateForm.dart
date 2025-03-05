@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../components/footer.dart'; // Footer component
 import '../components/header.dart'; // Header component
 import '../components/navbar.dart'; // Navbar component
+import '../components/user_provider.dart';
 import '../models/rebate.dart';
 
 class RebateFormPage extends StatefulWidget {
@@ -16,6 +18,7 @@ class RebateFormPage extends StatefulWidget {
 class _RebateFormPageState extends State<RebateFormPage> {
   final _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String? uid;
 
   // Controllers
   TextEditingController hostelController = TextEditingController();
@@ -26,7 +29,13 @@ class _RebateFormPageState extends State<RebateFormPage> {
   hostel? selectedHostel;
   
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch UID in initState instead of the initializer
+    uid = Provider.of<UserProvider>(context, listen: false).uid;
+  }
 
   // Function to show Date Picker
   Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
@@ -47,7 +56,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      DocumentReference studentRef = _firestore.collection('students').doc('student_id_here');
+      DocumentReference studentRef = _firestore.collection('students').doc(uid);
 
       // Convert date format
       List<String> startParts = rebateFromController.text.split('/');
@@ -69,7 +78,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
         hostel_: selectedHostel!,
       );
 
-      DocumentReference docRef = await _firestore.collection('rebates').add(rebate.toFirestore());
+      DocumentReference docRef = await _firestore.collection('rebates').add(rebate.toJson());
       await docRef.update({'req_id': docRef.id});
 
       /*ScaffoldMessenger.of(context).showSnackBar(

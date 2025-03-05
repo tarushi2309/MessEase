@@ -30,7 +30,7 @@ class Rebate {
     required this.hostel_,
   }) ;
 
-  factory Rebate.fromFirestore(DocumentSnapshot doc) {
+  factory Rebate.fromJson(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
     // Convert the status field from a string to an enum
@@ -54,7 +54,7 @@ class Rebate {
   }
 
   // Convert a Rebate instance to a map for Firestore storage
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'req_id': req_id,
       'student_id': student_id,
@@ -64,4 +64,21 @@ class Rebate {
       'hostel': hostel_.toString().split('.').last,
     };
   }
+
+  /*factory Rebate.fromJson(Map<String, dynamic> json) {
+    return Rebate(
+      req_id: json['req_id'],
+      student_id: json['student_id'],
+      start_date: Timestamp.fromMillisecondsSinceEpoch(json['start_date']),
+      end_date: Timestamp.fromMillisecondsSinceEpoch(json['end_date']),
+      status_: status.values.firstWhere(
+        (e) => e.toString() == 'status.${json['status']}',
+        orElse: () => status.pending,
+      ),
+      hostel_: hostel.values.firstWhere(
+        (e) => e.toString() == 'hostel.${json['hostel']}',
+      ),
+    );
+  }*/
+
 }

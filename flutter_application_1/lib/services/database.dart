@@ -73,17 +73,21 @@ class DatabaseModel{
     }
   }
 
-  Future<List<Map<String, dynamic>>> getRebateHistory(String userId) async{
+  Future<DocumentSnapshot> getRebateHistory(String uid) async{
     try{
-      QuerySnapshot querySnapshot = await _firestore
-          .collection('rebates')
-          .where('userId', isEqualTo: userId)
-          .orderBy('from', descending: true)
-          .get();
-      return querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-    } catch(e){
-      print("Error fetching the history: $e");
-      return [];
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+    .collection('rebates')
+    .where('user_id', isEqualTo: FirebaseFirestore.instance.collection('students').doc(uid))
+    .orderBy('start_date', descending: true) // Ensure indexing supports ordering
+    .get();
+if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs[0];  // Return the DocumentSnapshot
+      } else {
+        throw Exception("No student found for the provided uid");
+      }
+    } catch (e) {
+      print("Error fetching rebate history: $e");
+      throw e;
     }
   }
 }

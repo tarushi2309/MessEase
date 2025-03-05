@@ -1,15 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/rebate.dart';
+import 'package:flutter_application_1/services/database.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../components/footer.dart';
 import '../components/header.dart';
 import '../components/navbar.dart';
-import '../services/database.dart'; // Import DatabaseService
+import '../components/user_provider.dart';
 
 class RebateHistoryScreen extends StatefulWidget {
-  final String userId; // Pass user ID to fetch data
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  RebateHistoryScreen({super.key, required this.userId});
+  RebateHistoryScreen({super.key});
 
   @override
   _RebateHistoryScreenState createState() => _RebateHistoryScreenState();
@@ -17,28 +22,65 @@ class RebateHistoryScreen extends StatefulWidget {
 
 class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
   late DatabaseModel dbService;
-  List<Map<String, dynamic>> rebateHistory = []; 
+  List<Rebate> rebateHistory = [];
+  bool isLoading = true;
 
   @override
-  void initState() {
-    super.initState();
-    dbService = DatabaseModel(uid: widget.userId);
-    fetchRebateHistory();
-  }
+  
+  Future<void> _fetchRebateHistory(String uid) async {
+   
 
-  Future<void> fetchRebateHistory() async {
-    List<Map<String, dynamic>> history = await dbService.getRebateHistory(widget.userId);
-    setState(() {
-      rebateHistory = history;
-    });
+    dbService = DatabaseModel(uid: uid);
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('rebates')
+          .where('student_id', isEqualTo: FirebaseFirestore.instance.collection('students').doc(uid))
+          .orderBy('start_date', descending: true)
+          .get();
+      print("StudentID : $uid");
+      print("QuerySnapshot: $querySnapshot");
+      if (querySnapshot.docs.isEmpty) {
+        print("No rebate history found for the user.");
+      } else {
+        print("First rebate record: ${querySnapshot.docs[0].data()}");
+      }
+      setState(() {
+        rebateHistory = querySnapshot.docs
+            .map((doc) => Rebate.fromJson(querySnapshot.docs[0]))
+            .toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching rebate history: $e");
+      setState(() {
+        isLoading = true;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+     String? uid = Provider.of<UserProvider>(context).uid;
+
+    // If the UID is null, show an error message or loading indicator
+    if (uid == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('User Page')),
+        body: Center(
+          child: Text("No user found. Please log in."),
+        ),
+      );
+    }
+
+    // Fetch data if UID is available and not already loaded
+    if (isLoading) {
+      _fetchRebateHistory(uid);
+    }
     return Scaffold(
+      key: widget.scaffoldKey,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(56),
-        child: Header(scaffoldKey: GlobalKey<ScaffoldState>()),
+        child: Header(scaffoldKey: widget.scaffoldKey),
       ),
       drawer: Navbar(),
       body: Padding(
@@ -49,60 +91,46 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
             Center(
               child: Text(
                 "Rebate Tracker",
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w400, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black87,
+                ),
               ),
             ),
             const SizedBox(height: 10),
             
-            // Rebate Summary Card (Placeholder)
-            FutureBuilder<List<Map<String, dynamic>>>(
-              future: dbService.getRebateHistory(widget.userId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text("Error loading rebate data.");
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Text("No rebate history found.");
-                }
-
-                int totalRebateDays = snapshot.data!.fold(0, (sum, item) => sum + (item['days'] as int));
-                return RebateSummaryCard(rebateDays: totalRebateDays);
-              },
-            ),
-
+            RebateSummaryCard(rebateDays: rebateHistory.fold(0, (sum, rebate) => sum + ((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400))),
+            
             const SizedBox(height: 20),
-
             Center(
               child: Text(
                 "Rebate History",
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w400, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black87,
+                ),
               ),
             ),
             const SizedBox(height: 10),
 
-            // Display Rebate History
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: dbService.getRebateHistory(widget.userId),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text("Error loading rebate history."));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text("No rebate history found."));
-                  }
-
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final rebate = snapshot.data![index];
-                      return _buildRebateCard(rebate['from'], rebate['to'], rebate['days'], rebate['status']);
-                    },
-                  );
-                },
-              ),
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : rebateHistory.isEmpty
+                      ? Center(child: Text("No rebate history available."))
+                      : ListView.builder(
+                          itemCount: rebateHistory.length,
+                          itemBuilder: (context, index) {
+                            return _buildRebateCard(
+                              DateFormat('dd-MM-yyyy').format(rebateHistory[index].start_date.toDate()),
+                              DateFormat('dd-MM-yyyy').format(rebateHistory[index].end_date.toDate()), 
+                              ((rebateHistory[index].end_date.seconds - rebateHistory[index].start_date.seconds) ~/ 86400) + 1,
+                              "Approved", // Modify based on actual status
+                            );
+                          },
+                        ),
             ),
           ],
         ),
@@ -112,8 +140,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
   }
 
   Widget _buildRebateCard(String from, String to, int days, String status) {
-    Color statusColor = status == 'Approved' ? Colors.green : Colors.orange;
-
+    Color statusColor = status == 'Approved' ? Colors.green : Colors.red;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 2,
@@ -122,7 +149,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
         padding: const EdgeInsets.all(8.0),
         child: ListTile(
           title: Text(
-            'From: $from \nTo: $to',
+            'From: ${from} \nTo: ${to}',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           subtitle: Text('Number of days: $days'),
@@ -145,7 +172,6 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
 
 class RebateSummaryCard extends StatelessWidget {
   final int rebateDays;
-
   const RebateSummaryCard({super.key, required this.rebateDays});
 
   @override
@@ -173,12 +199,15 @@ class RebateSummaryCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     '₹$rebateAmount',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFF0753C)),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFF0753C),
+                    ),
                   ),
                 ],
               ),
             ),
-
             Column(
               children: [
                 SizedBox(
@@ -187,8 +216,16 @@ class RebateSummaryCard extends StatelessWidget {
                   child: PieChart(
                     PieChartData(
                       sections: [
-                        PieChartSectionData(color: pieColor, value: rebateDays.toDouble(), radius: 30),
-                        PieChartSectionData(color: Colors.grey[300]!, value: (21 - rebateDays).toDouble(), radius: 30),
+                        PieChartSectionData(
+                          color: pieColor,
+                          value: rebateDays.toDouble(),
+                          radius: 30,
+                        ),
+                        PieChartSectionData(
+                          color: Colors.grey[300]!,
+                          value: (21 - rebateDays).toDouble(),
+                          radius: 30,
+                        ),
                       ],
                       sectionsSpace: 2,
                       centerSpaceRadius: 30,
@@ -196,7 +233,8 @@ class RebateSummaryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Text('$rebateDays / 21 Days', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                Text('$rebateDays / 21 Days',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
               ],
             ),
           ],
