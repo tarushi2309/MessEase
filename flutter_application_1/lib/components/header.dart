@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+
 import '../pages/user.dart';
-import '../pages/home.dart';
-import 'navbar.dart';
 
 class Header extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
@@ -10,10 +9,13 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _buildCustomAppBar(context),
-      ],
+    return SizedBox(
+      height: 80, // Ensuring the Stack has a defined height
+      child: Stack(
+        children: [
+          _buildCustomAppBar(context),
+        ],
+      ),
     );
   }
 

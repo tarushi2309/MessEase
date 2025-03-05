@@ -41,8 +41,6 @@ class MyApp extends StatelessWidget {
       ),
       home: SignUpScreen(),
       initialRoute: '/signin',  // Default screen when app starts
-      home: HomeScreen(),
-      initialRoute: '/home',  // Default screen when app starts
       routes: {
         '/home': (context) => HomeScreen(),
         '/rebate-history': (context) => RebateHistoryScreen(),
