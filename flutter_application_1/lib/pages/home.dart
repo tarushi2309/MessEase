@@ -1,5 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
@@ -10,7 +8,6 @@ import 'package:provider/provider.dart';
 
 //import 'package:flutter_application_1/pages/RebateForm.dart';
 import '../components/footer.dart';
-import '../pages/user.dart'; // Import Profile Page
 
 class HomeScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
