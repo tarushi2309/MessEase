@@ -191,7 +191,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
                                 buildTextField("Room Number", roomController),
                                 buildDateField("Rebate From", rebateFromController),
                                 buildDateField("Rebate To", rebateToController),
-                                buildTextField("Number of Days", daysController, keyboardType: TextInputType.number),
+                                //buildTextField("Number of Days", daysController, keyboardType: TextInputType.number),
                                 const SizedBox(height: 20),
                                 ElevatedButton(
                                   onPressed: submitRebateForm,
