@@ -98,7 +98,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
               ),
             const SizedBox(height: 10),
             
-            RebateSummaryCard(rebateDays: rebateHistory.fold(0, (sum, rebate) => sum + ((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400))),
+            RebateSummaryCard(rebateDays: rebateHistory.fold(0, (sum, rebate) => sum + ((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400) + 1)),
             
             const SizedBox(height: 20),
             Center(
