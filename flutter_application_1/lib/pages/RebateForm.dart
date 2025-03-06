@@ -122,9 +122,12 @@ class _RebateFormPageState extends State<RebateFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,  // Assign the GlobalKey to Scaffold
+      key: _scaffoldKey,
+      // Assign the GlobalKey to Scaffold
       drawer: Navbar(),
-      body: Column(
+      body: Container(
+        color: Colors.white,
+        child: Column(
         children: [
           Header(scaffoldKey: _scaffoldKey), // Correct usage of Header
           Expanded(
@@ -221,6 +224,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
           CustomNavigationBar(), // Footer
         ],
       ),
+    ),
     );
   }
 
