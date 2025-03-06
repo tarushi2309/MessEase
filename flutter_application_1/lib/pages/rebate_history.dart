@@ -46,7 +46,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
       }
       setState(() {
         rebateHistory = querySnapshot.docs
-            .map((doc) => Rebate.fromJson(querySnapshot.docs[0]))
+            .map((doc) => Rebate.fromJson(doc))
             .toList();
         isLoading = false;
       });
@@ -125,7 +125,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
                               DateFormat('dd-MM-yyyy').format(rebateHistory[index].start_date.toDate()),
                               DateFormat('dd-MM-yyyy').format(rebateHistory[index].end_date.toDate()), 
                               ((rebateHistory[index].end_date.seconds - rebateHistory[index].start_date.seconds) ~/ 86400) + 1,
-                              "Approved", // Modify based on actual status
+                              "Pending", // Modify based on actual status
                             );
                           },
                         ),
