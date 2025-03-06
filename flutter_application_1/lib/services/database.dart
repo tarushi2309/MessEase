@@ -4,7 +4,6 @@ import 'package:flutter_application_1/models/user.dart';
 class DatabaseModel{
   final String uid;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DatabaseModel({required this.uid});
 
