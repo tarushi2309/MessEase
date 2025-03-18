@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "848249088068",
+    "project_id": "messease-97d1b",
+    "storage_bucket": "messease-97d1b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:848249088068:android:a1f28891a62a4dbde73411",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9iCcYOT2C4dLOpP-EeSZtDh25eYtQ5GQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:848249088068:android:2d7ebbbc32226729e73411",
+        "android_client_info": {
+          "package_name": "com.example.webapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9iCcYOT2C4dLOpP-EeSZtDh25eYtQ5GQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
