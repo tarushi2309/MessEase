@@ -31,12 +31,6 @@ class _RefundPageState extends State<RefundPage> {
     },
   ];
 
-  void updateStatus(int index, String newStatus) {
-    setState(() {
-      rebateRequests[index]["status"] = newStatus;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,9 +67,7 @@ class _RefundPageState extends State<RefundPage> {
                   ],
                 ),
                 // Table rows with data
-                ...rebateRequests.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  var request = entry.value;
+                ...rebateRequests.map((request) {
                   return TableRow(
                     decoration: BoxDecoration(color: Colors.grey.shade100),
                     children: [
@@ -83,7 +75,7 @@ class _RefundPageState extends State<RefundPage> {
                       tableCell(request["rebateFrom"]),
                       tableCell(request["rebateTo"]),
                       tableCell(request["days"]),
-                      statusDropdown(index, request["status"]),
+                      statusCell(request["status"]),
                     ],
                   );
                 }).toList(),
@@ -118,24 +110,18 @@ class _RefundPageState extends State<RefundPage> {
     );
   }
 
-  // Dropdown for status selection with background color change
-  Widget statusDropdown(int index, String currentStatus) {
+  // Widget for displaying status with color coding
+  Widget statusCell(String status) {
     return Container(
-      color: currentStatus == "Approved" ? Colors.green.shade300 : Colors.transparent, // Turns green when Approved
+      color: status == "Approved" ? Colors.green.shade300 : Colors.transparent, // Green background for approved
       padding: const EdgeInsets.all(8.0),
-      child: DropdownButton<String>(
-        value: currentStatus,
-        onChanged: (String? newValue) {
-          if (newValue != null) {
-            updateStatus(index, newValue);
-          }
-        },
-        items: ["Pending", "Approved"].map<DropdownMenuItem<String>>((String status) {
-          return DropdownMenuItem<String>(
-            value: status,
-            child: Text(status),
-          );
-        }).toList(),
+      child: Text(
+        status,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: status == "Approved" ? Colors.white : Colors.black,
+        ),
       ),
     );
   }

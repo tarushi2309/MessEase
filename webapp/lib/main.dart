@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:webapp/pages/admin/refund.dart'; // Ensure this path is correct
+import 'package:webapp/pages/admin/refund.dart'; 
+import 'package:webapp/pages/admin/menu_page.dart';// Ensure this path is correct
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +18,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: RefundPage(), // Load RefundPage instead of HomePage
+      //home: RefundPage(), // Load RefundPage instead of HomePage
+      home: MenuPage(),
     );
   }
 }
