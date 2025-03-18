@@ -13,6 +13,14 @@ enum hostel {
   beas, 
   satluj,
 }
+
+// adding the mess option in the form part
+enum mess {
+  konark,
+  anusha,
+  ideal,
+}
+
 class Rebate {
   final String req_id;
   final DocumentReference student_id;
@@ -20,6 +28,7 @@ class Rebate {
   final Timestamp end_date;
   final status status_;
   final hostel hostel_;
+  final mess mess_;
 
   Rebate({
     required this.req_id,
@@ -28,6 +37,7 @@ class Rebate {
     required this.end_date,
     required this.status_,
     required this.hostel_,
+    required this.mess_,
   }) ;
 
   factory Rebate.fromJson(DocumentSnapshot doc) {
@@ -43,6 +53,10 @@ class Rebate {
       (e) => e.toString() == 'hostel.${data['hostel']}',
     );
 
+    mess mess_ = mess.values.firstWhere(
+      (e) => e.toString() == 'mess.${data['mess']}',
+    );
+
     return Rebate(
       req_id: doc.id,
       student_id: data['student_id'],
@@ -50,6 +64,7 @@ class Rebate {
       end_date: data['end_date'],
       status_: status_,
       hostel_: hostel_,
+      mess_:mess_,
     );
   }
 
@@ -62,6 +77,7 @@ class Rebate {
       'end_date': end_date,
       'status': status_.toString().split('.').last, // Convert enum to string
       'hostel': hostel_.toString().split('.').last,
+      'mess': mess_.toString().split('.').last,
     };
   }
 

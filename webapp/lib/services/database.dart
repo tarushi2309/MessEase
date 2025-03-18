@@ -22,72 +22,79 @@ class DatabaseModel{
   }
 
   Future<DocumentSnapshot> getUserInfo(String uid) async {
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-      .collection("user")
-      .where("uid", isEqualTo: uid)
-      .limit(1)  // Ensure only one document is returned
-      .get();
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection("user")
+        .where("uid", isEqualTo: uid)
+        .limit(1)  // Ensure only one document is returned
+        .get();
 
-  // Return the first document in the QuerySnapshot (if exists)
-  if (querySnapshot.docs.isNotEmpty) {
-    return querySnapshot.docs[0];  // Return the DocumentSnapshot
-  } else {
-    throw Exception("No student found for the provided uid");
-  }
-}
-
-  Future<DocumentSnapshot> getStudentInfo(String uid) async {
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-      .collection("students")
-      .where("uid", isEqualTo: uid)
-      .limit(1)  // Ensure only one document is returned
-      .get();
-
-  // Return the first document in the QuerySnapshot (if exists)
-  if (querySnapshot.docs.isNotEmpty) {
-    return querySnapshot.docs[0];  // Return the DocumentSnapshot
-  } else {
-    throw Exception("No student found for the provided uid");
-  }
-}
-
-
-  Future<void> addRebateFormDetails({
-    required String hostelName,
-    required DateTime rebateFrom,
-    required DateTime rebateTo,
-    required int numDays,
-  }) async {
-    try {
-      await FirebaseFirestore.instance.collection("rebates").add({
-        "userId": uid,
-        "hostelName": hostelName,
-        "rebateFrom": rebateFrom.toIso8601String(),
-        "rebateTo": rebateTo.toIso8601String(),
-        "numDays": numDays,
-        "timestamp": FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      print("Error adding rebate form: $e");
-      throw e;
+    // Return the first document in the QuerySnapshot (if exists)
+    if (querySnapshot.docs.isNotEmpty) {
+      return querySnapshot.docs[0];  // Return the DocumentSnapshot
+    } else {
+      throw Exception("No user found for the provided uid");
     }
   }
 
-  Future<DocumentSnapshot> getRebateHistory(String uid) async{
+  //to get the mess manager info
+  Future<DocumentSnapshot> getMessManagerInfo(String uid) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection("mess_manager")
+        .where("uid", isEqualTo: uid)
+        .limit(1)  // Ensure only one document is returned
+        .get();
+
+    // Return the first document in the QuerySnapshot (if exists)
+    if (querySnapshot.docs.isNotEmpty) {
+      return querySnapshot.docs[0];  // Return the DocumentSnapshot
+    } else {
+      throw Exception("No Mess Manager found for the provided uid");
+    }
+  }
+
+  // to get the messId from the uid 
+  Future<String> getMessId() async {
     try{
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-    .collection('rebates')
-    .where('user_id', isEqualTo: FirebaseFirestore.instance.collection('students').doc(uid))
-    .orderBy('start_date', descending: true) // Ensure indexing supports ordering
-    .get();
-if (querySnapshot.docs.isNotEmpty) {
-        return querySnapshot.docs[0];  // Return the DocumentSnapshot
+      DocumentSnapshot messManagerDoc = await getMessManagerInfo(uid);
+      if(messManagerDoc.exists){
+        return messManagerDoc['messId']; //extracted the messId
       } else {
-        throw Exception("No student found for the provided uid");
+        print("No mess manager found for this uid");
+        return null;
       }
-    } catch (e) {
-      print("Error fetching rebate history: $e");
-      throw e;
+    } catch(e){
+      print("Error getting the messId: $e");
+      return null;
     }
   }
+
+  // to get pending rebates
+  Future<List<Rebate>> getPendingRebates() async {
+    try{
+      String? messId = await getMessId();
+      if(messId == null) throw Exception("Mess ID not found");
+
+      Map<String, String> messMapping = {
+        "1": "Konark",
+        "2": "Anusha",
+        "3": "Ideal",
+      };
+
+      String? messName = messMapping[messId];
+      if(messName == null) throw Exception("Invalid uid");
+
+      //Query firestore getting the pending requests for the uid 
+      QuerySnapshot rebateQuery = await _firestore
+        .collection("rebates")
+        .where("mess", isEqualTo: messName)
+        .where("status", isEqualTo: pending)
+        .get()
+      return rebateQuery.docs.map((doc) => Rebate.fromJson(doc)).toList();
+    } catch (e) {
+      print("Error fetching the pending rebated for this query $e");
+      return [];
+    }
+  }
+
+  
 }
