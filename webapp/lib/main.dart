@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:webapp/pages/mess_manager/mess_committee.dart';
+import 'package:webapp/pages/mess_manager/profile.dart';
 
 import 'firebase_options.dart';
 import '../pages/mess_manager/pending_request.dart';
@@ -12,6 +14,7 @@ import 'package:webapp/pages/mess_manager/home.dart' as mess_manager;
 import 'package:webapp/pages/common/login.dart';
 import 'firebase_options.dart';
 import 'components/user_provider.dart';
+import 'pages/mess_manager/mess_committee.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +36,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MessEase',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: MaterialColor(0xFFF0753C, {
           50: Color(0xFFFFEBE0),
@@ -55,6 +59,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/home_admin': (context) => admin.HomeScreen(),
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
+        '/mess_committee': (context) => MessCommitteeScreen(),
+        //'/pending_request': (context) => PendingRequestPage(),
+        '/profile': (context) => ProfileScreen(),
       },
     );
   }

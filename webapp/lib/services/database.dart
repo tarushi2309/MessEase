@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:webapp/models/rebate.dart';
 import 'package:webapp/models/student.dart';
 import 'package:webapp/models/user.dart';
 class DatabaseModel{
@@ -53,7 +54,7 @@ class DatabaseModel{
   }
 
   // to get the messId from the uid 
-  Future<String> getMessId() async {
+  Future<String?> getMessId() async {
     try{
       DocumentSnapshot messManagerDoc = await getMessManagerInfo(uid);
       if(messManagerDoc.exists){
@@ -68,33 +69,7 @@ class DatabaseModel{
     }
   }
 
-  // to get pending rebates
-  Future<List<Rebate>> getPendingRebates() async {
-    try{
-      String? messId = await getMessId();
-      if(messId == null) throw Exception("Mess ID not found");
-
-      Map<String, String> messMapping = {
-        "1": "Konark",
-        "2": "Anusha",
-        "3": "Ideal",
-      };
-
-      String? messName = messMapping[messId];
-      if(messName == null) throw Exception("Invalid uid");
-
-      //Query firestore getting the pending requests for the uid 
-      QuerySnapshot rebateQuery = await _firestore
-        .collection("rebates")
-        .where("mess", isEqualTo: messName)
-        .where("status", isEqualTo: pending)
-        .get()
-      return rebateQuery.docs.map((doc) => Rebate.fromJson(doc)).toList();
-    } catch (e) {
-      print("Error fetching the pending rebated for this query $e");
-      return [];
-    }
-  }
+  
 
   
 }

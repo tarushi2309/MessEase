@@ -1,0 +1,26 @@
+class AddonModel{
+  String name;
+  double price;
+  bool isSelected;
+  String messId;
+
+  AddonModel({required this.name, required this.price, required this.isSelected, required this.messId});
+
+  Map<String, dynamic> toJson(){
+    return {
+      'name': name,
+      'price': price,
+      'isSelected': isSelected,
+      'messId': messId
+    };
+  }
+
+  factory AddonModel.fromJson(Map<String, dynamic> json){
+    return AddonModel(
+      name: json['name'],
+      price: json['price'],
+      isSelected: false,
+      messId: json['messId']
+    );
+  }
+}
