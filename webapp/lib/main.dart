@@ -55,6 +55,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/home_admin': (context) => admin.HomeScreen(),
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
+        '/pending-request': (context) => PendingRequestPage(),
       },
     );
   }
