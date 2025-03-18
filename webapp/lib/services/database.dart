@@ -1,7 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:webapp/models/rebate.dart';
-import 'package:webapp/models/student.dart';
-import 'package:webapp/models/user.dart';
+import '../models/student.dart';
+import '../models/user.dart';
+import '../models/rebate.dart';
+import '../models/mess_manager.dart';
+import '../models/mess.dart';
+import 'package:provider/provider.dart';
+
 class DatabaseModel{
   final String uid;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
