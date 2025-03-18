@@ -6,6 +6,12 @@ import 'firebase_options.dart';
 import '../pages/mess_manager/pending_request.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/provider.dart';
+import 'package:webapp/pages/admin/home.dart' as admin;
+import 'package:webapp/pages/mess_manager/home.dart' as mess_manager;
+import 'package:webapp/pages/common/login.dart';
+import 'firebase_options.dart';
+import 'components/user_provider.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,10 +48,13 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      home: PendingRequestPage(),
-      initialRoute: '/pending-requests',  // Default screen when app starts
+      initialRoute: '/login',
+      home: LoginScreen(),
       routes: {
-        '/pending-requests': (context) => PendingRequestPage(),
+
+        '/login': (context) => LoginScreen(),
+        '/home_admin': (context) => admin.HomeScreen(),
+        '/home_mess_manager': (context) => mess_manager.HomeScreen(),
       },
     );
   }

@@ -1,15 +1,277 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+//import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:webapp/components/user_provider.dart';
+import 'package:webapp/services/database.dart';
 
-class Login extends StatefulWidget {
-  const Login({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<Login> createState() => _LoginState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginState extends State<Login> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  bool rememberMe = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  Future<void> signIn(String role) async {
+    if (_emailController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty) {
+      try {
+        // Attempt to sign in using Firebase Authentication.
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color(0xFFF0753C),
+            content: Text(
+              "Sign In Successful",
+              style: TextStyle(fontSize: 20.0),
+            ),
+          ),
+        );
+        String uid = userCredential.user!.uid;
+        print(uid);
+        Provider.of<UserProvider>(context, listen: false).setUid(uid);
+        // Navigate to your home screen after successful login.
+        // Replace HomeScreen() with your actual home screen widget.
+
+        print(1);
+        DatabaseModel db = DatabaseModel(uid: uid);
+        DocumentSnapshot doc = await db.getUserInfo(uid);
+
+        print(doc);
+
+        if (doc["role"] == role) {
+          print(doc["role"]);
+          if (role == "mess_manager") {
+            print(1);
+            Navigator.pushReplacementNamed(context, "/home_mess_manager");
+          } else if (role == "admin") {
+            Navigator.pushReplacementNamed(context, "/home_admin");
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Colors.red,
+              content: Text(
+                "Invalid role for this account.",
+                style: TextStyle(fontSize: 18.0),
+              ),
+            ),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        if (e.code == "user-not-found") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFFF0753C),
+              content: Text(
+                "No user found with that email.",
+                style: TextStyle(fontSize: 18.0),
+              ),
+            ),
+          );
+        } else if (e.code == "wrong-password") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFFF0753C),
+              content: Text(
+                "Incorrect password.",
+                style: TextStyle(fontSize: 18.0),
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFFF0753C),
+              content: Text(
+                "Sign In Failed. Please try again.",
+                style: TextStyle(fontSize: 18.0),
+              ),
+            ),
+          );
+        }
+      }
+    } else {
+      // If any of the fields are empty, inform the user.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFFF0753C),
+          content: Text(
+            "Please fill in both email and password.",
+            style: TextStyle(fontSize: 18.0),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Logo at the top
+            Image.asset(
+              "MessEase.png", // Make sure the image is in the assets folder
+              width: 200, // Adjust size as needed
+              height: 100,
+            ),
+            const SizedBox(height: 10), // Space between logo and form
+            // Boxed login form
+            Container(
+              width:
+                  MediaQuery.of(context).size.width > 500
+                      ? 500
+                      : MediaQuery.of(context).size.width * 0.9,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.shade300,
+                    blurRadius: 2,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TabBar(
+                    controller: _tabController,
+                    tabs: const [Tab(text: "MESS MANAGER"), Tab(text: "ADMIN")],
+                    indicatorColor: Color(0xFFF0753C),
+                    labelColor: Color(0xFFF0753C),
+                    unselectedLabelColor: Colors.grey,
+                  ),
+                  SizedBox(
+                    height: 350,
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [_buildLoginForm("mess_manager"), _buildLoginForm("admin")],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginForm(String role) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 30),
+          const Text(
+            "Welcome Back",
+            style: TextStyle(color: Colors.black, fontSize: 20),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            "Login with your email and password",
+            style: TextStyle(
+              color: Color.fromARGB(255, 133, 131, 131),
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          _inputField(
+            controller: _emailController,
+            hintText: "Email or username",
+          ),
+          _inputField(
+            controller: _passwordController,
+            hintText: "Password",
+            isPassword: true,
+          ),
+
+          const SizedBox(height: 20),
+          SizedBox(
+            width:
+                MediaQuery.of(context).size.width > 350
+                    ? 300
+                    : MediaQuery.of(context).size.width * 0.8,
+            child: ElevatedButton(
+              onPressed:()=> signIn(role),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFF0753C),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              child: const Text(
+                "SIGN IN",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _inputField({
+    TextEditingController? controller,
+    required String hintText,
+    bool isPassword = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: SizedBox(
+        width: 300, // Reduced width for boxed input fields
+        child: TextField(
+          controller: controller,
+          obscureText: isPassword,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(color: Colors.black54),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.grey),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 15,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
