@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webapp/pages/admin/refund.dart'; 
-import 'package:webapp/pages/admin/menu_page.dart';// Ensure this path is correct
+import 'package:webapp/pages/admin/menu_page.dart';
+import 'package:webapp/pages/mess_manager/profile.dart';// Ensure this path is correct
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +20,8 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       //home: RefundPage(), // Load RefundPage instead of HomePage
-      home: MenuPage(),
+      //home: MenuPage(),
+      home: MessManagerProfile(),
     );
   }
 }
