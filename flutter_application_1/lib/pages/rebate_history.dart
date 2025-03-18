@@ -78,12 +78,14 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
     }
     return Scaffold(
       key: widget.scaffoldKey,
+      backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(56),
         child: Header(scaffoldKey: widget.scaffoldKey),
       ),
       drawer: Navbar(),
-      body: Padding(
+      body: Container(
+        color: Colors.white,
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +127,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
                               DateFormat('dd-MM-yyyy').format(rebateHistory[index].start_date.toDate()),
                               DateFormat('dd-MM-yyyy').format(rebateHistory[index].end_date.toDate()), 
                               ((rebateHistory[index].end_date.seconds - rebateHistory[index].start_date.seconds) ~/ 86400) + 1,
-                              "Pending", // Modify based on actual status
+                              "Approved", // Modify based on actual status
                             );
                           },
                         ),
@@ -142,6 +144,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 2,
+      color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -181,6 +184,7 @@ class RebateSummaryCard extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(30.0),
         child: Row(
