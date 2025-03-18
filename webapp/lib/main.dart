@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'package:webapp/pages/admin/home.dart' as admin;
+import 'package:webapp/pages/mess_manager/home.dart' as mess_manager;
+import 'package:webapp/pages/common/login.dart';
 import 'firebase_options.dart';
+import 'components/user_provider.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => UserProvider(), // Provide the UserProvider globally
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -17,26 +27,30 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'MessEase',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: MaterialColor(0xFFF0753C, {
+          50: Color(0xFFFFEBE0),
+          100: Color(0xFFFFCCB3),
+          200: Color(0xFFFFAA80),
+          300: Color(0xFFFF8850),
+          400: Color(0xFFFF6F2B),
+          500: Color(0xFFF0753C),
+          600: Color(0xFFE06635),
+          700: Color(0xFFC0552E),
+          800: Color(0xFFA04527),
+          900: Color(0xFF80351F),
+        }),
+        fontFamily: "Roboto",
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      initialRoute: '/login',
+      home: LoginScreen(),
+      routes: {
+
+        '/login': (context) => LoginScreen(),
+        '/home_admin': (context) => admin.HomeScreen(),
+        '/home_mess_manager': (context) => mess_manager.HomeScreen(),
+      },
     );
   }
 }
