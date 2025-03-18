@@ -57,5 +57,23 @@ class DatabaseModel{
     }
   }
 
+  // to get the messId from the uid 
+  Future<String?> getMessId() async {
+    try{
+      DocumentSnapshot messManagerDoc = await getMessManagerInfo(uid);
+      if(messManagerDoc.exists){
+        return messManagerDoc['messId']; //extracted the messId
+      } else {
+        print("No mess manager found for this uid");
+        return null;
+      }
+    } catch(e){
+      print("Error getting the messId: $e");
+      return null;
+    }
+  }
+
+  
+
   
 }
