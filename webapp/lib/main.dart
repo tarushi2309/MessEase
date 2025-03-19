@@ -88,6 +88,7 @@ class MyApp extends StatelessWidget {
         '/home_admin': (context) => admin.HomeScreen(),
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
         '/mess_committee': (context) => MessCommitteeScreen(),
+        '/pending-request': (context) => PendingRequestPage(),
         '/pending_request': (context) => PendingRequestPage(),
         '/profile': (context) => MessManagerProfile(),
       },
