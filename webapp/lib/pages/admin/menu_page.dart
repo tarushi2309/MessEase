@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../components/header_admin.dart'; //import header
 
 class MenuPage extends StatefulWidget {
   @override
@@ -61,10 +62,10 @@ class _MenuPageState extends State<MenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Edit Mess Menu"),
-        backgroundColor: Colors.orange,
-      ),
+      appBar: PreferredSize(
+    preferredSize: Size.fromHeight(60.0),  // Adjust height if needed
+    child: Header(currentPage: "menu"),  // Pass currentPage value
+  ),
       body: Column(
         children: [
           // Row Layout for Days
