@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../components/header_admin.dart'; // Import header
 
 class RefundPage extends StatefulWidget {
   @override
@@ -6,115 +7,141 @@ class RefundPage extends StatefulWidget {
 }
 
 class _RefundPageState extends State<RefundPage> {
-  // Sample data: List of students and their rebate details
   List<Map<String, dynamic>> rebateRequests = [
-    {
-      "name": "John Doe",
-      "rebateFrom": "01-Mar-2024",
-      "rebateTo": "10-Mar-2024",
-      "days": "10",
-      "status": "Pending"
-    },
-    {
-      "name": "Alice Smith",
-      "rebateFrom": "05-Mar-2024",
-      "rebateTo": "15-Mar-2024",
-      "days": "11",
-      "status": "Pending"
-    },
-    {
-      "name": "Bob Johnson",
-      "rebateFrom": "12-Mar-2024",
-      "rebateTo": "20-Mar-2024",
-      "days": "9",
-      "status": "Approved"
-    },
+    {"name": "John Doe", "rebateFrom": "01-Mar-2024", "rebateTo": "10-Mar-2024", "days": "10", "status": "Pending"},
+    {"name": "Alice Smith", "rebateFrom": "05-Mar-2024", "rebateTo": "15-Mar-2024", "days": "11", "status": "Pending"},
+    {"name": "Bob Johnson", "rebateFrom": "12-Mar-2024", "rebateTo": "20-Mar-2024", "days": "9", "status": "Approved"},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Rebate Requests",
-              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            // Table structure
-            Table(
-              border: TableBorder.all(color: Colors.black),
-              columnWidths: const {
-                0: FlexColumnWidth(2), // Name column
-                1: FlexColumnWidth(2), // Rebate From
-                2: FlexColumnWidth(2), // Rebate To
-                3: FlexColumnWidth(2), // Number of Days
-                4: FlexColumnWidth(2), // Status column
-              },
-              children: [
-                // Table header
-                TableRow(
-                  decoration: BoxDecoration(color: Colors.orange.shade300),
-                  children: [
-                    tableHeaderCell("NAME"),
-                    tableHeaderCell("REBATE FROM"),
-                    tableHeaderCell("REBATE TO"),
-                    tableHeaderCell("NO. OF DAYS"),
-                    tableHeaderCell("REBATE STATUS"),
-                  ],
+      body: Column(
+        children: [
+          Header(currentPage: "refund"), // Top Header
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Card(
+                //color: Color(0xFFEEEEEE), // Light grey for a subtle look
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                // Table rows with data
-                ...rebateRequests.map((request) {
-                  return TableRow(
-                    decoration: BoxDecoration(color: Colors.grey.shade100),
+                elevation: 10,
+                shadowColor: Colors.black54,
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
                     children: [
-                      tableCell(request["name"]),
-                      tableCell(request["rebateFrom"]),
-                      tableCell(request["rebateTo"]),
-                      tableCell(request["days"]),
-                      statusCell(request["status"]),
+                      // Title inside a full-width container matching the table width
+                      Container(
+                        width: double.infinity, // Full width of the table
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blueGrey.shade400,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "REBATE REQUESTS",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Table structure
+                      Table(
+                        border: TableBorder.all(
+                          color: Colors.grey.shade500,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        columnWidths: const {
+                          0: FlexColumnWidth(2),
+                          1: FlexColumnWidth(2),
+                          2: FlexColumnWidth(2),
+                          3: FlexColumnWidth(2),
+                          4: FlexColumnWidth(2),
+                        },
+                        children: [
+                          TableRow(
+                            decoration: BoxDecoration(
+                              //color: const Color(0xFFF0753C),
+                              //color: Color(0xFF444444),
+                              color: Colors.blueGrey.shade400,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            children: [
+                              tableHeaderCell("NAME"),
+                              tableHeaderCell("REBATE FROM"),
+                              tableHeaderCell("REBATE TO"),
+                              tableHeaderCell("NO. OF DAYS"),
+                              tableHeaderCell("REBATE STATUS"),
+                            ],
+                          ),
+                          ...rebateRequests.map((request) {
+                            return TableRow(
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                              ),
+                              children: [
+                                tableCell(request["name"]),
+                                tableCell(request["rebateFrom"]),
+                                tableCell(request["rebateTo"]),
+                                tableCell(request["days"]),
+                                statusCell(request["status"]),
+                              ],
+                            );
+                          }).toList(),
+                        ],
+                      ),
                     ],
-                  );
-                }).toList(),
-              ],
+                  ),
+                ),
+              ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget tableHeaderCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 16,
         ),
       ),
     );
   }
 
-  // Widget for table header cell
-  Widget tableHeaderCell(String text) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  // Widget for table data cell
   Widget tableCell(String text) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(12.0),
       child: Text(
         text,
         textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14),
       ),
     );
   }
 
-  // Widget for displaying status with color coding
   Widget statusCell(String status) {
     return Container(
-      color: status == "Approved" ? Colors.green.shade300 : Colors.transparent, // Green background for approved
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: status == "Approved" ? Colors.green.shade400 : Colors.transparent,
+        borderRadius: BorderRadius.circular(4),
+      ),
       child: Text(
         status,
         textAlign: TextAlign.center,
