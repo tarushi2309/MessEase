@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen>
           print(doc["role"]);
           if (role == "mess_manager") {
             print(1);
-            Navigator.pushReplacementNamed(context, "/pending-request");
+            Navigator.pushReplacementNamed(context, "/home_mess_manager");
           } else if (role == "admin") {
             Navigator.pushReplacementNamed(context, "/home_admin");
           }

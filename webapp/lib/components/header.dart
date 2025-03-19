@@ -30,7 +30,7 @@ class Header extends StatelessWidget {
           // Navigation Links with Highlighting
           _navLink("Home", "/home_mess_manager", context),
           _navLink("Mess Committee", "/mess_committee", context),
-          _navLink("Pending Rebate", "/pending_rebate", context),
+          _navLink("Pending Rebate", "/pending_request", context),
           _navLink("Logout", "/login", context),
 
           // Profile Icon (Clickable)
