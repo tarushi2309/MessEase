@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:webapp/components/header.dart';
+import 'package:webapp/models/addon.dart';
+import 'package:webapp/services/database.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -9,6 +13,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -209,6 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddItemDialog(BuildContext context, String title) {
+    TextEditingController nameController = TextEditingController();
+  TextEditingController priceController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) {
@@ -234,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
                   TextField(
+                    controller: nameController,
                     decoration: InputDecoration(
                       labelText: 'Item Name',
                       border: OutlineInputBorder(),
@@ -241,6 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 10),
                   TextField(
+                    controller: priceController,
                     decoration: InputDecoration(
                       labelText: 'Price',
                       border: OutlineInputBorder(),
@@ -272,8 +286,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8),
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            String name = nameController.text.trim();
+                            String price = priceController.text.trim();
+                            
+                            DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+                            String message = await db.addAddon(name, price);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
                             Navigator.pop(context);
+                            setState(() {
+                              // Refresh the UI
+                            });
                           },
                           child: const Text('Add'),
                           style: ButtonStyle(
@@ -331,7 +359,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: const InputDecoration(
                       hintText: 'Enter your announcement...',
                       border: OutlineInputBorder(),
-                      
                     ),
                     maxLines: null, // Allows multi-line input
                     keyboardType: TextInputType.multiline,
