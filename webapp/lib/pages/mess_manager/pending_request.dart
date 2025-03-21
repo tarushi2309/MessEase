@@ -14,6 +14,7 @@ class PendingRebate {
   final String studentId;
   final String entryNumber;
   final String studentName;
+  final String req_id;
 
   PendingRebate({
     required this.startDate,
@@ -22,6 +23,7 @@ class PendingRebate {
     required this.entryNumber,
     required this.studentName,
     required this.studentId,
+    required this.req_id,
   });
 }
 
@@ -60,6 +62,7 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
     try {
       DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('user').doc(uid).get();
       print(userDoc);
+      print(userDoc['name']);
       if (userDoc.exists) {
         messName = userDoc['name']; // Return the name from the document
       } else {
@@ -72,6 +75,7 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
   }
 
 List<PendingRebate> Rebates = [];
+String reqId = "";
 
 Future<List<PendingRebate>> getPendingRebates(String messName) async {
   List<PendingRebate> pendingRebates = [];
@@ -89,6 +93,7 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
     Timestamp startTimestamp = rebate['start_date'];
     Timestamp endTimestamp = rebate['end_date'];
     String studentId = rebate['student_id'].path.split('/').last; // Extract document ID
+    reqId = rebate['req_id'];
 
     // Fetch student data using studentId
     DocumentSnapshot studentDoc = await FirebaseFirestore.instance
@@ -114,6 +119,7 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
           entryNumber: entryNumber,
           studentName: studentName,
           studentId: studentId,
+          req_id: reqId,
         ),
       );
     }
@@ -157,12 +163,20 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection("rebates")
           .where("student_id", isEqualTo: studentRef)
+          .where("mess", isEqualTo: messName)
+          .where("status", isEqualTo: "pending")
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         // Get the first matching document (assuming only one rebate per student at a time)
         DocumentSnapshot doc = querySnapshot.docs.first;
+
+        //debugging
+        print("Updating document: ${doc.reference.path}");
+        print("Document data: ${doc.data()}");
+
         await doc.reference.update({"status": newStatus}); // Update status
+        await Future.delayed(Duration(seconds: 2)); // wait for this change to propogate
 
         print("Rebate status updated successfully!");
       } else {
@@ -257,19 +271,24 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
                                           icon: Icon(Icons.more_vert, color: Colors.black),
                                           onSelected: (value) async {
                                             if (value == "approve" || value == "reject") {
-                                              setState(() {
+                                              //setState(() {
                                                 // updating the status in the backend
                                                 String newStatus = value; 
                                                 String studentId = filteredRequests[index].studentId;
                                                 print(newStatus);
                                                 print(studentId);
                                                 print("I am here to update status");
-                                                updateRebateStatus(studentId, newStatus);
+                                                await updateRebateStatus(studentId, newStatus);
 
                                                 // deleting the row once approved / rejected
-                                                print("I am here to delete the row");
-                                                filteredRequests.removeAt(index);
-                                              });
+                                                setState((){
+                                                  print("I am here to delete the row");
+                                                  String index_to_delete = filteredRequests[index].req_id;
+                                                  print(filteredRequests[index].req_id);
+                                                  print(index_to_delete);
+                                                  filteredRequests.removeWhere((rebate) =>rebate.req_id == index_to_delete);
+                                                });
+                                              //});
                                             }
                                           },
                                           itemBuilder: (context) => [
