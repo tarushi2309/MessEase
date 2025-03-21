@@ -15,6 +15,7 @@ import 'package:webapp/pages/common/login.dart';
 import 'firebase_options.dart';
 import 'components/user_provider.dart';
 import 'pages/mess_manager/mess_committee.dart';
+import 'pages/admin/refund.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
         '/mess_committee': (context) => MessCommitteeScreen(),
         '/pending-request': (context) => PendingRequestPage(),
-        '/pending_request': (context) => PendingRequestPage(),
+        '/refund' : (content) => RefundPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
     );
