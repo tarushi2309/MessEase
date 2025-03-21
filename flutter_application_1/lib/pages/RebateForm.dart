@@ -22,11 +22,13 @@ class _RebateFormPageState extends State<RebateFormPage> {
 
   // Controllers
   TextEditingController hostelController = TextEditingController();
+  TextEditingController messController = TextEditingController();
   TextEditingController roomController = TextEditingController();
   TextEditingController rebateFromController = TextEditingController();
   TextEditingController rebateToController = TextEditingController();
   TextEditingController daysController = TextEditingController();
   hostel? selectedHostel;
+  mess? selectedMess;
   
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -76,6 +78,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
         end_date: endDate,
         status_: status.pending,
         hostel_: selectedHostel!,
+        mess_: selectedMess!,
       );
 
       DocumentReference docRef = await _firestore.collection('rebates').add(rebate.toJson());
@@ -105,11 +108,13 @@ class _RebateFormPageState extends State<RebateFormPage> {
       try{
         setState(() {
           selectedHostel = null;
+          selectedMess = null;
           hostelController.clear();
           roomController.clear();
           rebateFromController.clear();
           rebateToController.clear();
           daysController.clear();
+          messController.clear();
         });
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -191,6 +196,32 @@ class _RebateFormPageState extends State<RebateFormPage> {
                                 ),
                                 ),
                               ),
+                              // mess part added in the form 
+                              Padding(
+                                  padding:EdgeInsets.symmetric(vertical: 10),
+                                 child: DropdownButtonFormField<mess>(
+                                value: selectedMess,
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    selectedMess = newValue;
+                                  });
+                                },
+                                items: mess.values.map((mess m) {
+                                  return DropdownMenuItem<mess>(
+                                    value: m,
+                                    child: Text(m.name.toUpperCase()), // Display names in uppercase
+                                  );
+                                }).toList(),
+                                decoration: InputDecoration(
+                                  labelText: 'Select Mess',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                ),
+                              ),
+
+
                                 buildTextField("Room Number", roomController),
                                 buildDateField("Rebate From", rebateFromController),
                                 buildDateField("Rebate To", rebateToController),
