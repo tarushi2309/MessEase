@@ -37,18 +37,30 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
           .where('student_id', isEqualTo: FirebaseFirestore.instance.collection('students').doc(uid))
           .orderBy('start_date', descending: true)
           .get();
-      print("StudentID : $uid");
-      print("QuerySnapshot: $querySnapshot");
+      //print("StudentID : $uid");
+      //print("QuerySnapshot: $querySnapshot");
       if (querySnapshot.docs.isEmpty) {
         print("No rebate history found for the user.");
       } else {
         print("First rebate record: ${querySnapshot.docs[0].data()}");
       }
       setState(() {
-        rebateHistory = querySnapshot.docs
+        /*rebateHistory = querySnapshot.docs
             .map((doc) => Rebate.fromJson(doc))
             .toList();
+        isLoading = false;*/
+
+        rebateHistory = querySnapshot.docs
+          .map((doc) {
+            // Print the status of each rebate for debugging
+            var rebate = Rebate.fromJson(doc);
+            //print("Rebate Status: ${rebate.status_}");
+            //print("Req_id: ${rebate.req_id}");
+            return rebate;
+          })
+          .toList();
         isLoading = false;
+        
       });
     } catch (e) {
       print("Error fetching rebate history: $e");
@@ -123,11 +135,15 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
                       : ListView.builder(
                           itemCount: rebateHistory.length,
                           itemBuilder: (context, index) {
+                            String formattedStatus = rebateHistory[index].status_.toString().split('.').last;
+                            formattedStatus = formattedStatus[0].toUpperCase() + formattedStatus.substring(1);
                             return _buildRebateCard(
                               DateFormat('dd-MM-yyyy').format(rebateHistory[index].start_date.toDate()),
                               DateFormat('dd-MM-yyyy').format(rebateHistory[index].end_date.toDate()), 
                               ((rebateHistory[index].end_date.seconds - rebateHistory[index].start_date.seconds) ~/ 86400) + 1,
-                              "Approved", // Modify based on actual status
+                              //actual status fetched form the database
+                              //rebateHistory[index].status_.toString().split('.').last,
+                              formattedStatus,
                             );
                           },
                         ),
@@ -140,7 +156,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
   }
 
   Widget _buildRebateCard(String from, String to, int days, String status) {
-    Color statusColor = status == 'Approved' ? Colors.green : Colors.red;
+    Color statusColor = status == 'Approve' ? Colors.green : Colors.red;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 2,
