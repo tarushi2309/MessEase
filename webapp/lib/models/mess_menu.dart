@@ -1,5 +1,5 @@
 class MessMenuModel {
-  final Map<String, Map<String, List<String>>> menu; // Nested map with a list of dishes for each meal
+  final Map<String, Map<String, List<String>>> menu; 
 
   MessMenuModel({
     required this.menu,
@@ -7,7 +7,7 @@ class MessMenuModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'menu': menu,  // Nested map for menu with lists of dishes
+      'menu': menu,  
     };
   }
 

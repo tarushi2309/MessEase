@@ -1,31 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:webapp/pages/admin/refund.dart'; 
-import 'package:webapp/pages/admin/menu_page.dart';
-import 'package:webapp/pages/mess_manager/profile.dart';// Ensure this path is correct
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // Hides the debug banner
-      title: 'MessEase',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: RefundPage(), // Load RefundPage instead of HomePage
-      //home: MenuPage(),
-      //home: MessCommitteePage(),
-    );
-  }
-}
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +15,7 @@ import 'package:webapp/pages/common/login.dart';
 import 'firebase_options.dart';
 import 'components/user_provider.dart';
 import 'pages/mess_manager/mess_committee.dart';
+import 'pages/admin/refund.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,7 +62,8 @@ class MyApp extends StatelessWidget {
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
         '/mess_committee': (context) => MessCommitteeScreen(),
         '/pending-request': (context) => PendingRequestPage(),
-        '/profile': (context) => MessManagerProfile(),
+        '/refund' : (content) => RefundPage(),
+        //'/profile': (context) => MessManagerProfile(),
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/models/addon.dart';
+import 'package:webapp/models/announcement.dart';
 import '../models/student.dart';
 import '../models/user.dart';
 import '../models/rebate.dart';
@@ -125,6 +126,42 @@ class DatabaseModel {
     }
   }
 
+  //function to remove the addon into the database
+  Future<String> removeAddon(String name) async {
+    if (name.isEmpty) {
+      return "Please fill in all fields.";
+    }
+
+    try {
+      String? messId = await getMessId();
+      if (messId == null) {
+        return "Error: Mess ID not found";
+      }
+
+      // Query Firestore to check if the addon already exists
+      QuerySnapshot querySnapshot =
+          await _firestore
+              .collection('addons')
+              .where('name', isEqualTo: name)
+              .where('messId', isEqualTo: messId)
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // If the add-on exists, update the price and set isSelected to true
+        DocumentReference existingDoc = querySnapshot.docs.first.reference;
+
+        await existingDoc.update({'isSelected': false});
+
+        return "Add-on removed successfully!";
+      } else {
+        // If the add-on doesn't exist, create a new one
+        return "Add-on not found!";
+      }
+    } catch (e) {
+      return "Error: ${e.toString()}";
+    }
+  }
+
   Future<List<AddonModel>> fetchSelectedAddons() async {
     String? messId = await getMessId();
 
@@ -144,4 +181,54 @@ class DatabaseModel {
         .map((doc) => AddonModel.fromJson(doc.data() as Map<String, dynamic>))
         .toList();
   }
+
+  //function to add the addon into the database
+  Future<String> addAnnouncement(String description) async {
+    if (description.isEmpty) {
+      return "Please fill in all fields.";
+    }
+
+    try {
+      String? messId = await getMessId();
+      if (messId == null) {
+        return "Error: Mess ID not found";
+      }
+
+      AnnouncementModel announcement = AnnouncementModel(
+        announcement: description,
+        messId: messId,
+        date: DateTime.now().toString(),
+      );
+
+      DocumentReference docRef = await _firestore
+          .collection('announcements')
+          .add(announcement.toJson());
+
+      return "Announcement added successfully!";
+    } catch (e) {
+      return "Error: ${e.toString()}";
+    }
+  }
+
+  Future<List<AnnouncementModel>> fetchAnnouncements() async {
+    String? messId = await getMessId();
+
+    if (messId == null) {
+      print("No messId found.");
+      return [];
+    }
+
+    QuerySnapshot query =
+        await _firestore
+            .collection('announcements')
+            .where('messId', isEqualTo: messId)
+            .where('date', isEqualTo: DateTime.now().toString())
+            .get();
+
+    return query.docs
+        .map((doc) => AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+
+  
 }

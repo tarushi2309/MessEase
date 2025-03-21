@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:webapp/components/header.dart';
+import 'package:webapp/components/header_manager.dart';
 import 'package:webapp/models/addon.dart';
 import 'package:webapp/services/database.dart';
 
@@ -15,9 +15,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -40,60 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Today's Add Ons",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle, size: 24),
-                            onPressed:
-                                () => _showAddItemDialog(context, "Add-On"),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: List.generate(
-                          2,
-                          (index) => Column(
-                            children: [
-                              Container(
-                                width: 150,
-                                height: 150,
-                                margin: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  image: DecorationImage(
-                                    image: AssetImage('addon.jpg'),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                'Addon ${index + 1}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Expanded(flex: 3, child: _buildAddOnsSection()),
                 const SizedBox(width: 16),
                 Expanded(
+                  flex: 4,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -113,30 +60,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      Container(
-                        height: 150,
-                        margin: const EdgeInsets.only(top: 20),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: List.generate(
-                                4,
-                                (index) => _generateAnnouncement(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 16),
+                      _buildAnnouncementsSection(),
                     ],
                   ),
                 ),
@@ -208,19 +133,138 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _generateAnnouncement() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Text(
-        "Lorem Ipsum is simply dummy text of the printing and typesetting industry. "
-        "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+  Widget _buildAddOnsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            const Text(
+              "Today's Add Ons",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_circle, size: 24),
+              onPressed: () => _showAddItemDialog(context, "Add-On"),
+            ),
+            IconButton(
+              icon: const Icon(Icons.remove_circle, size: 24),
+              onPressed: () => _showRemoveItemDialog(context, "Add-On"),
+            ),
+          ],
+        ),
+        FutureBuilder<List<AddonModel>>(
+          future: db.fetchSelectedAddons(), // Call function from database.dart
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text("Error: ${snapshot.error}"));
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text("No add-ons available"));
+            }
+
+            List<AddonModel> addons = snapshot.data!;
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children:
+                    addons.map((addon) {
+                      return Column(
+                        children: [
+                          Container(
+                            width: 150,
+                            height: 150,
+                            margin: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              image: DecorationImage(
+                                image: AssetImage('addon.jpg'),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${addon.name} -  ₹ ${addon.price}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnnouncementsSection() {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: FutureBuilder<QuerySnapshot>(
+        future: _firestore.collection('announcements').get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("No announcements available"));
+          }
+
+          List<DocumentSnapshot> announcements = snapshot.data!.docs;
+
+          return Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children:
+                    announcements.map((doc) {
+                      String announcementText = doc['announcement'];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "➤", 
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(announcementText)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   void _showAddItemDialog(BuildContext context, String title) {
     TextEditingController nameController = TextEditingController();
-  TextEditingController priceController = TextEditingController();
+    TextEditingController priceController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) {
@@ -289,8 +333,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: () async {
                             String name = nameController.text.trim();
                             String price = priceController.text.trim();
-                            
-                            DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+
+                            DatabaseModel db = DatabaseModel(
+                              uid: FirebaseAuth.instance.currentUser!.uid,
+                            );
                             String message = await db.addAddon(name, price);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -304,6 +350,110 @@ class _HomeScreenState extends State<HomeScreen> {
                             });
                           },
                           child: const Text('Add'),
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(
+                              Color(0xFFF0753C),
+                            ),
+                            foregroundColor: MaterialStateProperty.all(
+                              Colors.white,
+                            ),
+                            padding: MaterialStateProperty.all(
+                              const EdgeInsets.all(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRemoveItemDialog(BuildContext context, String title) {
+    TextEditingController nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Remove $title',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Item Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(
+                              Colors.grey[100],
+                            ),
+                            foregroundColor: MaterialStateProperty.all(
+                              Colors.black,
+                            ),
+                            padding: MaterialStateProperty.all(
+                              const EdgeInsets.all(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            String name = nameController.text.trim();
+
+                            DatabaseModel db = DatabaseModel(
+                              uid: FirebaseAuth.instance.currentUser!.uid,
+                            );
+                            String message = await db.removeAddon(name);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                            Navigator.pop(context);
+                            setState(() {
+                              // Refresh the UI
+                            });
+                          },
+                          child: const Text('Remove'),
                           style: ButtonStyle(
                             backgroundColor: MaterialStateProperty.all(
                               Color(0xFFF0753C),
@@ -382,12 +532,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 10),
                     TextButton(
-                      onPressed: () {
+                      onPressed: () async {
                         String announcementText =
                             announcementController.text.trim();
                         if (announcementText.isNotEmpty) {
-                          print("Announcement Saved: $announcementText");
+                          // Add the announcement to the database
+                          DatabaseModel db = DatabaseModel(
+                            uid: FirebaseAuth.instance.currentUser!.uid,
+                          );
+                          String result = await db.addAnnouncement(
+                            announcementText,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(result),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
                           Navigator.pop(context);
+                          setState(() {
+                            // Refresh the UI
+                          });
                         }
                       },
                       style: TextButton.styleFrom(
