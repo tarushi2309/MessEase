@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:webapp/components/header_manager.dart';
 import 'package:webapp/models/addon.dart';
+import 'package:webapp/models/announcement.dart';
+import 'package:webapp/models/mess_menu.dart';
 import 'package:webapp/services/database.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,70 +21,93 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: Header(currentPage: 'Home'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 35.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Konark Mess',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+    return FutureBuilder<MessMenuModel?>(
+      future: db.getMenu(),
+      builder: (context, menusnapshot) {
+        if (menusnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (menusnapshot.hasError) {
+          return Center(child: Text("Error: ${menusnapshot.error}"));
+        }
+        String today = DateFormat('EEEE').format(DateTime.now());
+        MessMenuModel messMenu = menusnapshot.data ?? MessMenuModel(menu: {});
+        Map<String, List<String>> menuForDay =
+            messMenu.menu[today] ?? {'Breakfast': [], 'Lunch': [], 'Dinner': []};
+
+        if (messMenu.menu.containsKey(today)) {
+          menuForDay = messMenu.menu[today]!;
+        }
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Header(currentPage: 'Home'),
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              vertical: 16.0,
+              horizontal: 35.0,
             ),
-            const SizedBox(height: 16),
-            Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 3, child: _buildAddOnsSection()),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 4,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const Text(
+                  'Konark Mess',
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 3, child: _buildAddOnsSection()),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Announcements",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Announcements",
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle, size: 24),
+                                onPressed:
+                                    () => _showAnnouncementDialog(context),
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle, size: 24),
-                            onPressed: () => _showAnnouncementDialog(context),
-                          ),
+                          const SizedBox(height: 16),
+                          _buildAnnouncementsSection(),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildAnnouncementsSection(),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Today's Menu",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                _buildMealSection("Breakfast",menuForDay['Breakfast']!),
+                _buildMealSection("Lunch",menuForDay['Lunch']!),
+                _buildMealSection("Dinner",menuForDay['Dinner']!),
               ],
             ),
-            const SizedBox(height: 16),
-            const Text(
-              "Today's Menu",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            _buildMealSection("Breakfast"),
-            _buildMealSection("Lunch"),
-            _buildMealSection("Dinner"),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildMealSection(String title) {
+  Widget _buildMealSection(String title, List<String> items) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
@@ -99,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 200, // Make sure height is large enough
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: 7,
+              itemCount: items.length,
               itemBuilder: (context, index) {
                 return Column(
                   children: [
@@ -117,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '$title Item ${index + 1}',
+                      items[index],
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -210,14 +236,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       height: 150,
       width: double.infinity,
-      margin: const EdgeInsets.only(top: 20),
+      margin: const EdgeInsets.only(top: 4),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(10),
       ),
-      child: FutureBuilder<QuerySnapshot>(
-        future: _firestore.collection('announcements').get(),
+      child: FutureBuilder<List<AnnouncementModel>>(
+        future: db.fetchAnnouncements(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -225,11 +251,12 @@ class _HomeScreenState extends State<HomeScreen> {
           if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text("No announcements available"));
           }
 
-          List<DocumentSnapshot> announcements = snapshot.data!.docs;
+          List<AnnouncementModel> announcements =
+              snapshot.data!.reversed.toList();
 
           return Scrollbar(
             thumbVisibility: true,
@@ -238,16 +265,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children:
                     announcements.map((doc) {
-                      String announcementText = doc['announcement'];
+                      String announcementText = doc.announcement;
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "➤", 
-                              style: TextStyle(fontSize: 18),
-                            ),
+                            const Text("➤", style: TextStyle(fontSize: 18)),
                             const SizedBox(width: 8),
                             Expanded(child: Text(announcementText)),
                           ],

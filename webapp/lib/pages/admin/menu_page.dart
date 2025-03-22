@@ -1,160 +1,318 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../components/header_admin.dart'; //import header
+import 'package:webapp/components/header_admin.dart';
+import 'package:webapp/models/mess_menu.dart';
+import 'package:webapp/services/database.dart';
 
 class MenuPage extends StatefulWidget {
+  const MenuPage({super.key});
+
   @override
-  _MenuPageState createState() => _MenuPageState();
+  State<MenuPage> createState() => _MenuPageState();
 }
 
 class _MenuPageState extends State<MenuPage> {
-  // Menu data structure: Map<Day, Map<MealType, List<Items>>>
-  Map<String, Map<String, List<TextEditingController>>> menu = {};
+  int selectedIndex = 0; // Tracks selected day
 
-  final List<String> days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  final List<String> mealTypes = ["Breakfast", "Lunch", "Dinner"];
+  DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
 
-  String selectedDay = "Monday"; // Default selected day
-
-  @override
-  void initState() {
-    super.initState();
-    initializeMenu();
-  }
-
-  void initializeMenu() {
-    for (var day in days) {
-      menu[day] = {};
-      for (var meal in mealTypes) {
-        menu[day]![meal] = [
-          TextEditingController(text: "Item 1"),
-          TextEditingController(text: "Item 2"),
-          TextEditingController(text: "Item 3"),
-        ];
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    // Dispose controllers to avoid memory leaks
-    for (var day in menu.keys) {
-      for (var meal in menu[day]!.keys) {
-        for (var controller in menu[day]![meal]!) {
-          controller.dispose();
-        }
-      }
-    }
-    super.dispose();
-  }
-
-  void saveMenu() {
-    // For now, just printing to console (Backend can be added later)
-    print("Updated Menu for $selectedDay:");
-    menu[selectedDay]!.forEach((mealType, controllers) {
-      print("$mealType: ${controllers.map((c) => c.text).toList()}");
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Menu for $selectedDay saved successfully!")),
-    );
-  }
+  final List<String> days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: PreferredSize(
-    preferredSize: Size.fromHeight(60.0),  // Adjust height if needed
-    child: Header(currentPage: "menu"),  // Pass currentPage value
-  ),
-      body: Column(
+        preferredSize: const Size.fromHeight(60),
+        child: Header(currentPage: 'Menu Page'),
+      ),
+      body: Row(
         children: [
-          // Row Layout for Days
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: days.map((day) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedDay = day;
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      margin: EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: selectedDay == day ? Colors.orange : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
+          // Left Sidebar Menu
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 180, // Fixed width for sidebar
+              height: MediaQuery.of(context).size.height - 40,
+              margin: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 0.5,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.0),
+                    child: Text(
+                      "Days",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
                       ),
-                      child: Text(
-                        day.substring(0, 3), // Show Mon, Tue, etc.
-                        style: TextStyle(
-                          color: selectedDay == day ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.center,
+                    child: SizedBox(
+                      width: 140,
+                      child: Divider(color: Color(0xFFF0753C), thickness: 1),
+                    ),
+                  ),
+                  ...List.generate(days.length, (index) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedIndex = index;
+                        });
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 10,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          border:
+                              selectedIndex == index
+                                  ? Border.all(color: Colors.black, width: 1)
+                                  : null,
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Row(
+                            children: [
+                              Image.asset(
+                                'logos/${days[index].toLowerCase()}.png',
+                                width: 24,
+                                height: 24,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ), // Space between icon and text
+                              Text(
+                                days[index],
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }),
+                ],
               ),
             ),
           ),
 
-          // Animated Menu Items
+          // Main Content Area (Dynamically changing)
           Expanded(
-            child: AnimatedSwitcher(
-              duration: Duration(milliseconds: 300),
-              transitionBuilder: (widget, animation) {
-                return FadeTransition(opacity: animation, child: widget);
-              },
-              child: Column(
-                key: ValueKey<String>(selectedDay),
-                children: mealTypes.map((mealType) {
-                  return Card(
-                    margin: EdgeInsets.all(10),
-                    elevation: 3,
-                    child: Padding(
-                      padding: EdgeInsets.all(10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            mealType.toUpperCase(),
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          Column(
-                            children: List.generate(menu[selectedDay]![mealType]!.length, (index) {
-                              return TextField(
-                                controller: menu[selectedDay]![mealType]![index],
-                                decoration: InputDecoration(
-                                  hintText: "Enter item",
-                                  suffixIcon: Icon(Icons.edit, color: Colors.orange),
-                                ),
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+            child: Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 0.5,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
-            ),
-          ),
-
-          // Save Button
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: ElevatedButton(
-              onPressed: saveMenu,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-              child: Text("Save Changes"),
+              child: FutureBuilder<Widget>(
+                future: _buildMainContent(days[selectedIndex]),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    return snapshot.data ?? Center(child: Text('No data'));
+                  }
+                },
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<Widget> _buildMainContent(String day) async {
+    return FutureBuilder<MessMenuModel?>(
+      future: db.getMenu(),
+      builder: (context, menuSnapshot) {
+        if (menuSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (menuSnapshot.hasError) {
+          return Center(child: Text('Error: ${menuSnapshot.error}'));
+        }
+
+        // Default to empty menu if data is null
+        MessMenuModel messMenu = menuSnapshot.data ?? MessMenuModel(menu: {});
+        Map<String, List<String>> menuForDay =
+            messMenu.menu[day] ?? {'Breakfast': [], 'Lunch': [], 'Dinner': []};
+
+        if (messMenu.menu.containsKey(day)) {
+          menuForDay = messMenu.menu[day]!;
+        }
+
+        return Column(
+          children: [
+            Text(
+              'MESS MENU',
+              style: TextStyle(fontWeight: FontWeight.normal, fontSize: 24),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMealCard(
+                    'Breakfast',
+                    menuForDay['Breakfast'] ?? [],
+                    day,
+                  ),
+                  _buildMealCard('Lunch', menuForDay['Lunch'] ?? [], day),
+                  _buildMealCard('Dinner', menuForDay['Dinner'] ?? [], day),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMealCard(String mealType, List<String> items, String day) {
+    TextEditingController addItemInput = TextEditingController();
+
+    return Expanded(
+      child: Card(
+        color: Colors.white,
+        elevation: 3,
+        margin: EdgeInsets.all(20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                mealType,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 5),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 140,
+                  child: Divider(color: Color(0xFFF0753C), thickness: 1),
+                ),
+              ),
+
+              // List of food items
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        children: [
+                          Image.asset('logos/arrow.png', width: 24, height: 24),
+                          SizedBox(width: 8.0),
+                          Text(
+                            items[index],
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Spacer(),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.remove_circle,
+                              size: 24,
+                              color: Color(0xFFF0753C),
+                            ),
+                            onPressed: () async {
+                              await db.removeItem(day, mealType, items[index]);
+                              setState(() {}); // Refresh UI
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Add Item Section (Fixed)
+              Row(
+                children: [
+                  // Fix TextField taking too much space
+                  Expanded(
+                    child: TextField(
+                      controller: addItemInput,
+                      decoration: InputDecoration(
+                        labelText: 'Add Item',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical:8, horizontal: 8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Add Button
+                  IconButton(
+                    icon: const Icon(
+                      Icons.add_circle,
+                      size: 24,
+                      color: Color(0xFFF0753C),
+                    ),
+                    onPressed: () async {
+                      if (addItemInput.text.isNotEmpty) {
+                        await db.addItem(day, mealType, addItemInput.text);
+                        setState(() {}); // Refresh UI
+                        addItemInput.clear();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

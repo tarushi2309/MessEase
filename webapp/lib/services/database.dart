@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/models/addon.dart';
 import 'package:webapp/models/announcement.dart';
+import 'package:webapp/models/mess_menu.dart';
 import '../models/student.dart';
 import '../models/user.dart';
 import '../models/rebate.dart';
@@ -224,11 +225,66 @@ class DatabaseModel {
             .where('messId', isEqualTo: messId)
             .where('date', isEqualTo: DateTime.now().toString())
             .get();
+    print(query.docs);
 
     return query.docs
-        .map((doc) => AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
+        .map(
+          (doc) =>
+              AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>),
+        )
         .toList();
   }
 
-  
+  Future<MessMenuModel?> getMenu() async {
+    DocumentSnapshot doc =
+        await _firestore.collection('mess_menu').doc('current_menu').get();
+    if (doc.exists) {
+      return MessMenuModel.fromJson(doc.data() as Map<String, dynamic>);
+    }
+    return null;
+  }
+
+  Future<void> addItem(String day, String meal, String item) async {
+    DocumentReference docRef = _firestore
+        .collection('mess_menu')
+        .doc('current_menu');
+    DocumentSnapshot doc = await docRef.get();
+
+    // If the document is empty or doesn't exist, initialize it
+    Map<String, dynamic> menuData = {};
+
+    if (doc.exists && doc.data() != null) {
+      menuData = doc.data() as Map<String, dynamic>;
+    }
+
+    // Ensure the "menu" structure exists
+    menuData.putIfAbsent('menu', () => {});
+    menuData['menu'].putIfAbsent(day, () => {});
+    menuData['menu'][day].putIfAbsent(meal, () => []);
+
+    // Add item only if it doesn't already exist
+    List<dynamic> mealItems = List.from(menuData['menu'][day][meal]);
+    if (!mealItems.contains(item)) {
+      mealItems.add(item);
+    }
+    menuData['menu'][day][meal] = mealItems;
+
+    // Update Firestore
+    await docRef.set(menuData);
+  }
+
+  Future<void> removeItem(String day, String meal, String item) async {
+    DocumentReference docRef = _firestore
+        .collection('mess_menu')
+        .doc('current_menu');
+    DocumentSnapshot doc = await docRef.get();
+
+    if (doc.exists) {
+      MessMenuModel menu = MessMenuModel.fromJson(
+        doc.data() as Map<String, dynamic>,
+      );
+      menu.menu[day]?[meal]?.remove(item);
+      await docRef.update({'menu': menu.menu});
+    }
+  }
 }
