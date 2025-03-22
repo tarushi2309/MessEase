@@ -17,12 +17,14 @@ import 'firebase_options.dart';
 import 'components/user_provider.dart';
 import 'pages/mess_manager/mess_committee.dart';
 import 'pages/admin/refund.dart';
+import 'package:url_strategy/url_strategy.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  setPathUrlStrategy();
   runApp(
     ChangeNotifierProvider(
       create: (context) => UserProvider(), // Provide the UserProvider globally
