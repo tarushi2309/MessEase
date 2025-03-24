@@ -17,6 +17,7 @@ import 'firebase_options.dart';
 import 'components/user_provider.dart';
 import 'pages/mess_manager/mess_committee.dart';
 import 'pages/admin/refund.dart';
+import 'pages/admin/rebate_history.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 void main() async{
@@ -67,6 +68,9 @@ class MyApp extends StatelessWidget {
         '/pending-request': (context) => PendingRequestPage(),
         '/refund' : (content) => RefundPage(),
         '/menu_page': (context) => MenuPage(),
+        '/rebate_history': (context) => RebateHistoryPage(
+          //messName: ModalRoute.of(context)!.settings.arguments as String,
+        ),
         //'/profile': (context) => MessManagerProfile(),
       },
     );
