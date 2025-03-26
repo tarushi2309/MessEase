@@ -156,7 +156,7 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
 
   //function to change the status in the firebase of a rebate query
 
-  Future<void> updateRebateStatus(String studentId, String newStatus) async {
+  Future<void> updateRebateStatus(String studentId, String newStatus, int numberofDaysAdded) async {
     try {
       DocumentReference studentRef = FirebaseFirestore.instance.collection("students").doc(studentId);
       // Query Firestore for rebate where student_id matches
@@ -167,6 +167,14 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
           .where("status", isEqualTo: "pending")
           .get();
 
+      print(studentRef);
+      QuerySnapshot querySnapshotStudent = await FirebaseFirestore.instance
+          .collection("students")
+          .where("uid", isEqualTo: studentId)
+          .get();
+
+      
+      //update status to approve/reject
       if (querySnapshot.docs.isNotEmpty) {
         // Get the first matching document (assuming only one rebate per student at a time)
         DocumentSnapshot doc = querySnapshot.docs.first;
@@ -182,9 +190,36 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
       } else {
         print("No rebate request found for this student.");
       }
+
+      //update the num of days of rebate
+      if (querySnapshotStudent.docs.isNotEmpty) {
+        // Get the first matching document (assuming only one rebate per student at a time)
+        print("Entering here");
+        DocumentSnapshot doc = querySnapshotStudent.docs.first;
+
+        //debugging
+        print("Updating document: ${doc.reference.path}");
+        print("Document data: ${doc.data()}");
+
+        int currentNumberOfDays = doc["days_of_rebate"] ?? 0;
+        int updatedDays = currentNumberOfDays + numberofDaysAdded;
+        print(updatedDays);
+
+        await doc.reference.update({"days_of_rebate": updatedDays}); // Update status
+        await doc.reference.update({"refund": updatedDays * 130}); // Update status
+        await Future.delayed(Duration(seconds: 2)); // wait for this change to propogate
+
+        print("Rebate days added successfully!");
+      } else {
+        print("No rebate request found for this student.");
+      }
+
+
     } catch (e) {
       print("Error updating rebate status: $e");
     }
+
+  
   }
 
   String searchQuery = "";
@@ -275,10 +310,13 @@ Future<List<PendingRebate>> getPendingRebates(String messName) async {
                                                 // updating the status in the backend
                                                 String newStatus = value; 
                                                 String studentId = filteredRequests[index].studentId;
+                                                //int numberofDaysAdded = ((filteredRequests[index].endDate.seconds - filteredRequests[index].startDate.seconds) ~/ 86400) + 1;
+                                                int numberofDaysAdded = ((filteredRequests[index].endDate.millisecondsSinceEpoch ~/ 1000 - filteredRequests[index].startDate.millisecondsSinceEpoch ~/ 1000) ~/ 86400) + 1;
                                                 print(newStatus);
                                                 print(studentId);
+                                                print(numberofDaysAdded);
                                                 print("I am here to update status");
-                                                await updateRebateStatus(studentId, newStatus);
+                                                await updateRebateStatus(studentId, newStatus, numberofDaysAdded);
 
                                                 // deleting the row once approved / rejected
                                                 setState((){
