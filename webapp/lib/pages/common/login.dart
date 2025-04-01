@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen>
         // Navigate to your home screen after successful login.
         // Replace HomeScreen() with your actual home screen widget.
 
-        print(1);
+        //print(1);
         DatabaseModel db = DatabaseModel(uid: uid);
         DocumentSnapshot doc = await db.getUserInfo(uid);
 
@@ -59,6 +59,8 @@ class _LoginScreenState extends State<LoginScreen>
             Navigator.pushReplacementNamed(context, "/home_mess_manager");
           } else if (role == "admin") {
             Navigator.pushReplacementNamed(context, "/home_admin");
+          } else if (role == "boha") {
+            Navigator.pushReplacementNamed(context, "/home_boha");
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -121,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -170,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen>
                 children: [
                   TabBar(
                     controller: _tabController,
-                    tabs: const [Tab(text: "MESS MANAGER"), Tab(text: "ADMIN")],
+                    tabs: const [Tab(text: "MESS MANAGER"), Tab(text: "ADMIN"), Tab(text: "BOHA")],
                     indicatorColor: Color(0xFFF0753C),
                     labelColor: Color(0xFFF0753C),
                     unselectedLabelColor: Colors.grey,
@@ -179,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen>
                     height: 350,
                     child: TabBarView(
                       controller: _tabController,
-                      children: [_buildLoginForm("mess_manager"), _buildLoginForm("admin")],
+                      children: [_buildLoginForm("mess_manager"), _buildLoginForm("admin"), _buildLoginForm("boha")],
                     ),
                   ),
                 ],

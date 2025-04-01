@@ -183,7 +183,7 @@ class DatabaseModel {
         .toList();
   }
 
-  //function to add the addon into the database
+  /*//function to add the addon into the database
   Future<String> addAnnouncement(String description) async {
     if (description.isEmpty) {
       return "Please fill in all fields.";
@@ -233,7 +233,7 @@ class DatabaseModel {
               AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>),
         )
         .toList();
-  }
+  } */
 
   Future<MessMenuModel?> getMenu() async {
     DocumentSnapshot doc =

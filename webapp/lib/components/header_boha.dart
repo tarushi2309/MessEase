@@ -28,9 +28,10 @@ class Header extends StatelessWidget {
           const Spacer(),
 
           // Navigation Links with Highlighting
-          _navLink("Home", "/home_admin", context),
-          //_navLink("Menu Page", "/menu_page", context),
-          _navLink("Refund", "/refund", context),
+          _navLink("Home", "/home_boha", context),
+          _navLink("Menu Page", "/menu_page", context),
+          _navLink("Mess Committee", "/mess_committee", context),
+          _navLink("Announcements", "/announcements", context),
           _navLink("Logout", "/login", context),
 
           // Profile Icon (Clickable)

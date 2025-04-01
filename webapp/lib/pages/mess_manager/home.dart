@@ -77,15 +77,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.add_circle, size: 24),
-                                onPressed:
-                                    () => _showAnnouncementDialog(context),
-                              ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          _buildAnnouncementsSection(),
+                          /*const SizedBox(height: 16),
+                          _buildAnnouncementsSection(),*/
                         ],
                       ),
                     ),
@@ -232,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAnnouncementsSection() {
+ /* Widget _buildAnnouncementsSection() {
     return Container(
       height: 150,
       width: double.infinity,
@@ -243,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: FutureBuilder<List<AnnouncementModel>>(
-        future: db.fetchAnnouncements(),
+        //future: db.fetchAnnouncements(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -285,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
+*/
   void _showAddItemDialog(BuildContext context, String title) {
     TextEditingController nameController = TextEditingController();
     TextEditingController priceController = TextEditingController();
@@ -502,100 +497,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAnnouncementDialog(BuildContext context) {
-    TextEditingController announcementController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            width:
-                MediaQuery.of(context).size.width * 0.5, // 60% of screen width
-            height: 250, // Adjust height as needed
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Add Announcement',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: TextField(
-                    controller: announcementController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your announcement...',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: null, // Allows multi-line input
-                    keyboardType: TextInputType.multiline,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: () async {
-                        String announcementText =
-                            announcementController.text.trim();
-                        if (announcementText.isNotEmpty) {
-                          // Add the announcement to the database
-                          DatabaseModel db = DatabaseModel(
-                            uid: FirebaseAuth.instance.currentUser!.uid,
-                          );
-                          String result = await db.addAnnouncement(
-                            announcementText,
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(result),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                          Navigator.pop(context);
-                          setState(() {
-                            // Refresh the UI
-                          });
-                        }
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFF0753C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                      ),
-                      child: const Text('Save'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }

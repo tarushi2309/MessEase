@@ -20,4 +20,13 @@ class AnnouncementModel {
       date: json['date'],
     );
   }
+
+  List<String> get messNames {
+    Map<String, String> messMapping = {
+      "1": "Konark",
+      "2": "Anusha",
+      "3": "Ideal",
+    };
+    return messId.split(',').map((id) => messMapping[id] ?? "Unknown").toList();
+  }
 }
