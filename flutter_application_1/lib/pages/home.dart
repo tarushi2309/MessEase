@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
@@ -5,55 +6,122 @@ import 'package:flutter_application_1/pages/rebate_history.dart';
 import 'package:flutter_application_1/pages/rebateform.dart';
 import 'package:flutter_application_1/pages/user.dart';
 import 'package:provider/provider.dart';
-
-//import 'package:flutter_application_1/pages/RebateForm.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../components/footer.dart';
+import 'package:flutter_application_1/models/mess_menu.dart'; // Assuming you have this model defined
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   HomeScreen({super.key});
 
-  void didChangeDependencies(BuildContext context) {
-  String? uid = Provider.of<UserProvider>(context).uid;
-    print("user: $uid");
-  }
   @override
-Widget build(BuildContext context) {
-  String? uid = Provider.of<UserProvider>(context).uid;
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  Map<String, List<String>> todayMenu = {};
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchMenu();
+  }
+
+  void fetchMenu() async {
+  String today = getTodayDay(); // Get today's day
+  try {
+    // Fetch the Firestore document
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('mess_menu')
+        .doc('current_menu')
+        .get();
+
+    if (doc.exists) {
+      // Convert the document data to a Map
+      var menuData = doc.data() as Map<String, dynamic>;
+
+      // Ensure the 'menu' field is properly handled
+      if (menuData.containsKey('menu')) {
+        var menuMap = menuData['menu'] as Map<String, dynamic>;
+        print("menuMap: $menuMap");
+
+        // Ensure that the day's menu is a List<String>
+        if (menuMap.containsKey(today)) {
+          var dailyMenu = menuMap[today] as Map<String, dynamic>;
+
+        // Extract each meal type (Breakfast, Lunch, Dinner)
+        setState(() {
+          todayMenu = {
+            "Breakfast": List<String>.from(dailyMenu['Breakfast'] ?? []),
+            "Lunch": List<String>.from(dailyMenu['Lunch'] ?? []),
+            "Dinner": List<String>.from(dailyMenu['Dinner'] ?? []),
+          };
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          todayMenu = {}; // No menu for today in Firestore
+          isLoading = false;
+        });
+      }
+    
+      }
+    }
+  } catch (e) {
+    print("Error fetching menu: $e");
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
+
+
+  // Get today's day in short format (Mon, Tue, etc.)
+  String getTodayDay() {
+    List<String> shortDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    DateTime now = DateTime.now();
+    return shortDays[now.weekday - 1];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String? uid = Provider.of<UserProvider>(context).uid;
     print("\nuser is : $uid");
-  return Scaffold(
-    key: scaffoldKey,
-    backgroundColor: Colors.white,
-    drawer: _buildDrawer(context),
-    body: Stack(
-      children: [
-        Column(
-          children: [
-            _buildHeader(context), // Fixed header
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 15),
-                      _buildContent(context), // Scrollable content
-                    ],
+
+    return Scaffold(
+      key: widget.scaffoldKey,
+      backgroundColor: Colors.white,
+      drawer: _buildDrawer(context),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              _buildHeader(context), // Fixed header
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 15),
+                        _buildContent(context), // Scrollable content
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
-    ),
-    bottomNavigationBar: const CustomNavigationBar(),
-  );
-}
+            ],
+          ),
+        ],
+      ),
+      bottomNavigationBar: const CustomNavigationBar(),
+    );
+  }
 
-  /// Builds the header section with the background image and custom app bar.
   Widget _buildHeader(BuildContext context) {
     return Stack(
       children: [
@@ -76,7 +144,6 @@ Widget build(BuildContext context) {
     );
   }
 
-
   Widget _buildContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -94,7 +161,11 @@ Widget build(BuildContext context) {
             ),
           ),
           const SizedBox(height: 10),
-          _buildMenuAccordion(),
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : todayMenu.isEmpty
+                  ? Text("No menu available today", style: TextStyle(fontSize: 18))
+                  : _buildMenuAccordion(),
           const SizedBox(height: 10),
           _buildAddOns(),
         ],
@@ -102,7 +173,7 @@ Widget build(BuildContext context) {
     );
   }
 
-  /// Builds the Today's Add-Ons section.
+  // Add On section for today’s menu
   Widget _buildAddOns() {
     final List<Map<String, String>> addOns = [
       {"image": "assets/addon.jpg", "label": "Gulab Jamun"},
@@ -163,7 +234,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  /// Builds the menu accordion containing Breakfast, Lunch, and Dinner sections.
   Widget _buildMenuAccordion() {
     return Column(
       children: [
@@ -171,25 +241,24 @@ Widget build(BuildContext context) {
           title: "Breakfast",
           icon: Icons.free_breakfast,
           bgColor: const Color(0xFFFFEBE0),
-          items: ["Poha", "Idli Sambhar", "Paratha", "Tea/Coffee"],
+          items: List<String>.from(todayMenu['Breakfast'] ?? []),
         ),
         _buildMenuTile(
           title: "Lunch",
           icon: Icons.lunch_dining,
           bgColor: const Color(0xFFFFEBE0),
-          items: ["Dal Tadka", "Paneer Butter Masala", "Rice", "Roti", "Salad"],
+          items: List<String>.from(todayMenu['Lunch'] ?? []),
         ),
         _buildMenuTile(
           title: "Dinner",
           icon: Icons.dinner_dining,
           bgColor: const Color(0xFFFFEBE0),
-          items: ["Rajma", "Aloo Gobi", "Jeera Rice", "Tandoori Roti"],
+          items: List<String>.from(todayMenu['Dinner'] ?? []),
         ),
       ],
     );
   }
 
-  /// Builds an individual accordion tile for the menu.
   Widget _buildMenuTile({
     required String title,
     required IconData icon,
@@ -231,7 +300,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  /// Builds the custom navigation drawer.
   Widget _buildDrawer(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
@@ -299,7 +367,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  /// Builds an individual item for the drawer.
   Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFFF0753C)),
@@ -308,7 +375,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  /// Builds the custom app bar with a menu button, logo, and profile icon.
   Widget _buildCustomAppBar(BuildContext context) {
     return Positioned(
       top: 35,
@@ -319,7 +385,7 @@ Widget build(BuildContext context) {
         children: [
           IconButton(
             onPressed: () {
-              scaffoldKey.currentState?.openDrawer();
+              widget.scaffoldKey.currentState?.openDrawer();
             },
             icon: const Icon(Icons.menu, color: Colors.white, size: 30),
           ),
