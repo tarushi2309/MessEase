@@ -81,20 +81,4 @@ class Rebate {
     };
   }
 
-  /*factory Rebate.fromJson(Map<String, dynamic> json) {
-    return Rebate(
-      req_id: json['req_id'],
-      student_id: json['student_id'],
-      start_date: Timestamp.fromMillisecondsSinceEpoch(json['start_date']),
-      end_date: Timestamp.fromMillisecondsSinceEpoch(json['end_date']),
-      status_: status.values.firstWhere(
-        (e) => e.toString() == 'status.${json['status']}',
-        orElse: () => status.pending,
-      ),
-      hostel_: hostel.values.firstWhere(
-        (e) => e.toString() == 'hostel.${json['hostel']}',
-      ),
-    );
-  }*/
-
 }

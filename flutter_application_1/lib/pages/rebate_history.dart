@@ -23,6 +23,7 @@ class RebateHistoryScreen extends StatefulWidget {
 class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
   late DatabaseModel dbService;
   List<Rebate> rebateHistory = [];
+  List<Rebate> approvedRebates = [];
   bool isLoading = true;
 
   @override
@@ -45,22 +46,22 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
         print("First rebate record: ${querySnapshot.docs[0].data()}");
       }
       setState(() {
-        /*rebateHistory = querySnapshot.docs
-            .map((doc) => Rebate.fromJson(doc))
-            .toList();
-        isLoading = false;*/
-
         rebateHistory = querySnapshot.docs
           .map((doc) {
             // Print the status of each rebate for debugging
             var rebate = Rebate.fromJson(doc);
-            //print("Rebate Status: ${rebate.status_}");
+            print("Rebate Status: ${rebate.status_.toString().toLowerCase()}");
             //print("Req_id: ${rebate.req_id}");
             return rebate;
           })
           .toList();
-        isLoading = false;
-        
+
+        // get the approved requests to show in the pie chart
+        approvedRebates = rebateHistory
+                .where((rebate) => rebate.status_.toString().toLowerCase() == "status.approve")
+                .toList();
+
+        isLoading = false;        
       });
     } catch (e) {
       print("Error fetching rebate history: $e");
@@ -111,9 +112,9 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
                 ),
               ),
             const SizedBox(height: 10),
-            
-            RebateSummaryCard(rebateDays: rebateHistory.fold(0, (sum, rebate) => sum + ((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400) + 1)),
-            
+
+            RebateSummaryCard(rebateDays: approvedRebates.fold(0, (sum, rebate) => sum + ((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400) + 1)),
+               
             const SizedBox(height: 20),
             Center(
               child: Text(
