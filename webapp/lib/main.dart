@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:webapp/pages/boha/menu_page.dart';
+import 'package:webapp/pages/mess_manager/current_rebate.dart';
 import 'package:webapp/pages/mess_manager/mess_committee.dart';
 import 'package:webapp/pages/mess_manager/profile.dart';
 
@@ -71,6 +72,7 @@ class MyApp extends StatelessWidget {
         '/home_boha': (context) => boha.HomeScreen(),
         '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
         '/pending-request': (context) => PendingRequestPage(),
+        '/current-request': (context) => CurrentRequestPage(),
         '/refund' : (content) => RefundPage(),
         '/menu_page': (context) => MenuPage(),
         '/rebate_history': (context) => RebateHistoryPage(),
