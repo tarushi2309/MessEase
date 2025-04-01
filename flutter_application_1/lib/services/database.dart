@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_application_1/models/mess_menu.dart';
 import 'package:flutter_application_1/models/student.dart';
 import 'package:flutter_application_1/models/user.dart';
 class DatabaseModel{
@@ -89,5 +90,14 @@ if (querySnapshot.docs.isNotEmpty) {
       print("Error fetching rebate history: $e");
       throw e;
     }
+  }
+
+  Future<MessMenuModel?> getMenu() async {
+    DocumentSnapshot doc =
+        await _firestore.collection('mess_menu').doc('current_menu').get();
+    if (doc.exists) {
+      return MessMenuModel.fromJson(doc.data() as Map<String, dynamic>);
+    }
+    return null;
   }
 }

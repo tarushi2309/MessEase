@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
+import 'package:flutter_application_1/pages/profile_photo.dart';
 import 'package:flutter_application_1/pages/signup.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -100,7 +101,7 @@ class _SignInFormState extends State<SignInForm> {
         // Navigate to your home screen after successful login.
         // Replace HomeScreen() with your actual home screen widget.
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) =>  HomeScreen()));
+            context, MaterialPageRoute(builder: (context) => HomeScreen()));
       } on FirebaseAuthException catch (e) {
         if (e.code == "user-not-found") {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
