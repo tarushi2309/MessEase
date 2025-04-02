@@ -43,20 +43,22 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
   String? uid;
   String messName = "";
 
+  List<CurrentRebate> Rebates = [];
+
+  List<CurrentRebate> CurrentRebates = [];
   @override
-  void initState() {
+  void initState(){
     super.initState();
     // Fetch UID in initState instead of the initializer
     uid = Provider.of<UserProvider>(context, listen: false).uid;
     print(uid);
     print("this is me debugging");
     fetchUserName();
-    
   }
 
+  
   // fetch mess name from uid
   @override
-  
   void fetchUserName() async{
     print("I am entering here");
     try {
@@ -74,7 +76,7 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
     print(messName);
   }
 
-List<CurrentRebate> Rebates = [];
+
 String reqId = "";
 
 Future<List<CurrentRebate>> getCurrentRebates(String messName) async {
@@ -82,17 +84,17 @@ Future<List<CurrentRebate>> getCurrentRebates(String messName) async {
   // Fetch rebates where mess = messName and status = "Approved"
   QuerySnapshot rebateSnapshot = await FirebaseFirestore.instance
       .collection('rebates')
-      .where('mess', isEqualTo: messName).where('status', isEqualTo: 'approve').where('start_date', isLessThanOrEqualTo: Timestamp.fromDate(DateTime.now())).where('end_date', isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now())).orderBy('start_date',descending: true).orderBy('end_date',descending: false).get();
-  print("rebateSnapshot: $rebateSnapshot");
+      .where('mess', isEqualTo: messName).where('status', isEqualTo: 'approve').get();
   for (var doc in rebateSnapshot.docs) {
     Map<String, dynamic> rebate = doc.data() as Map<String, dynamic>;
-    print("rebate: $rebate");
 
-    Timestamp startTimestamp = rebate['start_date'];
-    Timestamp endTimestamp = rebate['end_date'];
+    Timestamp startTimestamp = rebate['start_date'] as Timestamp;
+    Timestamp endTimestamp = rebate['end_date'] as Timestamp;
+    if(startTimestamp.compareTo(Timestamp.now())<=0 && endTimestamp.compareTo(Timestamp.now())>=0){
+      
+    
     String studentId = rebate['student_id'].path.split('/').last;// Extract document ID
     reqId = rebate['req_id'];
-
     // Fetch student data using studentId
     DocumentSnapshot studentDoc = await FirebaseFirestore.instance
         .collection('students')
@@ -120,17 +122,18 @@ Future<List<CurrentRebate>> getCurrentRebates(String messName) async {
           req_id: reqId,
         ),
       );
+      
+    }
     }
   }
-
+  
   return CurrentRebates;
 }
 
-  List<CurrentRebate> CurrentRebates = [];
+  
 
   Future<void> fetchCurrentRebates() async {
     try{
-
       Rebates = await getCurrentRebates(messName);
       /*for (var rebate in Rebates) {
         print("Start Date: ${rebate.startDate}");
