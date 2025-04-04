@@ -103,8 +103,7 @@ class _SignUpFormState extends State<SignUpForm> {
           uid: userCredential.user!.uid,
           degree: selectedDegree ?? '',
           entryNumber: entry_nocontroller.text,
-          year: int.tryParse(yearcontroller.text) ?? 0,
-          password: password,
+          year: "",
         );
         await dbService.addUserDetails(user);
         await dbService.addStudentDetails(student);

@@ -1,19 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_application_1/models/mess_menu.dart';
 import 'package:flutter_application_1/models/student.dart';
-import 'package:flutter_application_1/models/user.dart';
 class DatabaseModel{
   final String uid;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DatabaseModel({required this.uid});
 
-  Future<dynamic> addUserDetails(UserModel user) async {
-    return await FirebaseFirestore.instance
-        .collection("user")
-        .doc(uid)
-        .set(user.toJson());
-  }
+  
 
   Future<dynamic> addStudentDetails(StudentModel student) async {
     return await FirebaseFirestore.instance
@@ -22,20 +16,7 @@ class DatabaseModel{
         .set(student.toJson());
   }
 
-  Future<DocumentSnapshot> getUserInfo(String uid) async {
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-      .collection("user")
-      .where("uid", isEqualTo: uid)
-      .limit(1)  // Ensure only one document is returned
-      .get();
-
-  // Return the first document in the QuerySnapshot (if exists)
-  if (querySnapshot.docs.isNotEmpty) {
-    return querySnapshot.docs[0];  // Return the DocumentSnapshot
-  } else {
-    throw Exception("No student found for the provided uid");
-  }
-}
+  
 
   Future<DocumentSnapshot> getStudentInfo(String uid) async {
   QuerySnapshot querySnapshot = await FirebaseFirestore.instance
