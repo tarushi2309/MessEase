@@ -5,10 +5,17 @@ import 'package:flutter_application_1/pages/messmenu.dart';
 import 'package:flutter_application_1/pages/rebate_history.dart';
 import 'package:flutter_application_1/pages/rebateform.dart';
 import 'package:flutter_application_1/pages/user.dart';
+import 'package:flutter_application_1/models/feedback.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../components/footer.dart';
 import 'package:flutter_application_1/models/mess_menu.dart'; // Assuming you have this model defined
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:firebase_storage/firebase_storage.dart';
+
+
 
 class HomeScreen extends StatefulWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
@@ -84,6 +91,159 @@ class _HomeScreenState extends State<HomeScreen> {
     DateTime now = DateTime.now();
     return shortDays[now.weekday - 1];
   }
+
+
+  // add feedback to the firestore
+  Future<void> submitFeedback({
+    required String uid,
+    required String text,
+    XFile? image,
+  }) async {
+    String? imageUrl;
+
+    try {
+      // Upload image to Firebase Storage if available
+      if (image != null) {
+        final fileName = path.basename(image.path);
+        final storageRef = FirebaseStorage.instance.ref().child('feedback_images/$fileName');
+        final uploadTask = await storageRef.putFile(File(image.path));
+        imageUrl = await uploadTask.ref.getDownloadURL();
+      }
+      // Create feedback model
+      FeedbackModel feedback = FeedbackModel(
+        uid: uid,
+        text: text,
+        imageUrl: imageUrl,
+        timestamp: DateTime.now(),
+      );
+
+      // Add to Firestore
+      await FirebaseFirestore.instance.collection('feedback').add(feedback.toJson());
+      debugPrint("Feedback successfully submitted");
+    } catch (e) {
+      debugPrint("Error submitting feedback: $e");
+      rethrow;
+    }
+  }
+
+
+  // feedback form 
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedImage;
+  TextEditingController _feedbackController = TextEditingController();
+
+  void _showFeedbackDialog(BuildContext context, String mealType) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Container(
+            height: 300,
+            width: double.infinity,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Feedback Form ! You input matters :)',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(12),
+                    child: _selectedImage != null
+                        ? Image.file(File(_selectedImage!.path), height: 100)
+                        : const Text(''),
+                  ),
+                ),
+
+                // Bottom Input + Buttons
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: Colors.grey.shade300)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _feedbackController,
+                          decoration: const InputDecoration(
+                            hintText: 'Type your message here',
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Text("Attach", style: TextStyle(color: Colors.white)),
+                        onPressed: () async {
+                          final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            _selectedImage = image;
+                          }
+                          Navigator.of(context).pop();
+                          _showFeedbackDialog(context, mealType); // Refresh UI
+                        },
+                      ),
+                      const SizedBox(width: 4),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Text("Send", style: TextStyle(color: Colors.white)),
+
+                        onPressed: () async {
+                          final uid = Provider.of<UserProvider>(context, listen: false).uid;
+                          print("Feedback: ${_feedbackController.text}");
+                          print("Image Path: ${_selectedImage?.path}");
+                          try {
+                            await submitFeedback(
+                              uid: uid!,
+                              text: _feedbackController.text.trim(),
+                              image: _selectedImage,
+                            );
+                            print("Feedback submitted successfully");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Feedback submitted!')),
+                            );
+                            _feedbackController.clear();
+                            _selectedImage = null;
+                            Navigator.of(context).pop();
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Failed to submit feedback')),
+                            );
+                          }
+                        }
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? Center(child: CircularProgressIndicator())
               : todayMenu.isEmpty
                   ? Text("No menu available today", style: TextStyle(fontSize: 18))
-                  : _buildMenuAccordion(),
+                  : _buildMenuAccordion(context),
           const SizedBox(height: 10),
           _buildAddOns(),
         ],
@@ -234,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMenuAccordion() {
+  Widget _buildMenuAccordion(BuildContext context) {
     return Column(
       children: [
         _buildMenuTile(
@@ -242,18 +402,21 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.free_breakfast,
           bgColor: const Color(0xFFFFEBE0),
           items: List<String>.from(todayMenu['Breakfast'] ?? []),
+          context: context,
         ),
         _buildMenuTile(
           title: "Lunch",
           icon: Icons.lunch_dining,
           bgColor: const Color(0xFFFFEBE0),
           items: List<String>.from(todayMenu['Lunch'] ?? []),
+          context: context,
         ),
         _buildMenuTile(
           title: "Dinner",
           icon: Icons.dinner_dining,
           bgColor: const Color(0xFFFFEBE0),
           items: List<String>.from(todayMenu['Dinner'] ?? []),
+          context: context,
         ),
       ],
     );
@@ -262,43 +425,41 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMenuTile({
     required String title,
     required IconData icon,
-    required List<String> items,
     required Color bgColor,
+    required List<String> items,
+    required BuildContext context,
   }) {
     return Card(
+      color: bgColor,
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Theme(
-        data: ThemeData().copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          backgroundColor: bgColor,
-          collapsedBackgroundColor: bgColor.withOpacity(0.8),
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          leading: Icon(icon, color: const Color(0xFFF0753C), size: 28),
-          title: Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          children: items
-              .map(
-                (item) => Padding(
-              padding: const EdgeInsets.fromLTRB(16,0,16,16),
-              child: Row(
-                children: [
-                  const Icon(Icons.fastfood, color: Color(0xFFF0753C), size: 20),
-                  const SizedBox(width: 10),
-                  Text(item, style: const TextStyle(fontSize: 16)),
-                ],
-              ),
+      child: ExpansionTile(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: Colors.deepOrange),
+                const SizedBox(width: 8),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
             ),
-          )
-              .toList(),
+            IconButton(
+              icon: const Icon(Icons.feedback, color: Colors.deepOrange),
+              onPressed: () => _showFeedbackDialog(context, title),
+              tooltip: 'Give Feedback',
+            ),
+          ],
         ),
+        children: items
+            .map((item) => ListTile(
+                  title: Text(item),
+                ))
+            .toList(),
       ),
     );
   }
+
 
   Widget _buildDrawer(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
