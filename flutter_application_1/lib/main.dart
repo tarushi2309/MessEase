@@ -10,7 +10,6 @@ import 'pages/RebateForm.dart';
 import 'pages/messmenu.dart';
 import 'pages/rebate_history.dart';
 import 'pages/signin.dart';
-import 'pages/signup.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +46,7 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      home: SignUpScreen(),
+      home: SignInScreen(),
       initialRoute: '/signin',  // Default screen when app starts
       routes: {
 
@@ -57,7 +56,6 @@ class MyApp extends StatelessWidget {
         '/mess-menu': (context) => MessMenuScreen(),
         '/rebate-form': (context) => RebateFormPage(),
         '/signin': (context) => SignInScreen(),
-        '/signup': (context) => SignUpScreen(),
       },
     );
   }

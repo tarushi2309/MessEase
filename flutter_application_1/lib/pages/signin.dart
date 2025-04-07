@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
+import 'package:flutter_application_1/models/student.dart';
 import 'package:flutter_application_1/pages/profile_photo.dart';
-import 'package:flutter_application_1/pages/signup.dart';
+import 'package:flutter_application_1/services/database.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 // Import your home screen or any other destination after sign in.
 import 'home.dart';
@@ -79,7 +81,7 @@ class _SignInFormState extends State<SignInForm> {
   // Define controllers for the email and password fields.
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+  String? selectedDegree;
   // This function authenticates the user using Firebase.
   Future<void> signIn() async {
     if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
@@ -136,6 +138,151 @@ class _SignInFormState extends State<SignInForm> {
           )));
     }
   }
+
+  Future<void> signInGoogle() async{
+    try{
+      await FirebaseAuth.instance.signOut();
+      await GoogleSignIn().signOut();
+        final googleUser = await GoogleSignIn().signIn();
+        final googleAuth = await googleUser?.authentication;
+        final cred = GoogleAuthProvider.credential(idToken: googleAuth?.idToken,accessToken: googleAuth?.accessToken);
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(cred);
+      
+        final AdditionalUserInfo? info = userCredential.additionalUserInfo;
+            Map<String,dynamic>? userInfo=info?.profile;
+            if(userInfo != null)
+            {
+              String checkIIT = userInfo['hd'];
+              if(checkIIT == "iitrpr.ac.in")
+              {
+                String email=userInfo['email'];
+                final digitRegex = RegExp(r'\d');
+                final firstDigitMatch = digitRegex.firstMatch(email);
+                final lastDigitMatch = digitRegex.allMatches(email).lastOrNull;
+                if(firstDigitMatch!=null&&lastDigitMatch!=null)
+                {
+                  String uid = userCredential.user!.uid;
+                  Provider.of<UserProvider>(context, listen: false).setUid(uid);
+                  bool newUser=info!.isNewUser;
+                  if(newUser)
+                  {
+                    await showDegreeDialog(context);
+                    String entryNo = email.substring(firstDigitMatch.start, lastDigitMatch.end);
+                    String year;
+                    if(entryNo.length==11)
+                      year = entryNo.substring(0,4);
+                    else
+                      year = "20"+ entryNo.substring(0,2);
+                    final DatabaseModel dbService =
+                      DatabaseModel(uid:uid);
+                    StudentModel student = StudentModel(
+                    name:  userInfo['given_name']+" "+userInfo['family_name'],
+                    email: email,
+                    uid: uid,
+                    degree: selectedDegree ?? '',
+                    entryNumber:entryNo,
+                    year: year,
+                    );
+                    await dbService.addStudentDetails(student);
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text(
+                      "Sign In Successful",
+                      style: TextStyle(fontSize: 20.0),
+                    ),
+                  ));
+                  // Navigate to your home screen after successful login.
+                  // Replace HomeScreen() with your actual home screen widget.
+                  Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => HomeScreen()));
+                }
+                else
+                {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  backgroundColor: Colors.orangeAccent,
+                  content: Text(
+                    "This app is for students , please use the website for other stakeholders!!.",
+                    style: TextStyle(fontSize: 18.0),
+                  )));
+                }
+              }
+              else
+              {
+                
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                backgroundColor: Colors.orangeAccent,
+                content: Text(
+                  "You are not authorised to use this app.",
+                  style: TextStyle(fontSize: 18.0),
+                )));
+              }
+            }
+            else
+            {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "No user found.",
+                style: TextStyle(fontSize: 18.0),
+              )));
+            }
+        } on FirebaseAuthException catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "Sign In Failed. Please try again.",
+                style: TextStyle(fontSize: 18.0),
+              )));
+        
+      }
+    }
+  
+  Future<void> showDegreeDialog(BuildContext context) async {
+  List<String> degreeOptions = ['B.Tech', 'M.Tech', 'M.Sc','PHD', 'Intern'];
+
+  await showDialog(
+    context: context,
+    barrierDismissible: false, // Prevent dismissing without selecting
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text("Select Your Degree"),
+            content: DropdownButton<String>(
+              isExpanded: true,
+              hint: const Text("Choose your degree"),
+              value: selectedDegree,
+              items: degreeOptions.map((degree) {
+                return DropdownMenuItem(
+                  value: degree,
+                  child: Text(degree),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedDegree = value;
+                });
+              },
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: selectedDegree == null
+                    ? null // Disable button if no selection is made
+                    : () {
+                        Navigator.of(context).pop(selectedDegree); // Pass the selected degree back
+                      },
+                child: const Text("Continue"),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+  }
+
+
+
 
   @override
   void dispose() {
@@ -220,6 +367,29 @@ class _SignInFormState extends State<SignInForm> {
                     ),
                   ),
           ),
+          ElevatedButton(
+            onPressed: signInGoogle,
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: const Color(0xFFFF7643),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 48),
+              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 24.0),
+              shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),      
+            ),
+            child: const Center(
+                    child: Text(
+                      "Sign In with Google",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+          ),
         ],
       ),
     
@@ -245,7 +415,7 @@ class NoAccountText extends StatelessWidget {
             // Handle navigation to Sign Up
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const SignUpScreen()),
+              MaterialPageRoute(builder: (context) =>  HomeScreen()),
             );
           },
           child: const Text(

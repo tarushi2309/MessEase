@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/models/student.dart';
-import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/database.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -27,7 +26,7 @@ class _UserPageState extends State<UserPage> {
   File? _image;
   final picker = ImagePicker();
 
-  late UserModel user;
+  
   late StudentModel student;
   bool isDataLoaded = false; // Track data loading state
 
@@ -37,12 +36,11 @@ class _UserPageState extends State<UserPage> {
 
     DatabaseModel dbService = DatabaseModel(uid: uid);
     try {
-      DocumentSnapshot user_info = await dbService.getUserInfo(uid);
+      
       DocumentSnapshot student_info = await dbService.getStudentInfo(uid);
 
       // Update the user and student models inside setState to rebuild the UI
       setState(() {
-        user = UserModel.fromJson(user_info.data() as Map<String, dynamic>);
         student =
             StudentModel.fromJson(student_info.data() as Map<String, dynamic>);
         isDataLoaded = true; // Set the loading flag to true
@@ -113,7 +111,7 @@ class _UserPageState extends State<UserPage> {
                                 size: 50, color: Colors.white),
                           ),
                           SizedBox(height: 10),
-                          Text("${user.name}".toUpperCase(),
+                          Text("${student.name}".toUpperCase(),
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,

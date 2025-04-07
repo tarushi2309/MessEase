@@ -3,15 +3,17 @@ class AddonModel{
   double price;
   bool isSelected;
   String messId;
+  DateTime date;
 
-  AddonModel({required this.name, required this.price, required this.isSelected, required this.messId});
+  AddonModel({required this.name, required this.price, required this.isSelected, required this.messId, required this.date});
 
   Map<String, dynamic> toJson(){
     return {
       'name': name,
       'price': price,
       'isSelected': isSelected,
-      'messId': messId
+      'messId': messId,
+      'date': DateTime.now(),
     };
   }
 
@@ -20,7 +22,8 @@ class AddonModel{
       name: json['name'],
       price: json['price'],
       isSelected: false,
-      messId: json['messId']
+      messId: json['messId'],
+      date: json['date'],
     );
   }
 }

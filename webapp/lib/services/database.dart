@@ -113,6 +113,7 @@ class DatabaseModel {
           price: parsedPrice,
           isSelected: true,
           messId: messId,
+          date: DateTime.now(),
         );
 
         DocumentReference docRef = await _firestore
@@ -127,6 +128,21 @@ class DatabaseModel {
     }
   }
 
+  Future<void> removePrevAddons() async{
+    String? messId = await getMessId();
+    if (messId == null) {
+      return;
+    }
+
+    QuerySnapshot querySnapshot =
+          await _firestore
+              .collection('addons')
+              .where('messId', isEqualTo: messId).where('date', isNotEqualTo: DateTime.now()).get();
+
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
   //function to remove the addon into the database
   Future<String> removeAddon(String name) async {
     if (name.isEmpty) {
