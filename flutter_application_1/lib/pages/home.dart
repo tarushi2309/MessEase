@@ -97,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> submitFeedback({
     required String uid,
     required String text,
+    required String mess,
     XFile? image,
   }) async {
     String? imageUrl;
@@ -115,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         text: text,
         imageUrl: imageUrl,
         timestamp: DateTime.now(),
+        mess: mess,
       );
 
       // Add to Firestore
@@ -214,10 +216,24 @@ class _HomeScreenState extends State<HomeScreen> {
                           print("Feedback: ${_feedbackController.text}");
                           print("Image Path: ${_selectedImage?.path}");
                           try {
+                            // get the mess name from the uid
+                            final studentDoc = await FirebaseFirestore.instance
+                                      .collection('students')
+                                      .doc('uid')
+                                      .get();
+                            
+                            if(!studentDoc.exists){
+                              throw Exception("Student Not found");
+                            }
+
+                            final mess = studentDoc.data()?['mess'];
+                            print("Fetched mess : $mess");
+
                             await submitFeedback(
                               uid: uid!,
                               text: _feedbackController.text.trim(),
                               image: _selectedImage,
+                              mess: mess,
                             );
                             print("Feedback submitted successfully");
                             ScaffoldMessenger.of(context).showSnackBar(
