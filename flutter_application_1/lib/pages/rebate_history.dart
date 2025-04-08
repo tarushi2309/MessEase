@@ -167,7 +167,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
         padding: const EdgeInsets.all(8.0),
         child: ListTile(
           title: Text(
-            'From: ${from} \nTo: ${to}',
+            'From: $from \nTo: $to',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           subtitle: Text('Number of days: $days'),
