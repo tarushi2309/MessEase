@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Ensure the 'menu' field is properly handled
       if (menuData.containsKey('menu')) {
         var menuMap = menuData['menu'] as Map<String, dynamic>;
-        print("menuMap: $menuMap");
+        //print("menuMap: $menuMap");
 
         // Ensure that the day's menu is a List<String>
         if (menuMap.containsKey(today)) {

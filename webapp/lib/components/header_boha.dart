@@ -30,7 +30,7 @@ class Header extends StatelessWidget {
           // Navigation Links with Highlighting
           _navLink("Home", "/home_boha", context),
           _navLink("Menu Page", "/menu_page", context),
-          _navLink("Mess Committee", "/mess_committee", context),
+          _navLink("Mess Details", "/mess_committee", context),
           _navLink("Announcements", "/announcements", context),
           _navLink("Logout", "/login", context),
 
