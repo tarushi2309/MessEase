@@ -1,4 +1,5 @@
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
@@ -28,7 +29,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Map<String, List<String>> todayMenu = {};
   bool isLoading = true;
-
+  final String _imgbbApiKey = "321e92bce52209a8c6c4f1271bbec58f";
   @override
   void initState() {
     super.initState();
@@ -51,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Ensure the 'menu' field is properly handled
       if (menuData.containsKey('menu')) {
         var menuMap = menuData['menu'] as Map<String, dynamic>;
-        print("menuMap: $menuMap");
+        //print("menuMap: $menuMap");
 
         // Ensure that the day's menu is a List<String>
         if (menuMap.containsKey(today)) {
@@ -97,18 +98,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> submitFeedback({
     required String uid,
     required String text,
-    required String mess,
-    XFile? image,
+    File? image,
   }) async {
     String? imageUrl;
 
     try {
       // Upload image to Firebase Storage if available
       if (image != null) {
-        final fileName = path.basename(image.path);
-        final storageRef = FirebaseStorage.instance.ref().child('feedback_images/$fileName');
-        final uploadTask = await storageRef.putFile(File(image.path));
-        imageUrl = await uploadTask.ref.getDownloadURL();
+         final Dio dio = Dio();
+      final formData = FormData.fromMap({
+        'key': _imgbbApiKey,
+        'image': await MultipartFile.fromFile(image.path),
+      });
+
+      final response = await dio.post(
+        "https://api.imgbb.com/1/upload",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        imageUrl = response.data['data']['url'];
+
       }
       // Create feedback model
       FeedbackModel feedback = FeedbackModel(
@@ -116,13 +126,12 @@ class _HomeScreenState extends State<HomeScreen> {
         text: text,
         imageUrl: imageUrl,
         timestamp: DateTime.now(),
-        mess: mess,
       );
 
       // Add to Firestore
       await FirebaseFirestore.instance.collection('feedback').add(feedback.toJson());
       debugPrint("Feedback successfully submitted");
-    } catch (e) {
+    }} catch (e) {
       debugPrint("Error submitting feedback: $e");
       rethrow;
     }
@@ -131,8 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // feedback form 
   final ImagePicker _picker = ImagePicker();
-  XFile? _selectedImage;
-  TextEditingController _feedbackController = TextEditingController();
+  File? _selectedImage;
+  final TextEditingController _feedbackController = TextEditingController();
 
   void _showFeedbackDialog(BuildContext context, String mealType) {
     showDialog(
@@ -140,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: Container(
+          child: SizedBox(
             height: 300,
             width: double.infinity,
             child: Column(
@@ -165,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(12),
                     child: _selectedImage != null
-                        ? Image.file(File(_selectedImage!.path), height: 100)
+                        ? Image.file(_selectedImage!, height: 100)
                         : const Text(''),
                   ),
                 ),
@@ -197,7 +206,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPressed: () async {
                           final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
                           if (image != null) {
-                            _selectedImage = image;
+                            setState(() {
+                            _selectedImage = File(image.path); // Convert XFile to File
+                          });
                           }
                           Navigator.of(context).pop();
                           _showFeedbackDialog(context, mealType); // Refresh UI
@@ -216,24 +227,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           print("Feedback: ${_feedbackController.text}");
                           print("Image Path: ${_selectedImage?.path}");
                           try {
-                            // get the mess name from the uid
-                            final studentDoc = await FirebaseFirestore.instance
-                                      .collection('students')
-                                      .doc('uid')
-                                      .get();
-                            
-                            if(!studentDoc.exists){
-                              throw Exception("Student Not found");
-                            }
-
-                            final mess = studentDoc.data()?['mess'];
-                            print("Fetched mess : $mess");
-
                             await submitFeedback(
                               uid: uid!,
                               text: _feedbackController.text.trim(),
                               image: _selectedImage,
-                              mess: mess,
                             );
                             print("Feedback submitted successfully");
                             ScaffoldMessenger.of(context).showSnackBar(

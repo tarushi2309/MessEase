@@ -47,64 +47,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         _feedbacks = fetchFeedbacks(messName);
     }
 
-    /*Future<List<FeedbackModelUI>> fetchFeedbacks(String messName) async {
-        final List<FeedbackModelUI> feedbackList = [];
-        print("Fetching feedbacks");
-
-        final DateTime now = DateTime.now();
-        final DateTime oneMonthAgo = DateTime(now.year, now.month - 1, now.day);
-
-        print(now);
-        print(oneMonthAgo);
-
-        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-                        .collection("feedback")
-                        .where('mess', isEqualTo: messName)
-                        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(oneMonthAgo))
-                        .orderBy('timestamp', descending: true)
-                        .get();
-
-        for (QueryDocumentSnapshot feedbackDoc in querySnapshot.docs){
-            final data = feedbackDoc.data() as Map<String, dynamic>;
-
-            final String uid = data['uid'];
-            final String text = data['text'];
-            final String? imageUrl = data['imageUrl'];
-            final DateTime timestamp = DateTime.parse(data['timestamp']);
-
-            // Now fetch student data using uid
-            DocumentSnapshot studentSnapshot = await FirebaseFirestore.instance
-                .collection('students')
-                .doc(uid)
-                .get();
-            
-            DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-                .collection('user')
-                .doc(uid)
-                .get();
-            
-            final studentData = studentSnapshot.data() as Map<String, dynamic>;
-            final userData = userSnapshot.data() as Map<String, dynamic>;
-            
-            final String studentName = userData['name'] ?? 'Unknown';
-            final String studentEntryNum = studentData['entryNumber'] ?? 'Unknown';
-            final String studentEmail = userData['email'] ?? 'Unknown';
-
-            feedbackList.add(
-                FeedbackModelUI(
-                    text: text,
-                    timestamp: timestamp,
-                    uid: uid,
-                    studentName: studentName,
-                    studentEntryNum: studentEntryNum,
-                    studentEmail: studentEmail,
-                    imageUrl: imageUrl,
-                ),
-            );
-        }  
-        return feedbackList;  
-    }*/
-
     Future<List<FeedbackModelUI>> fetchFeedbacks(String messName) async {
     final List<FeedbackModelUI> feedbackList = [];
     final DateTime now = DateTime.now();
@@ -134,24 +76,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     .doc(uid)
                     .get();
 
-                DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-                    .collection('user')
-                    .doc(uid)
-                    .get();
-
                 final studentDataRaw = studentSnapshot.data();
-                final userDataRaw = userSnapshot.data();
 
-                if (studentDataRaw == null || userDataRaw == null) {
+                if (studentDataRaw == null) {
+                    print("Null data found");
                     continue; 
                 }
 
                 final studentData = studentSnapshot.data() as Map<String, dynamic>;
-                final userData = userSnapshot.data() as Map<String, dynamic>;
 
-                final String studentName = userData['name'] ?? 'Unknown';
+                final String studentName = studentData['name'] ?? 'Unknown';
                 final String studentEntryNum = studentData['entryNumber'] ?? 'Unknown';
-                final String studentEmail = userData['email'] ?? 'Unknown';
+                final String studentEmail = studentData['email'] ?? 'Unknown';
 
                 feedbackList.add(
                     FeedbackModelUI(
