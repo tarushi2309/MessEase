@@ -237,10 +237,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 .get();
 
                             if (!studentDoc.exists) {
+                              print("student not found");
                               throw Exception("Student not found");
+                              
                             }
 
-                            final mess = studentDoc.data()?['mess']; // Get the 'mess' field
+                            final mess = studentDoc['mess']; // Get the 'mess' field
                             print("Fetched Mess: $mess");
                             await submitFeedback(
                               uid: uid!,

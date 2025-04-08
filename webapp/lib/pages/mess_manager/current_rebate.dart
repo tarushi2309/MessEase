@@ -25,7 +25,7 @@ class CurrentRebate {
     required this.studentName,
     required this.studentId,
     required this.req_id,
-    this.url,
+    required this.url,
   });
 }
 
@@ -227,16 +227,6 @@ Future<List<CurrentRebate>> getCurrentRebates(String messName) async {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // Display Student Image
-                                    CircleAvatar(
-                                      radius: 30,
-                                      backgroundImage: request.url != null && request.url!.isNotEmpty
-                                          ? NetworkImage(request.url!)
-                                          : null,
-                                      child: request.url == null || request.url!.isEmpty
-                                          ? Icon(Icons.person, size: 30)
-                                          : null,
-                                    ),
                                     SizedBox(width: 120, child: Text(request.studentName)),
                                     SizedBox(width: 120, child: Text(request.entryNumber)),
                                     SizedBox(width: 120, child: Text(request.hostel)),
