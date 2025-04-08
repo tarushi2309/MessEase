@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class AddonModel{
   String name;
   double price;
@@ -23,7 +25,9 @@ class AddonModel{
       price: json['price'],
       isSelected: false,
       messId: json['messId'],
-      date: json['date'],
+      date: json['date'] != null
+        ? (json['date'] as Timestamp).toDate()
+        : DateTime.now(),
     );
   }
 }

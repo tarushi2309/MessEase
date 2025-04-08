@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:webapp/components/header_manager.dart';
 import '../../models/rebate.dart';
 import '../../models/user.dart';
 import '../../services/database.dart';
@@ -168,7 +169,11 @@ Future<List<CurrentRebate>> getCurrentRebates(String messName) async {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text('Current Requests')),
+      backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Header(currentPage: 'Current Rebates'),
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : CurrentRebates.isEmpty

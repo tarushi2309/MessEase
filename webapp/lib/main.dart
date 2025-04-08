@@ -8,7 +8,7 @@ import 'package:webapp/pages/mess_manager/mess_committee.dart';
 import 'package:webapp/pages/mess_manager/profile.dart';
 
 import 'firebase_options.dart';
-import '../pages/mess_manager/pending_request.dart';
+import 'pages/mess_manager/pending_rebate.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/provider.dart';
@@ -72,13 +72,14 @@ class MyApp extends StatelessWidget {
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
         '/home_boha': (context) => boha.HomeScreen(),
         '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
-        '/pending-request': (context) => PendingRequestPage(),
-        '/current-request': (context) => CurrentRequestPage(),
+        '/pending_rebates': (context) => PendingRequestPage(),
+        '/current_rebates': (context) => CurrentRequestPage(),
         '/refund' : (content) => RefundPage(),
         '/menu_page': (context) => MenuPage(),
         '/rebate_history': (context) => RebateHistoryPage(),
         '/mess_committee': (context) => MessCommitteePage(),
         '/announcements': (context) => AnnouncementPage(),
+        '/mess_committee_mess_manager' : (context) => MessCommitteeMessManagerPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
     );
