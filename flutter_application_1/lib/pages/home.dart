@@ -99,43 +99,47 @@ class _HomeScreenState extends State<HomeScreen> {
     required String uid,
     required String text,
     File? image,
+    required String mess,
   }) async {
     String? imageUrl;
 
     try {
       // Upload image to Firebase Storage if available
       if (image != null) {
-         final Dio dio = Dio();
-      final formData = FormData.fromMap({
-        'key': _imgbbApiKey,
-        'image': await MultipartFile.fromFile(image.path),
-      });
+          final Dio dio = Dio();
+          final formData = FormData.fromMap({
+            'key': _imgbbApiKey,
+            'image': await MultipartFile.fromFile(image.path),
+          });
 
-      final response = await dio.post(
-        "https://api.imgbb.com/1/upload",
-        data: formData,
-      );
+          final response = await dio.post(
+            "https://api.imgbb.com/1/upload",
+            data: formData,
+          );
 
-      if (response.statusCode == 200) {
-        imageUrl = response.data['data']['url'];
+          if (response.statusCode == 200) {
+            imageUrl = response.data['data']['url'];
 
+          }
       }
-      // Create feedback model
-      FeedbackModel feedback = FeedbackModel(
-        uid: uid,
-        text: text,
-        imageUrl: imageUrl,
-        timestamp: DateTime.now(),
-      );
+          // Create feedback model
+          FeedbackModel feedback = FeedbackModel(
+            uid: uid,
+            text: text,
+            imageUrl: imageUrl,
+            mess: mess,
+            timestamp: DateTime.now(),
+          );
 
-      // Add to Firestore
-      await FirebaseFirestore.instance.collection('feedback').add(feedback.toJson());
-      debugPrint("Feedback successfully submitted");
-    }} catch (e) {
-      debugPrint("Error submitting feedback: $e");
-      rethrow;
+          // Add to Firestore
+          await FirebaseFirestore.instance.collection('feedback').add(feedback.toJson());
+          print("Feedback successfully submitted to Firestore");
+        
+      } catch (e) {
+        print("Error submitting feedback: $e");
+        rethrow;
+      }
     }
-  }
 
 
   // feedback form 
@@ -227,10 +231,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           print("Feedback: ${_feedbackController.text}");
                           print("Image Path: ${_selectedImage?.path}");
                           try {
+                            final studentDoc = await FirebaseFirestore.instance
+                                .collection('students')
+                                .doc(uid)
+                                .get();
+
+                            if (!studentDoc.exists) {
+                              throw Exception("Student not found");
+                            }
+
+                            final mess = studentDoc.data()?['mess']; // Get the 'mess' field
+                            print("Fetched Mess: $mess");
                             await submitFeedback(
                               uid: uid!,
                               text: _feedbackController.text.trim(),
                               image: _selectedImage,
+                              mess: mess,
                             );
                             print("Feedback submitted successfully");
                             ScaffoldMessenger.of(context).showSnackBar(
