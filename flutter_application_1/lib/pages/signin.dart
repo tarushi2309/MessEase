@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/models/student.dart';
@@ -7,6 +10,7 @@ import 'package:flutter_application_1/services/database.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 // Import your home screen or any other destination after sign in.
 import 'home.dart';
@@ -82,6 +86,7 @@ class _SignInFormState extends State<SignInForm> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   String? selectedDegree;
+  String? downloadUrl;
   // This function authenticates the user using Firebase.
   Future<void> signIn() async {
     if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
@@ -166,7 +171,9 @@ class _SignInFormState extends State<SignInForm> {
                   bool newUser=info!.isNewUser;
                   if(newUser)
                   {
+                    String name = userInfo['given_name']+" "+userInfo['family_name'];
                     await showDegreeDialog(context);
+                    await showPhotoUploadDialog(context, name);
                     String entryNo = email.substring(firstDigitMatch.start, lastDigitMatch.end);
                     String year;
                     if(entryNo.length==11)
@@ -176,12 +183,13 @@ class _SignInFormState extends State<SignInForm> {
                     final DatabaseModel dbService =
                       DatabaseModel(uid:uid);
                     StudentModel student = StudentModel(
-                    name:  userInfo['given_name']+" "+userInfo['family_name'],
+                    name: name ,
                     email: email,
                     uid: uid,
                     degree: selectedDegree ?? '',
                     entryNumber:entryNo,
                     year: year,
+                    url: downloadUrl ?? '',
                     );
                     await dbService.addStudentDetails(student);
                   }
@@ -282,7 +290,71 @@ class _SignInFormState extends State<SignInForm> {
   }
 
 
+  Future<void> showPhotoUploadDialog(BuildContext context, String name) async {
+  File? selectedImage;
 
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text("Upload Your Profile Photo"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                selectedImage != null
+                    ? Image.file(selectedImage!, height: 150)
+                    : const Text("No image selected"),
+                ElevatedButton(
+                  onPressed: () async {
+                    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                    if (pickedFile != null) {
+                      setState(() {
+                        selectedImage = File(pickedFile.path);
+                      });
+                    }
+                  },
+                  child: const Text("Choose Photo"),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: selectedImage == null
+                    ? null
+                    : () async {
+                        // Upload the image to Firebase Storage
+                        await uploadProfilePhoto(selectedImage!,name);
+                        Navigator.of(context).pop();
+                      },
+                child: const Text("Upload & Continue"),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<void> uploadProfilePhoto(File imageFile,String name) async {
+  try {
+    // Create a reference to Firebase Storage
+    final storageRef = FirebaseStorage.instance.ref().child('profile_photos/$name}.jpg');
+
+    // Upload the file
+    final uploadTask = await storageRef.putFile(imageFile);
+
+    // Get the download URL for the uploaded image
+    downloadUrl = await storageRef.getDownloadURL();
+    print("Uploaded image URL: $downloadUrl");
+  } catch (e) {
+    print("Error uploading profile photo: $e");
+    throw e;
+  }
+}
 
   @override
   void dispose() {

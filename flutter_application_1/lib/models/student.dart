@@ -5,6 +5,7 @@ class StudentModel {
   final String degree;
   final String entryNumber;
   final String year;
+  final String url;
   int refund=0;
   int monthly_refund;
   int days_of_rebate;
@@ -18,6 +19,7 @@ class StudentModel {
     required this.degree,
     required this.entryNumber,
     required this.year,
+    required this.url,
     refund=0,
     this.monthly_refund=0,
     this.days_of_rebate=0,
@@ -33,6 +35,7 @@ class StudentModel {
         'degree': degree,
         'entryNumber': entryNumber,
         'year': year,
+        'url':url,
         'refund':0,
         'monthly_refund':0,
         'days_of_rebate':0,
@@ -48,6 +51,7 @@ class StudentModel {
         degree: json['degree'] as String,
         entryNumber: json['entryNumber'] as String,
         year: json['year'] as String,
+        url: json['url'] as String,
         refund: json['refund'] as int,
         monthly_refund: json['monthly_refund'] as int,
         days_of_rebate: json['days_of_rebate'] as int,
