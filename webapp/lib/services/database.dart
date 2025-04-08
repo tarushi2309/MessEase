@@ -251,6 +251,18 @@ class DatabaseModel {
         .toList();
   } */
 
+ // get the announcements from the database
+    Future<List<AnnouncementModel>> fetchAnnouncements() async {
+        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+            .collection("announcements")
+            .get();
+
+        return querySnapshot.docs.map((doc) {
+            Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+            return AnnouncementModel.fromJson(data);
+        }).toList();
+    }
+
   Future<MessMenuModel?> getMenu() async {
     DocumentSnapshot doc =
         await _firestore.collection('mess_menu').doc('current_menu').get();

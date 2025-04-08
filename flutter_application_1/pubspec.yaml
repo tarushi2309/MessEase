@@ -45,7 +45,11 @@ dependencies:
   cloud_firestore: ^5.6.4
   firebase_storage: ^12.4.5
   google_sign_in: ^6.3.0
+<<<<<<< HEAD
+  font_awesome_flutter: ^10.6.0
+=======
   dio: ^5.8.0+1
+>>>>>>> 91056e8d50f11e7c36eb3ae3c9ac575d4a3ba207
 
 dev_dependencies:
   flutter_test:

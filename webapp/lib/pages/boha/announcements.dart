@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/models/announcement.dart';
 import 'package:webapp/components/header_boha.dart';
+import 'package:webapp/services/database.dart';
 
 class AnnouncementPage extends StatefulWidget {
   const AnnouncementPage({super.key});
@@ -11,26 +13,20 @@ class AnnouncementPage extends StatefulWidget {
 }
 
 class _AnnouncementPageState extends State<AnnouncementPage> {
+
+    // Fetch announcements from Firestore
     late Future<List<AnnouncementModel>> _announcements;
+
+    DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
 
     //fetch announcements when this screen is accessed
     @override
     void initState() {
         super.initState();
-        _announcements = fetchAnnouncements();  
+        _announcements = db.fetchAnnouncements();  
     }
 
-    // get the announcements from the database
-    Future<List<AnnouncementModel>> fetchAnnouncements() async {
-        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-            .collection("announcements")
-            .get();
-
-        return querySnapshot.docs.map((doc) {
-            Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-            return AnnouncementModel.fromJson(data);
-        }).toList();
-    }
+    
 
     // add announcements 
     void _showAddAnnouncementDialog() {
@@ -110,7 +106,7 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
                             }
 
                             setState(() {
-                                _announcements = fetchAnnouncements();
+                                _announcements = db.fetchAnnouncements();
                             });
 
                             Navigator.pop(context);

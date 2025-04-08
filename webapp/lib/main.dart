@@ -9,7 +9,7 @@ import 'package:webapp/pages/mess_manager/feedback.dart';
 import 'package:webapp/pages/mess_manager/profile.dart';
 
 import 'firebase_options.dart';
-import '../pages/mess_manager/pending_request.dart';
+import 'pages/mess_manager/pending_rebate.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/provider.dart';
@@ -82,6 +82,7 @@ class MyApp extends StatelessWidget {
         '/rebate_history': (context) => RebateHistoryPage(),
         '/mess_committee': (context) => MessCommitteePage(),
         '/announcements': (context) => AnnouncementPage(),
+        '/mess_committee_mess_manager' : (context) => MessCommitteeMessManagerPage(),
         '/feedback': (context) => FeedbackScreen(),
         '/feedback_mess': (context) => FeedbackMessScreen(),
         //'/profile': (context) => MessManagerProfile(),
