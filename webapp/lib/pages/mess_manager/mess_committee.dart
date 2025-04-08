@@ -5,14 +5,14 @@ import 'package:webapp/components/header_manager.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 
-class MessCommitteeScreenMess extends StatefulWidget {
-  const MessCommitteeScreenMess({super.key});
+class MessCommitteeMessManagerPage extends StatefulWidget {
+  const MessCommitteeMessManagerPage({super.key});
 
   @override
-  _MessCommitteeScreenMessState createState() => _MessCommitteeScreenMessState();
+  _MessCommitteeMessManagerPageState createState() => _MessCommitteeMessManagerPageState();
 }
 
-class _MessCommitteeScreenMessState extends State<MessCommitteeScreenMess> {
+class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerPage> {
   String? uid;
   String messName = "";
 

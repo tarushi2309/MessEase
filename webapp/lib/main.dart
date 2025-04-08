@@ -74,7 +74,7 @@ class MyApp extends StatelessWidget {
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
         '/home_boha': (context) => boha.HomeScreen(),
         '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
-        '/mess_committee_mess': (context) => MessCommitteeScreenMess(),
+        //'/mess_committee_mess': (context) => MessCommitteeScreenMess(),
         '/pending-request': (context) => PendingRequestPage(),
         '/current-request': (context) => CurrentRequestPage(),
         '/refund' : (content) => RefundPage(),

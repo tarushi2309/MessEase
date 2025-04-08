@@ -29,6 +29,21 @@ class DatabaseModel {
         .set(student.toJson());
   }
 
+  Future<DocumentSnapshot> getStudentInfo(String uid) async {
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      .collection("students")
+      .where("uid", isEqualTo: uid)
+      .limit(1)  // Ensure only one document is returned
+      .get();
+
+  // Return the first document in the QuerySnapshot (if exists)
+  if (querySnapshot.docs.isNotEmpty) {
+    return querySnapshot.docs[0];  // Return the DocumentSnapshot
+  } else {
+    throw Exception("No student found for the provided uid");
+  }
+}
+
   Future<DocumentSnapshot> getUserInfo(String uid) async {
     QuerySnapshot querySnapshot =
         await FirebaseFirestore.instance
