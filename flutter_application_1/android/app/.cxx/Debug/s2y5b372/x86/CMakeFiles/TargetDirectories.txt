@@ -1,0 +1,2 @@
+/Users/tarushi/Documents/cp301/MessEase/flutter_application_1/android/app/.cxx/Debug/s2y5b372/x86/CMakeFiles/edit_cache.dir
+/Users/tarushi/Documents/cp301/MessEase/flutter_application_1/android/app/.cxx/Debug/s2y5b372/x86/CMakeFiles/rebuild_cache.dir

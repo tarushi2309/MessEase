@@ -176,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         FutureBuilder<List<AddonModel>>(
+          db.removePrevAddons(),
           future: db.fetchSelectedAddons(), // Call function from database.dart
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {

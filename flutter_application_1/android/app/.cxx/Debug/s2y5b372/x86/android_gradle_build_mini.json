@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/tarushi/Downloads/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/tarushi/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/tarushi/Documents/cp301/MessEase/flutter_application_1/android/app/.cxx/Debug/s2y5b372/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/tarushi/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/tarushi/Documents/cp301/MessEase/flutter_application_1/android/app/.cxx/Debug/s2y5b372/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}
