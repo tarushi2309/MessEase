@@ -46,6 +46,8 @@ dependencies:
   url_strategy: ^0.2.0
   file_picker: ^9.2.0
   image_picker: ^1.1.2
+  imgbb: any
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
