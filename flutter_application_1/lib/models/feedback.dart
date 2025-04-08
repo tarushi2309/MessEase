@@ -3,12 +3,14 @@ class FeedbackModel {
   final String text;
   final String? imageUrl;
   final DateTime timestamp;
+  final String mess;
 
   FeedbackModel({
     required this.uid,
     required this.text,
     this.imageUrl,
     required this.timestamp,
+    required this.mess,
   });
 
   Map<String, dynamic> toJson() {
@@ -17,6 +19,7 @@ class FeedbackModel {
       'text': text,
       'imageUrl': imageUrl,
       'timestamp': timestamp.toIso8601String(), 
+      'mess': mess,
     };
   }
 
@@ -26,6 +29,7 @@ class FeedbackModel {
       text: json['text'],
       imageUrl: json['imageUrl'],
       timestamp: DateTime.parse(json['timestamp']),
+      mess: json['mess'],
     );
   }
 }
