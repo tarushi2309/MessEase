@@ -20,6 +20,12 @@ class _HomeScreenState extends State<HomeScreen> {
   DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
 
   @override
+  void initState() {
+    super.initState();
+    db.removePrevAddons();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<MessMenuModel?>(
       future: db.getMenu(),
@@ -176,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         FutureBuilder<List<AddonModel>>(
-          db.removePrevAddons(),
+          //db.removePrevAddons(),
           future: db.fetchSelectedAddons(), // Call function from database.dart
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
