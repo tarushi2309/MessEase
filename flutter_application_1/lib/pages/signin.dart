@@ -172,7 +172,7 @@ class _SignInFormState extends State<SignInForm> {
                   {
                     String name = userInfo['given_name']+" "+userInfo['family_name'];
                     await showDegreeDialog(context);
-                    await _uploadProfilePicture();
+                    //await showImageUploadDialog(context);
                     String entryNo = email.substring(firstDigitMatch.start, lastDigitMatch.end);
                     String year;
                     if(entryNo.length==11) {
@@ -291,7 +291,7 @@ class _SignInFormState extends State<SignInForm> {
   }
 
 
-   Future<void> _uploadProfilePicture() async {
+   /*Future<void> _uploadProfilePicture() async {
     try {
       // Show the dialog and wait for the returned URL
       String? imageUrl = await showDialog<String>(
@@ -303,14 +303,7 @@ class _SignInFormState extends State<SignInForm> {
           downloadUrl = imageUrl; // Store the returned URL
         });
       }
-    }
-    catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text("Error saving profile picture to Firestore. Error details:\n$e"),
-      ));
-    }
-   }
+    }*/
 
 
   @override
