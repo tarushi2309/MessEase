@@ -25,6 +25,7 @@ import 'package:url_strategy/url_strategy.dart';
 import 'package:webapp/pages/boha/mess.dart';
 import 'package:webapp/pages/boha/announcements.dart';
 import 'package:webapp/pages/boha/mess_committee.dart';
+import 'package:webapp/pages/boha/feedback.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,6 +80,7 @@ class MyApp extends StatelessWidget {
         '/rebate_history': (context) => RebateHistoryPage(),
         '/mess_committee': (context) => MessCommitteePage(),
         '/announcements': (context) => AnnouncementPage(),
+        '/feedback': (context) => FeedbackScreen(),
         //'/profile': (context) => MessManagerProfile(),
       },
     );

@@ -3,6 +3,7 @@ class StudentModel {
   final String degree;
   final String password;
   final String entryNumber;
+  final String mess;
   final int year;
   int refund=0;
   int monthly_refund;
@@ -16,6 +17,7 @@ class StudentModel {
     required this.entryNumber,
     required this.year,
     required this.password,
+    required this.mess,
     refund=0,
     this.monthly_refund=0,
     this.days_of_rebate=0,
@@ -28,6 +30,7 @@ class StudentModel {
         'uid': uid,
         'degree': degree,
         'entryNumber': entryNumber,
+        'mess': mess,
         'year': year,
         'password': password,
         'refund':0,
@@ -42,6 +45,7 @@ class StudentModel {
         uid: json['uid'] as String,
         degree: json['degree'] as String,
         entryNumber: json['entryNumber'] as String,
+        mess: json['mess'] as String,
         year: json['year'] as int,
         password: json['password'] as String,
         refund: json['refund'] as int,

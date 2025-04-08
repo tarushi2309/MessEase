@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:webapp/components/header_admin.dart';
 
 class RebateData {
   final String studentId;
@@ -100,7 +101,11 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Rebate History - $messName')),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        //title: Text('Rebate History - $messName'),
+        child: Header(currentPage: 'Rebate History'),
+      ),
       body: Column(
         children: [
           Padding(

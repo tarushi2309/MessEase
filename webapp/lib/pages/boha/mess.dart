@@ -49,8 +49,8 @@ class MessCommitteePage extends StatelessWidget {
       children: [
         TableCell(child: Padding(padding: EdgeInsets.all(8), child: Text('Mess Name', style: TextStyle(fontWeight: FontWeight.bold)))),
         TableCell(child: Padding(padding: EdgeInsets.all(8), child: Text('Mess Manager', style: TextStyle(fontWeight: FontWeight.bold)))),
-        TableCell(child: Padding(padding: EdgeInsets.all(8), child: Text('Number of Committee members', style: TextStyle(fontWeight: FontWeight.bold)))),
-        TableCell(child: Padding(padding: EdgeInsets.all(8), child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold)))),
+        TableCell(child: Padding(padding: EdgeInsets.all(8), child: Text('Mess Committee', style: TextStyle(fontWeight: FontWeight.bold)))),
+        TableCell(child: Padding(padding: EdgeInsets.all(8), child: Text('Feedbacks', style: TextStyle(fontWeight: FontWeight.bold)))),
       ],
     );
   }
@@ -60,7 +60,6 @@ class MessCommitteePage extends StatelessWidget {
       children: [
         TableCell(child: Padding(padding: const EdgeInsets.all(8), child: Text(messName))),
         TableCell(child: Padding(padding: const EdgeInsets.all(8), child: Text(manager))),
-        TableCell(child: Padding(padding: const EdgeInsets.all(8), child: Text(studentCount))),
         TableCell(
           child: Padding(
             padding: const EdgeInsets.all(8),
@@ -69,6 +68,21 @@ class MessCommitteePage extends StatelessWidget {
                 Navigator.pushNamed(
                   context,
                   '/mess_committee_boha',
+                  arguments: messName,  
+                );
+              },
+              child: const Text('Check Details'),
+            ),
+          ),
+        ),
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/feedback',
                   arguments: messName,  
                 );
               },
