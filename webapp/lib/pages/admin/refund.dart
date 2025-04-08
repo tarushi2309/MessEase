@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
+import 'package:webapp/components/header_admin.dart';
+
 class RefundPage extends StatelessWidget {
   const RefundPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rebate Status'),
-        centerTitle: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Header(currentPage: 'Refund'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

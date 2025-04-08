@@ -37,12 +37,12 @@ class _UserPageState extends State<UserPage> {
     DatabaseModel dbService = DatabaseModel(uid: uid);
     try {
       
-      DocumentSnapshot student_info = await dbService.getStudentInfo(uid);
+      DocumentSnapshot studentInfo = await dbService.getStudentInfo(uid);
 
       // Update the user and student models inside setState to rebuild the UI
       setState(() {
         student =
-            StudentModel.fromJson(student_info.data() as Map<String, dynamic>);
+            StudentModel.fromJson(studentInfo.data() as Map<String, dynamic>);
         isDataLoaded = true; // Set the loading flag to true
       });
     } catch (e) {
@@ -74,11 +74,10 @@ class _UserPageState extends State<UserPage> {
     }
     return Scaffold(
       backgroundColor: Colors.white,
-      body: !isDataLoaded // Show a loading spinner while data is loading
+      body: !isDataLoaded
           ? Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                //Header(scaffoldKey: GlobalKey<ScaffoldState>()),
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -99,74 +98,47 @@ class _UserPageState extends State<UserPage> {
                           Icon(Icons.arrow_back, color: Colors.white, size: 28),
                     ),
                     Positioned(
-                      bottom: 5,
-                      left: 0,
-                      right: 0,
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.grey.shade300,
-                            child: Icon(Icons.person,
-                                size: 50, color: Colors.white),
-                          ),
-                          SizedBox(height: 10),
-                          Text("${student.name}".toUpperCase(),
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w500)),
-                          SizedBox(height: 5),
-                        ],
+                      bottom: -50,
+                      left: MediaQuery.of(context).size.width / 2 - 50,
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey.shade300,
+                        backgroundImage: student.url != ''
+                            ? NetworkImage(student.url)
+                            : null,
+                        child: student.url == ''
+                            ? Icon(Icons.person, size: 50, color: Colors.white)
+                            : null,
                       ),
                     ),
                   ],
                 ),
+                SizedBox(height: 60),
+                Text(student.name.toUpperCase(),
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
+                SizedBox(height: 10),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            margin: EdgeInsets.symmetric(horizontal: 10),
-                            padding: EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(color: Colors.black12, blurRadius: 2),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("User Details",
-                                    style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500)),
-                                SizedBox(height: 8),
-                                infoRow(
-                                    "Entry Number", "${student.entryNumber}"),
-                                infoRow("Degree", "${student.degree}"),
-                                infoRow("Year", "${student.year}"),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16.0),
+                      child:
+                          Column(crossAxisAlignment:
+                              CrossAxisAlignment.start, children:
+                              [
+                                infoRow("Entry Number", student.entryNumber),
+                                infoRow("Degree", student.degree),
+                                infoRow("Year", student.year),
                                 infoRow("Mess", "Konark Mess"),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10,),
-                          
-                          _buildBankDetailsTile(),
-                          
-                          _buildIssueNewMessIDTile(),
-                          SizedBox(height: 20),
-                        ],
-                      ),
+                             const SizedBox(height: 10),
+                                _buildBankDetailsTile(),
+                                _buildIssueNewMessIDTile(),
+                              ]),
                     ),
                   ),
                 ),
-                CustomNavigationBar(),
+                 CustomNavigationBar(),
               ],
             ),
     );
@@ -261,7 +233,7 @@ Widget _buildIssueNewMessIDTile() {
             // infoRow("Account Number", "${student.bank_account_number}"),
             // infoRow("IFSC Code", "${student.ifsc_code}"),
             infoRow("Account Number", "${student.bank_account_number}"),
-            infoRow("IFSC Code", "${student.ifsc_code}")
+            infoRow("IFSC Code", student.ifsc_code)
           ],
         ),
       ),
