@@ -29,7 +29,8 @@ class SignInScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView( // Ensures content is scrollable
+          child: SingleChildScrollView(
+            // Ensures content is scrollable
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -45,7 +46,7 @@ class SignInScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  "Welcome Back",
+                  "Welcome",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.black,
@@ -54,14 +55,13 @@ class SignInScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  "Sign in with your email and password",
+                  "Sign in with your Google Account",
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Color(0xFF757575)),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 30),
                 const SignInForm(),
-                const SizedBox(height: 16),
-                const NoAccountText(),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -70,8 +70,6 @@ class SignInScreen extends StatelessWidget {
     );
   }
 }
-
-
 
 class SignInForm extends StatefulWidget {
   const SignInForm({super.key});
@@ -93,8 +91,7 @@ class _SignInFormState extends State<SignInForm> {
         // Attempt to sign in using Firebase Authentication.
         UserCredential userCredential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(
-                email: emailController.text,
-                password: passwordController.text);
+                email: emailController.text, password: passwordController.text);
 
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
@@ -143,155 +140,145 @@ class _SignInFormState extends State<SignInForm> {
     }
   }
 
-  Future<void> signInGoogle() async{
-    try{
+  Future<void> signInGoogle() async {
+    try {
       await FirebaseAuth.instance.signOut();
       await GoogleSignIn().signOut();
-        final googleUser = await GoogleSignIn().signIn();
-        final googleAuth = await googleUser?.authentication;
-        final cred = GoogleAuthProvider.credential(idToken: googleAuth?.idToken,accessToken: googleAuth?.accessToken);
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(cred);
-      
-        final AdditionalUserInfo? info = userCredential.additionalUserInfo;
-            Map<String,dynamic>? userInfo=info?.profile;
-            if(userInfo != null)
-            {
-              String checkIIT = userInfo['hd'];
-              if(checkIIT == "iitrpr.ac.in")
-              {
-                String email=userInfo['email'];
-                final digitRegex = RegExp(r'\d');
-                final firstDigitMatch = digitRegex.firstMatch(email);
-                final lastDigitMatch = digitRegex.allMatches(email).lastOrNull;
-                if(firstDigitMatch!=null&&lastDigitMatch!=null)
-                {
-                  String uid = userCredential.user!.uid;
-                  Provider.of<UserProvider>(context, listen: false).setUid(uid);
-                  bool newUser=info!.isNewUser;
-                  if(newUser)
-                  {
-                    String name = userInfo['given_name']+" "+userInfo['family_name'];
-                    await showDegreeDialog(context);
-                    //await showImageUploadDialog(context);
-                    String entryNo = email.substring(firstDigitMatch.start, lastDigitMatch.end);
-                    String year;
-                    if(entryNo.length==11) {
-                      year = entryNo.substring(0,4);
-                    } else {
-                      year = "20${entryNo.substring(0,2)}";
-                    }
-                    final DatabaseModel dbService =
-                      DatabaseModel(uid:uid);
-                    StudentModel student = StudentModel(
-                    name: name ,
-                    email: email,
-                    uid: uid,
-                    degree: selectedDegree ?? '',
-                    entryNumber:entryNo,
-                    year: year,
-                    url:downloadUrl ?? '',
-                    );
-                    await dbService.addStudentDetails(student);
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text(
-                      "Sign In Successful",
-                      style: TextStyle(fontSize: 20.0),
-                    ),
-                  ));
-                  // Navigate to your home screen after successful login.
-                  // Replace HomeScreen() with your actual home screen widget.
-                  Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => HomeScreen()));
-                }
-                else
-                {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  backgroundColor: Colors.orangeAccent,
-                  content: Text(
-                    "This app is for students , please use the website for other stakeholders!!.",
-                    style: TextStyle(fontSize: 18.0),
-                  )));
-                }
+      final googleUser = await GoogleSignIn().signIn();
+      final googleAuth = await googleUser?.authentication;
+      final cred = GoogleAuthProvider.credential(
+          idToken: googleAuth?.idToken, accessToken: googleAuth?.accessToken);
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(cred);
+
+      final AdditionalUserInfo? info = userCredential.additionalUserInfo;
+      Map<String, dynamic>? userInfo = info?.profile;
+      if (userInfo != null) {
+        String checkIIT = userInfo['hd'];
+        if (checkIIT == "iitrpr.ac.in") {
+          String email = userInfo['email'];
+          final digitRegex = RegExp(r'\d');
+          final firstDigitMatch = digitRegex.firstMatch(email);
+          final lastDigitMatch = digitRegex.allMatches(email).lastOrNull;
+          if (firstDigitMatch != null && lastDigitMatch != null) {
+            String uid = userCredential.user!.uid;
+            Provider.of<UserProvider>(context, listen: false).setUid(uid);
+            bool newUser = info!.isNewUser;
+            if (newUser) {
+              String name =
+                  userInfo['given_name'] + " " + userInfo['family_name'];
+              await showDegreeDialog(context);
+              await _uploadProfilePicture();
+              String entryNo =
+                  email.substring(firstDigitMatch.start, lastDigitMatch.end);
+              String year;
+              if (entryNo.length == 11) {
+                year = entryNo.substring(0, 4);
+              } else {
+                year = "20${entryNo.substring(0, 2)}";
               }
-              else
-              {
-                
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              final DatabaseModel dbService = DatabaseModel(uid: uid);
+              StudentModel student = StudentModel(
+                name: name,
+                email: email,
+                uid: uid,
+                degree: selectedDegree ?? '',
+                entryNumber: entryNo,
+                year: year,
+                url: downloadUrl ?? '',
+              );
+              await dbService.addStudentDetails(student);
+            }
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                "Sign In Successful",
+                style: TextStyle(fontSize: 20.0),
+              ),
+            ));
+            // Navigate to your home screen after successful login.
+            // Replace HomeScreen() with your actual home screen widget.
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => HomeScreen()));
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 backgroundColor: Colors.orangeAccent,
                 content: Text(
-                  "You are not authorised to use this app.",
+                  "This app is for students , please use the website for other stakeholders!!.",
                   style: TextStyle(fontSize: 18.0),
                 )));
-              }
-            }
-            else
-            {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              backgroundColor: Colors.orangeAccent,
-              content: Text(
-                "No user found.",
-                style: TextStyle(fontSize: 18.0),
-              )));
-            }
-        } on FirebaseAuthException {
+          }
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               backgroundColor: Colors.orangeAccent,
               content: Text(
-                "Sign In Failed. Please try again.",
+                "You are not authorised to use this app.",
                 style: TextStyle(fontSize: 18.0),
               )));
-        
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.orangeAccent,
+            content: Text(
+              "No user found.",
+              style: TextStyle(fontSize: 18.0),
+            )));
       }
+    } on FirebaseAuthException {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Colors.orangeAccent,
+          content: Text(
+            "Sign In Failed. Please try again.",
+            style: TextStyle(fontSize: 18.0),
+          )));
     }
-
-  
-  Future<void> showDegreeDialog(BuildContext context) async {
-  List<String> degreeOptions = ['B.Tech', 'M.Tech', 'M.Sc','PHD', 'Intern'];
-
-  await showDialog(
-    context: context,
-    barrierDismissible: false, // Prevent dismissing without selecting
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text("Select Your Degree"),
-            content: DropdownButton<String>(
-              isExpanded: true,
-              hint: const Text("Choose your degree"),
-              value: selectedDegree,
-              items: degreeOptions.map((degree) {
-                return DropdownMenuItem(
-                  value: degree,
-                  child: Text(degree),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedDegree = value;
-                });
-              },
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: selectedDegree == null
-                    ? null // Disable button if no selection is made
-                    : () {
-                        Navigator.of(context).pop(selectedDegree); // Pass the selected degree back
-                      },
-                child: const Text("Continue"),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
   }
 
+  Future<void> showDegreeDialog(BuildContext context) async {
+    List<String> degreeOptions = ['B.Tech', 'M.Tech', 'M.Sc', 'PHD', 'Intern'];
 
-   /*Future<void> _uploadProfilePicture() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing without selecting
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Select Your Degree"),
+              content: DropdownButton<String>(
+                isExpanded: true,
+                hint: const Text("Choose your degree"),
+                value: selectedDegree,
+                items: degreeOptions.map((degree) {
+                  return DropdownMenuItem(
+                    value: degree,
+                    child: Text(degree),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedDegree = value;
+                  });
+                },
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: selectedDegree == null
+                      ? null // Disable button if no selection is made
+                      : () {
+                          Navigator.of(context).pop(
+                              selectedDegree); // Pass the selected degree back
+                        },
+                  child: const Text("Continue"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _uploadProfilePicture() async {
     try {
       // Show the dialog and wait for the returned URL
       String? imageUrl = await showDialog<String>(
@@ -303,8 +290,13 @@ class _SignInFormState extends State<SignInForm> {
           downloadUrl = imageUrl; // Store the returned URL
         });
       }
-    }*/
-
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+            "Error saving profile picture to Firestore. Error details:\n$e"),
+      ));
+    }
+  }
 
   @override
   void dispose() {
@@ -316,149 +308,60 @@ class _SignInFormState extends State<SignInForm> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Form(
       child: Column(
         children: [
-          // Email Field
-          TextFormField(
-            controller: emailController,
-            textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              hintText: "Enter your email",
-              labelText: "Email",
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              hintStyle: const TextStyle(color: Color(0xFF757575)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-              suffixIcon: Transform.scale(
-                scale: 0.4, // Adjust the scale factor
-                child: SvgPicture.string(mailIcon),
-              ),
-              border: authOutlineInputBorder,
-              enabledBorder: authOutlineInputBorder,
-              focusedBorder: authOutlineInputBorder.copyWith(
-                  borderSide: const BorderSide(color: Color(0xFFFF7643))),
-            ),
-          ),
-          // Password Field
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: TextFormField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: "Enter your password",
-                labelText: "Password",
-                floatingLabelBehavior: FloatingLabelBehavior.always,
-                hintStyle: const TextStyle(color: Color(0xFF757575)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                suffixIcon: Transform.scale(
-                  scale: 0.4, // Adjust the scale factor
-                  child: SvgPicture.string(lockIcon),
+          Center(
+            child: SizedBox(
+              width: 250, // 👈 smaller width — adjust as you like
+              child: ElevatedButton.icon(
+                onPressed: signInGoogle,
+                icon: ClipOval(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Image.asset(
+                      'assets/google_logo.png',
+                      height: 24,
+                      width: 24,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-                border: authOutlineInputBorder,
-                enabledBorder: authOutlineInputBorder,
-                focusedBorder: authOutlineInputBorder.copyWith(
-                    borderSide: const BorderSide(color: Color(0xFFFF7643))),
+                
+                label: const Text(
+                  "Sign in with Google",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: Color(0xFFFF7643),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
               ),
             ),
-          ),
-          // Continue Button
-          ElevatedButton(
-            onPressed: signIn,
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: const Color(0xFFFF7643),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 48),
-              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 24.0),
-              shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),      
-            ),
-            child: const Center(
-                    child: Text(
-                      "Sign In",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-          ),
-          ElevatedButton(
-            onPressed: signInGoogle,
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: const Color(0xFFFF7643),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 48),
-              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 24.0),
-              shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),      
-            ),
-            child: const Center(
-                    child: Text(
-                      "Sign In with Google",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
           ),
         ],
       ),
-    
-    );
-  }
-}
-
-
-class NoAccountText extends StatelessWidget {
-  const NoAccountText({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text(
-          "Don’t have an account? ",
-          style: TextStyle(color: Color(0xFF757575)),
-        ),
-        GestureDetector(
-          onTap: () {
-            // Handle navigation to Sign Up
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) =>  HomeScreen()),
-            );
-          },
-          child: const Text(
-            "Sign Up",
-            style: TextStyle(
-              color: Color(0xFFFF7643),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
 
 // Icons
 const mailIcon =
-'''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
+    '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
   <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/>
 </svg>''';
 
 const lockIcon =
-'''<svg width="15" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    '''<svg width="15" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path fill-rule="evenodd" clip-rule="evenodd" d="M9.24419 11.5472C9.24419 12.4845 8.46279 13.2453 7.5 13.2453C6.53721 13.2453 5.75581 12.4845 5.75581 11.5472C5.75581 10.6098 6.53721 9.84906 7.5 9.84906C8.46279 9.84906 9.24419 10.6098 9.24419 11.5472ZM13.9535 14.0943C13.9535 15.6863 12.6235 16.9811 10.9884 16.9811H4.01163C2.37645 16.9811 1.04651 15.6863 1.04651 14.0943V9C1.04651 7.40802 2.37645 6.11321 4.01163 6.11321H10.9884C12.6235 6.11321 13.9535 7.40802 13.9535 9V14.0943ZM4.53488 3.90566C4.53488 2.31368 5.86483 1.01887 7.5 1.01887C8.28488 1.01887 9.03139 1.31943 9.59477 1.86028C10.1564 2.41387 10.4651 3.14066 10.4651 3.90566V5.09434H4.53488V3.90566ZM11.5116 5.12745V3.90566C11.5116 2.87151 11.0956 1.89085 10.3352 1.14028C9.5686 0.405 8.56221 0 7.5 0C5.2875 0 3.48837 1.7516 3.48837 3.90566V5.12745C1.52267 5.37792 0 7.01915 0 9V14.0943C0 16.2484 1.79913 18 4.01163 18H10.9884C13.2 18 15 16.2484 15 14.0943V9C15 7.01915 13.4773 5.37792 11.5116 5.12745Z" fill="#000000"/>
 </svg>''';
