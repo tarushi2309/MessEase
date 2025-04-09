@@ -242,6 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               
                             }
 
+                            print(studentDoc.data());
+
+
                             final mess = studentDoc['mess']; // Get the 'mess' field
                             print("Fetched Mess: $mess");
                             await submitFeedback(
