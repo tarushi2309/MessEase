@@ -16,6 +16,7 @@ class CurrentRebate {
   final String entryNumber;
   final String studentName;
   final String req_id;
+  final String? url;
 
   CurrentRebate({
     required this.startDate,
@@ -25,6 +26,7 @@ class CurrentRebate {
     required this.studentName,
     required this.studentId,
     required this.req_id,
+    required this.url,
   });
 }
 
@@ -102,15 +104,11 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
             .doc(studentId)
             .get();
 
-        // Fetch user data using studentId
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('user')
-            .doc(studentId)
-            .get();
+        
 
-        if (studentDoc.exists && userDoc.exists) {
+        if (studentDoc.exists ) {
           String entryNumber = studentDoc['entryNumber']; // Get entry number
-          String studentName = userDoc['name']; // Get student name
+          String studentName = studentDoc['name']; // Get student name
 
           CurrentRebates.add(
             CurrentRebate(
@@ -121,6 +119,7 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
               studentName: studentName,
               studentId: studentId,
               req_id: reqId,
+              url:studentDoc['url'],
             ),
           );
         }
@@ -431,30 +430,20 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                                                 final rebate =
                                                     filteredRequests[index];
 
-                                                return Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                      vertical: 12,
-                                                      horizontal: 8),
+                                                 return Container(
+                                                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                                                   decoration: BoxDecoration(
-                                                    color: index % 2 == 0
-                                                        ? Colors.grey[50]
-                                                        : Colors.grey[
-                                                            100], // alternating row color
+                                                    color: index % 2 == 0 ? Colors.grey[50] : Colors.grey[100], // Alternating row colors
                                                     border: Border(
-                                                      bottom: BorderSide(
-                                                          color: Colors
-                                                              .grey[300]!),
+                                                      bottom: BorderSide(color: Colors.grey[300]!),
                                                     ),
                                                   ),
                                                   child: Row(
                                                     children: [
-                                                      _buildBodyCell(
-                                                          rebate.studentName),
-                                                      _buildBodyCell(
-                                                          rebate.entryNumber),
-                                                      _buildBodyCell(
-                                                          rebate.hostel),
-                                    
+                                                      _buildBodyCell(rebate.url ?? ""), // Student Image
+                                                      _buildBodyCell(rebate.studentName), // Student Name
+                                                      _buildBodyCell(rebate.entryNumber), // Entry Number
+                                                      _buildBodyCell(rebate.hostel), // Hostel Name
                                                     ],
                                                   ),
                                                 );
@@ -493,11 +482,15 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
 
   Widget _buildBodyCell(dynamic content) {
     return Expanded(
-      child: Center(
-        child: content is Widget
-            ? content
-            : Text(content.toString(), style: TextStyle(fontSize: 14)),
-      ),
-    );
+    child: Center(
+      child: content is String && content.startsWith('http') // Check if it's a valid URL
+          ? CircleAvatar(
+              radius: 20,
+              backgroundImage: NetworkImage(content), // Display image from URL
+              onBackgroundImageError: (_, __) => Icon(Icons.person), // Fallback icon
+            )
+          : Text(content.toString(), style: TextStyle(fontSize: 14)),
+    ),
+  );
   }
 }

@@ -102,14 +102,11 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
           .get();
 
       // Fetch user data using studentId
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('user')
-          .doc(studentId)
-          .get();
+      
 
-      if (studentDoc.exists && userDoc.exists) {
+      if (studentDoc.exists) {
         String entryNumber = studentDoc['entryNumber']; // Get entry number
-        String studentName = userDoc['name']; // Get student name
+        String studentName = studentDoc['name']; // Get student name
 
         pendingRebates.add(
           PendingRebate(
