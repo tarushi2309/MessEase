@@ -47,10 +47,8 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
 
   Future<void> fetchUserNameAndFeedbacks() async {
     try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('user')
-          .doc(uid)
-          .get();
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('user').doc(uid).get();
 
       if (userDoc.exists) {
         messName = userDoc['name'];
@@ -101,8 +99,8 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
         final studentDataRaw = studentSnapshot.data();
 
         if (studentDataRaw == null) {
-            print("got null data");
-            continue;
+          print("got null data");
+          continue;
         }
 
         final studentData = studentDataRaw as Map<String, dynamic>;
@@ -144,8 +142,10 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
                   : FutureBuilder<List<FeedbackModelUI>>(
                       future: _feedbacks,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
                           return Center(
                             child: Column(
@@ -157,7 +157,8 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
                               ],
                             ),
                           );
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
                           return const Center(child: Text("No feedback found"));
                         } else {
                           List<FeedbackModelUI> feedbacks = snapshot.data!;
@@ -179,17 +180,20 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
                                   DataCell(Text(feedback.studentEmail)),
                                   DataCell(Text(feedback.text)),
                                   DataCell(
-                                    feedback.imageUrl != null && feedback.imageUrl!.isNotEmpty
+                                    feedback.imageUrl != null &&
+                                            feedback.imageUrl!.isNotEmpty
                                         ? InkWell(
                                             onTap: () {
                                               showDialog(
                                                 context: context,
                                                 builder: (_) => AlertDialog(
-                                                  content: Image.network(feedback.imageUrl!),
+                                                  content: Image.network(
+                                                      feedback.imageUrl!),
                                                 ),
                                               );
                                             },
-                                            child: const Icon(Icons.image, color: Colors.blue),
+                                            child: const Icon(Icons.image,
+                                                color: Colors.blue),
                                           )
                                         : const Text("No image"),
                                   ),
