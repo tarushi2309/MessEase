@@ -47,10 +47,14 @@ class _RebateFormPageState extends State<RebateFormPage> {
       firstDate: DateTime(2023),
       lastDate: DateTime(2100),
     );
-    if (pickedDate != null) {
+    if (pickedDate != null && pickedDate.isAfter(DateTime.now())) {
       setState(() {
         controller.text = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
       });
+    }
+    else
+    {
+      controller.text = "";
     }
   }
 
@@ -300,7 +304,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
         onTap: () => _selectDate(context, controller),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return "Please select a date";
+            return "Please select a valid date";
           }
           return null;
         },
