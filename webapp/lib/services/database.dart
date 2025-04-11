@@ -76,7 +76,7 @@ class DatabaseModel {
     }
 
     try {
-      double parsedPrice = double.parse(price); // Convert price to double
+      int parsedPrice = int.parse(price); // Convert price to double
       print("messId: $messId");
       if (messId == null) {
         return "Error: Mess ID not found";
@@ -182,24 +182,7 @@ class DatabaseModel {
         .toList();
   }
 
-  Future<List<AddonModel>> fetchSelectedAddons() async {
-
-    if (messId == null) {
-      print("No messId found.");
-      return [];
-    }
-
-    QuerySnapshot query =
-        await _firestore
-            .collection('addons')
-            .where('messId', isEqualTo: messId)
-            .where('isSelected', isEqualTo: true)
-            .get();
-
-    return query.docs
-        .map((doc) => AddonModel.fromJson(doc.data() as Map<String, dynamic>))
-        .toList();
-  }
+  
 
    Future<dynamic> addMessDetails(MessModel mess) async {
     return await FirebaseFirestore.instance

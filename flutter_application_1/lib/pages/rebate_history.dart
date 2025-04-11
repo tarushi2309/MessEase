@@ -195,7 +195,7 @@ class RebateSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int rebateAmount = rebateDays * 130;
-    double filledPercentage = rebateDays / 21;
+    double filledPercentage = rebateDays / 20;
     Color pieColor = Color(0xFFE06635);
 
     return Card(
@@ -242,7 +242,7 @@ class RebateSummaryCard extends StatelessWidget {
                         ),
                         PieChartSectionData(
                           color: Colors.grey[300]!,
-                          value: (21 - rebateDays).toDouble(),
+                          value: (20 - rebateDays).toDouble(),
                           radius: 30,
                         ),
                       ],
@@ -252,7 +252,7 @@ class RebateSummaryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Text('$rebateDays / 21 Days',
+                Text('$rebateDays / 20 Days',
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
               ],
             ),
