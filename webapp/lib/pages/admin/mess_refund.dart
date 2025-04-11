@@ -14,7 +14,7 @@ class RebateData {
   final String ifscCode;
   final int refund;
   final String email;
-  String status;
+  final String status;
 
   RebateData({
     required this.docId,
@@ -40,8 +40,10 @@ class RebateHistoryPage extends StatefulWidget {
 
 class _RebateHistoryPageState extends State<RebateHistoryPage> {
   late String messName;
-  late Future<List<RebateData>> _rebateHistory;
+  List<RebateData> _rows = [];
+  bool _loadingRows = true;
 
+  // Filters & sorting
   String searchQuery = '';
   String selectedYear = 'All';
   int? minDays;
@@ -58,7 +60,12 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)!.settings.arguments;
     messName = args is String ? args.toLowerCase() : 'unknown';
-    _rebateHistory = fetchRebateHistory(messName);
+    fetchRebateHistory(messName).then((list) {
+      setState(() {
+        _rows = list;
+        _loadingRows = false;
+      });
+    });
   }
 
   Future<List<RebateData>> fetchRebateHistory(String messName) async {
@@ -69,32 +76,29 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
 
     final List<RebateData> rebateList = [];
     for (final rebateDoc in rebateQuery.docs) {
-      final rebateData = rebateDoc.data();
+      final data = rebateDoc.data();
       final docId = rebateDoc.id;
+      final studentId = data['student_id'] is String
+          ? data['student_id']
+          : data['student_id'].path.split('/').last;
 
-      final studentId = rebateData['student_id'] is String
-          ? rebateData['student_id']
-          : rebateData['student_id'].path.split('/').last;
-
-      final studentDoc = await FirebaseFirestore.instance
+      final studentSnap = await FirebaseFirestore.instance
           .collection('students')
           .where('uid', isEqualTo: studentId)
           .get();
-      final studentNameDoc = await FirebaseFirestore.instance
+      final userSnap = await FirebaseFirestore.instance
           .collection('user')
           .where('uid', isEqualTo: studentId)
           .get();
 
       final studentData =
-          studentDoc.docs.isNotEmpty ? studentDoc.docs.first.data() : {};
-      final studentNameData = studentNameDoc.docs.isNotEmpty
-          ? studentNameDoc.docs.first.data()
-          : {};
+          studentSnap.docs.isNotEmpty ? studentSnap.docs.first.data() : {};
+      final userData = userSnap.docs.isNotEmpty ? userSnap.docs.first.data() : {};
 
       rebateList.add(RebateData(
         docId: docId,
         studentId: studentId,
-        name: studentNameData['name']?.toString() ?? 'Unknown',
+        name: userData['name']?.toString() ?? 'Unknown',
         entryNumber: studentData['entryNumber']?.toString() ?? 'Unknown',
         year: studentData['year']?.toString() ?? 'Unknown',
         degree: studentData['degree']?.toString() ?? 'Unknown',
@@ -103,17 +107,15 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
             studentData['bank_account_number']?.toString() ?? 'Unknown',
         ifscCode: studentData['ifsc_code']?.toString() ?? 'Unknown',
         refund: studentData['refund'] ?? 0,
-        email: studentNameData['email']?.toString() ?? 'Unknown',
-        status: rebateData['status']?.toString() ?? 'Pending',
+        email: userData['email']?.toString() ?? 'Unknown',
+        status: data['status']?.toString() ?? 'Pending',
       ));
     }
-
     return rebateList;
   }
 
   List<RebateData> _applyFilters(List<RebateData> list) {
     final q = searchQuery.toLowerCase();
-
     final rows = list.where((r) {
       final okQ = r.name.toLowerCase().contains(q) ||
           r.entryNumber.toLowerCase().contains(q);
@@ -136,16 +138,6 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
         maxDays = null;
       });
 
-  Future<void> updateStatus(String docId, String newStatus) async {
-    await FirebaseFirestore.instance
-        .collection('rebates')
-        .doc(docId)
-        .update({'status': newStatus});
-    setState(() {
-      _rebateHistory = fetchRebateHistory(messName);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,6 +150,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            // filter row
             Row(
               children: [
                 Expanded(
@@ -218,162 +211,37 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: FutureBuilder<List<RebateData>>(
-                future: _rebateHistory,
-                builder: (context, snap) {
-                  final rows = _applyFilters(snap.data ?? []);
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final tableWidth =
-                                MediaQuery.of(context).size.width * 0.95;
-                            return Center(
-                              child: Container(
-                                width: tableWidth,
-                                child: Card(
-                                  color: Colors.white,
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[300],
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(16),
-                                            topRight: Radius.circular(16),
-                                          ),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 14, horizontal: 8),
-                                        child: Row(
-                                          children: [
-                                            _buildHeaderCell('Name'),
-                                            _buildHeaderCell('Entry Number'),
-                                            _buildHeaderCell('Year'),
-                                            _buildHeaderCell('Days'),
-                                            _buildHeaderCell('Amount'),
-                                            _buildHeaderCell('Account Number'),
-                                            _buildHeaderCell('IFSC Code'),
-                                            _buildHeaderCell('Actions'),
-                                          ],
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: const BorderRadius.only(
-                                            bottomLeft: Radius.circular(16),
-                                            bottomRight: Radius.circular(16),
-                                          ),
-                                          child: rows.isEmpty
-                                              ? Container(
-                                                  color: Colors.grey[50],
-                                                  child: const Center(
-                                                    child: Text(
-                                                        'No rebate records.'),
-                                                  ),
-                                                )
-                                              : ListView.builder(
-                                                  padding: EdgeInsets.zero,
-                                                  itemCount: rows.length,
-                                                  itemBuilder:
-                                                      (context, index) {
-                                                    final r = rows[index];
-                                                    final rowColor = index.isEven
-                                                        ? Colors.grey[50]
-                                                        : Colors.grey[100];
-                                                    return Container(
-                                                      color: rowColor,
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          vertical: 12,
-                                                          horizontal: 8),
-                                                      child: Row(
-                                                        children: [
-                                                          _buildBodyCell(r.name),
-                                                          _buildBodyCell(
-                                                              r.entryNumber),
-                                                          _buildBodyCell(r.year),
-                                                          _buildBodyCell(
-                                                              r.numberOfDays),
-                                                          _buildBodyCell(
-                                                              '₹${r.refund}'),
-                                                          _buildBodyCell(
-                                                              r.bankAccountNumber),
-                                                          _buildBodyCell(
-                                                              r.ifscCode),
-                                                          Expanded(
-                                                            child: Center(
-                                                              child: TextButton(
-                                                                onPressed: () {
-                                                                  final newStatus = r.status ==
-                                                                          'Pending'
-                                                                      ? 'Processed'
-                                                                      : 'Pending';
-                                                                  updateStatus(
-                                                                      r.docId,
-                                                                      newStatus);
-                                                                },
-                                                                child: Text(r.status ==
-                                                                        'Pending'
-                                                                    ? 'Mark Processed'
-                                                                    : 'Mark Pending'),
-                                                              ),
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+              child: _loadingRows
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildTable(),
+            ),
+            const SizedBox(height: 12),
+            // always-visible export button
+            Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.download, color: Colors.white),
+                  label: const Text('Export to Excel',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(const Color(0xFFF0753C)),
+                    padding: MaterialStateProperty.all<EdgeInsets>(
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
+                    shape: MaterialStateProperty.all<OutlinedBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 12),
-                      Container(
-                        margin: const EdgeInsets.only(right: 20),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.download, color: Colors.white),
-                            label: const Text('Export to Excel',
-                                style:
-                                    TextStyle(fontSize: 16, color: Colors.white)),
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.all<Color>(
-                                      const Color(0xFFF0753C)),
-                              padding: MaterialStateProperty.all<EdgeInsets>(
-                                  const EdgeInsets.symmetric(
-                                      vertical: 12, horizontal: 20)),
-                              shape: MaterialStateProperty.all<OutlinedBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Export to Excel clicked')),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Export to Excel clicked')),
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -382,26 +250,131 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     );
   }
 
-  Widget _buildHeaderCell(String label) {
-    return Expanded(
-      child: Center(
-        child: Text(
-          label,
-          style: const TextStyle(
-              fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black87),
+  Widget _buildTable() {
+    final rows = _applyFilters(_rows);
+
+    return LayoutBuilder(builder: (context, constraints) {
+      final tableWidth = MediaQuery.of(context).size.width * 0.95;
+      return Center(
+        child: Container(
+          width: tableWidth,
+          child: Card(
+            color: Colors.white,
+            elevation: 2,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              children: [
+                // header strip (always shown)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  child: Row(
+                    children: [
+                      _buildHeaderCell('Name'),
+                      _buildHeaderCell('Entry Number'),
+                      _buildHeaderCell('Year'),
+                      _buildHeaderCell('Days'),
+                      _buildHeaderCell('Amount'),
+                      _buildHeaderCell('Account Number'),
+                      _buildHeaderCell('IFSC Code'),
+                      _buildHeaderCell('Actions'),
+                    ],
+                  ),
+                ),
+                // body (empty state or rows)
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
+                    ),
+                    child: rows.isEmpty
+                        ? Container(
+                            color: Colors.grey[50],
+                            child: const Center(
+                              child: Text('No rebate records.'),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: rows.length,
+                            itemBuilder: (context, index) {
+                              final r = rows[index];
+                              final rowColor = index.isEven
+                                  ? Colors.grey[50]
+                                  : Colors.grey[100];
+                              return Container(
+                                color: rowColor,
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 8),
+                                child: Row(
+                                  children: [
+                                    _buildBodyCell(r.name),
+                                    _buildBodyCell(r.entryNumber),
+                                    _buildBodyCell(r.year),
+                                    _buildBodyCell(r.numberOfDays),
+                                    _buildBodyCell('₹${r.refund}'),
+                                    _buildBodyCell(r.bankAccountNumber),
+                                    _buildBodyCell(r.ifscCode),
+                                    Expanded(
+                                      child: Center(
+                                        child: TextButton(
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            backgroundColor:
+                                                const Color(0xFFF0753C),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 8),
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _rows.removeWhere(
+                                                  (e) => e.docId == r.docId);
+                                            });
+                                          },
+                                          child: const Text('Process'),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  Widget _buildBodyCell(dynamic content) {
-    return Expanded(
-      child: Center(
-        child: content is Widget
-            ? content
-            : Text(content.toString(),
-                style: const TextStyle(fontSize: 14)),
-      ),
-    );
-  }
+  Widget _buildHeaderCell(String label) => Expanded(
+        child: Center(
+          child: Text(label,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Colors.black87)),
+        ),
+      );
+
+  Widget _buildBodyCell(dynamic content) => Expanded(
+        child: Center(
+          child: content is Widget
+              ? content
+              : Text(content.toString(),
+                  style: const TextStyle(fontSize: 14)),
+        ),
+      );
 }

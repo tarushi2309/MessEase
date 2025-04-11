@@ -6,7 +6,6 @@ import 'package:webapp/pages/boha/menu_page.dart';
 import 'package:webapp/pages/mess_manager/current_rebate.dart';
 import 'package:webapp/pages/mess_manager/mess_committee.dart';
 import 'package:webapp/pages/mess_manager/feedback.dart';
-import 'package:webapp/pages/mess_manager/profile.dart';
 import 'package:webapp/pages/student/get_details.dart';
 
 import 'firebase_options.dart';
