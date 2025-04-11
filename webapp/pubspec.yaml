@@ -48,6 +48,9 @@ dependencies:
   image_picker: ^1.1.2
   imgbb: any
   http: ^1.2.2
+  google_sign_in: ^6.3.0
+  font_awesome_flutter: ^10.6.0
+  dio: ^5.8.0+1
 
 dev_dependencies:
   flutter_test:
