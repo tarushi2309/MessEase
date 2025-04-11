@@ -17,14 +17,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+  DatabaseModel db = DatabaseModel();
 
   @override
   void initState() {
     super.initState();
-    db.removePrevAddons();
+    initialise();
   }
 
+  void initialise () async {
+    await db.getMessId(FirebaseAuth.instance.currentUser!.uid);
+    db.removePrevAddons();
+  }
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<MessMenuModel?>(
@@ -38,8 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         String today = DateFormat('EEEE').format(DateTime.now());
         MessMenuModel messMenu = menusnapshot.data ?? MessMenuModel(menu: {});
-        Map<String, List<String>> menuForDay = messMenu.menu[today] ??
-            {'Breakfast': [], 'Lunch': [], 'Dinner': []};
+        Map<String, List<String>> menuForDay =
+            messMenu.menu[today] ?? {'Breakfast': [], 'Lunch': [], 'Dinner': []};
 
         if (messMenu.menu.containsKey(today)) {
           menuForDay = messMenu.menu[today]!;
@@ -66,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 3, child: _buildAddOnsSection()),
+                    Expanded(flex:3 , child: _buildAddOnsSection()),
                     const SizedBox(width: 16),
                     Expanded(
                       flex: 4,
@@ -97,9 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   "Today's Menu",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                _buildMealSection("Breakfast", menuForDay['Breakfast']!),
-                _buildMealSection("Lunch", menuForDay['Lunch']!),
-                _buildMealSection("Dinner", menuForDay['Dinner']!),
+                _buildMealSection("Breakfast",menuForDay['Breakfast']!),
+                _buildMealSection("Lunch",menuForDay['Lunch']!),
+                _buildMealSection("Dinner",menuForDay['Dinner']!),
               ],
             ),
           ),
@@ -182,8 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         FutureBuilder<List<AddonModel>>(
-          //db.removePrevAddons(),
-          future: db.fetchSelectedAddons(), // Call function from database.dart
+          future: db.fetchAddons(), // Call function from database.dart
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -192,13 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return Center(child: Text("Error: ${snapshot.error}"));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(height: 50),
-                  Center(child: Text("No add-ons available")),
-                  
-      ]);
+              return const Center(child: Text("No add-ons available"));
             }
 
             List<AddonModel> addons = snapshot.data!;
@@ -206,31 +203,32 @@ class _HomeScreenState extends State<HomeScreen> {
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: addons.map((addon) {
-                  return Column(
-                    children: [
-                      Container(
-                        width: 150,
-                        height: 150,
-                        margin: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          image: DecorationImage(
-                            image: AssetImage('addon.jpg'),
-                            fit: BoxFit.cover,
+                children:
+                    addons.map((addon) {
+                      return Column(
+                        children: [
+                          Container(
+                            width: 150,
+                            height: 150,
+                            margin: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              image: DecorationImage(
+                                image: AssetImage('addon.jpg'),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Text(
-                        '${addon.name} -  ₹ ${addon.price}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+                          Text(
+                            '${addon.name} -  ₹ ${addon.price}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
               ),
             );
           },
@@ -240,76 +238,58 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAnnouncementsSection() {
-  return Container(
-    height: 150,
-    width: double.infinity,
-    margin: const EdgeInsets.only(top: 4),
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-    decoration: BoxDecoration(
-      color: Colors.grey[100],
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: FutureBuilder<List<AnnouncementModel>>(
-      future: db.fetchAnnouncements(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("No announcements available"));
-        }
+    return Container(
+      height: 150,
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: FutureBuilder<List<AnnouncementModel>>(
+        future: db.fetchAnnouncements(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No announcements available"));
+          }
 
-        // Get only today's announcements
-        DateTime today = DateTime.now();
-        List<AnnouncementModel> announcements = snapshot.data!
-            .where((a) {
-              try {
-                DateTime announcementDate = DateTime.parse(a.date);
-                return announcementDate.year == today.year &&
-                    announcementDate.month == today.month &&
-                    announcementDate.day == today.day;
-              } catch (e) {
-                return false;
-              }
-            })
-            .toList()
-            .reversed
-            .toList();
+          List<AnnouncementModel> announcements =
+              snapshot.data!.reversed.toList();
 
-        if (announcements.isEmpty) {
-          return const Center(child: Text("No announcements for today"));
-        }
-
-        return Scrollbar(
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: announcements.map((doc) {
-                String announcementText = doc.announcement;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("➤", style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(announcementText)),
-                    ],
-                  ),
-                );
-              }).toList(),
+          return Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children:
+                    announcements.map((doc) {
+                      String announcementText = doc.announcement;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("➤", style: TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(announcementText)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
-
+          );
+        },
+      ),
+    );
+  }
 
   void _showAddItemDialog(BuildContext context, String title) {
     TextEditingController nameController = TextEditingController();
@@ -362,18 +342,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(8),
                         child: ElevatedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
                           style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
+                            backgroundColor: WidgetStateProperty.all(
                               Colors.grey[100],
                             ),
-                            foregroundColor: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(
                               Colors.black,
                             ),
-                            padding: MaterialStateProperty.all(
+                            padding: WidgetStateProperty.all(
                               const EdgeInsets.all(8),
                             ),
                           ),
+                          child: const Text('Cancel'),
                         ),
                       ),
                       Padding(
@@ -383,9 +363,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             String name = nameController.text.trim();
                             String price = priceController.text.trim();
 
-                            DatabaseModel db = DatabaseModel(
-                              uid: FirebaseAuth.instance.currentUser!.uid,
-                            );
                             String message = await db.addAddon(name, price);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -398,18 +375,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               // Refresh the UI
                             });
                           },
-                          child: const Text('Add'),
                           style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
+                            backgroundColor: WidgetStateProperty.all(
                               Color(0xFFF0753C),
                             ),
-                            foregroundColor: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(
                               Colors.white,
                             ),
-                            padding: MaterialStateProperty.all(
+                            padding: WidgetStateProperty.all(
                               const EdgeInsets.all(8),
                             ),
                           ),
+                          child: const Text('Add'),
                         ),
                       ),
                     ],
@@ -458,6 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
+
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -466,18 +444,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(8),
                         child: ElevatedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
                           style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
+                            backgroundColor: WidgetStateProperty.all(
                               Colors.grey[100],
                             ),
-                            foregroundColor: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(
                               Colors.black,
                             ),
-                            padding: MaterialStateProperty.all(
+                            padding: WidgetStateProperty.all(
                               const EdgeInsets.all(8),
                             ),
                           ),
+                          child: const Text('Cancel'),
                         ),
                       ),
                       Padding(
@@ -486,9 +464,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: () async {
                             String name = nameController.text.trim();
 
-                            DatabaseModel db = DatabaseModel(
-                              uid: FirebaseAuth.instance.currentUser!.uid,
-                            );
                             String message = await db.removeAddon(name);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -501,18 +476,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               // Refresh the UI
                             });
                           },
-                          child: const Text('Remove'),
                           style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
+                            backgroundColor: WidgetStateProperty.all(
                               Color(0xFFF0753C),
                             ),
-                            foregroundColor: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(
                               Colors.white,
                             ),
-                            padding: MaterialStateProperty.all(
+                            padding: WidgetStateProperty.all(
                               const EdgeInsets.all(8),
                             ),
                           ),
+                          child: const Text('Remove'),
                         ),
                       ),
                     ],
@@ -525,4 +500,5 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
 }

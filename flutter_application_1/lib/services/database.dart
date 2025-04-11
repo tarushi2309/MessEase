@@ -51,7 +51,7 @@ class DatabaseModel{
       });
     } catch (e) {
       print("Error adding rebate form: $e");
-      throw e;
+      rethrow;
     }
   }
 
@@ -69,7 +69,7 @@ if (querySnapshot.docs.isNotEmpty) {
       }
     } catch (e) {
       print("Error fetching rebate history: $e");
-      throw e;
+      rethrow;
     }
   }
 

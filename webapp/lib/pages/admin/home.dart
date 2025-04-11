@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webapp/components/header_admin.dart';
+import 'package:webapp/models/mess.dart';
+import 'package:webapp/services/database.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +23,25 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedMessMsc_1 = "Anusha";
   String _selectedMessMsc_2 = "Anusha";
   String _selectedMessPhd = "Anusha";
+
+  Future<void> allot_mess()
+  async {
+    Map<String,String> messAllot;
+    messAllot = {
+      "BTech1": _selectedMessBtech_1,
+      "BTech2": _selectedMessBtech_2,
+      "BTech3": _selectedMessBtech_3,
+      "BTech4": _selectedMessBtech_4,
+      "MTech1": _selectedMessMtech_1,
+      "MTech2": _selectedMessMtech_2,
+      "MSc1": _selectedMessMsc_1,
+      "MSc2": _selectedMessMsc_2,
+      "PhD": _selectedMessPhd
+    };
+    MessModel mess = MessModel(messAllot : messAllot);
+    DatabaseModel dbservice = DatabaseModel();
+    await dbservice.addMessDetails(mess);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Builds the "Allot Messes" card.
-  Widget _buildAllotMessesCard() {
+  Widget _buildAllotMessesCard(){
     return Card(
       color: Colors.white,
       elevation: 2,
@@ -119,7 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: (){
+                  allot_mess();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Mess Allotted Successfully!")),
                   );
