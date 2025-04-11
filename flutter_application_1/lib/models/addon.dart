@@ -19,9 +19,9 @@ class AddonModel{
 
   factory AddonModel.fromJson(Map<String, dynamic> json){
     return AddonModel(
-      name: json['name'],
-      price: json['price'],
-      messId: json['messId'],
+      name: json['name'] as String,
+      price: json['price'] as int,
+      messId: json['messId'] as String,
       date: json['date'] != null
         ? (json['date'] as Timestamp).toDate()
         : DateTime.now(),

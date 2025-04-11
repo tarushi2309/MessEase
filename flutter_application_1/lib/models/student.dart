@@ -6,8 +6,8 @@ class StudentModel {
   final String entryNumber;
   final String year;
   final String url;
-  //final String mess;
-  //final DateTime last_rebate;
+  /*final String mess;
+  final DateTime last_rebate;*/
   int refund=0;
   int monthly_refund;
   int days_of_rebate;
@@ -27,8 +27,8 @@ class StudentModel {
     this.days_of_rebate=0,
     this.bank_account_number=0,
     this.ifsc_code="",
-    //required this.mess,
-    //required this.last_rebate,
+    /*required this.mess,
+    required this.last_rebate,*/
   }) ;
 
   // Convert a UserModel into a Map for storing in Firestore or Realtime Database.
@@ -40,6 +40,7 @@ class StudentModel {
         'entryNumber': entryNumber,
         'year': year,
         'url':url,
+        //'mess': mess,
         //'mess': mess,
         'refund':0,
         'monthly_refund':0,
@@ -64,7 +65,7 @@ class StudentModel {
         days_of_rebate: json['days_of_rebate'] as int,
         bank_account_number: json['bank_account_number'] as int,
         ifsc_code: json['ifsc_code'] as String,
-        //mess:json['mess'] as String,
-        //last_rebate:json['last_rebate'].toDate() as DateTime,
+        /*mess:json['mess'] as String,
+        last_rebate:json['last_rebate'].toDate() as DateTime,*/
       );
 }

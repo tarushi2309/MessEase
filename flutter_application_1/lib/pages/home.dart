@@ -2,11 +2,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
+import 'package:flutter_application_1/models/addon.dart';
 import 'package:flutter_application_1/pages/messmenu.dart';
 import 'package:flutter_application_1/pages/rebate_history.dart';
 import 'package:flutter_application_1/pages/rebateform.dart';
 import 'package:flutter_application_1/pages/user.dart';
 import 'package:flutter_application_1/models/feedback.dart';
+import 'package:flutter_application_1/services/database.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../components/footer.dart';
@@ -28,23 +30,28 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Map<String, List<String>> todayMenu = {};
+  List<AddonModel>? addon;
   bool isLoading = true;
   final String _imgbbApiKey = "321e92bce52209a8c6c4f1271bbec58f";
-  @override
-  void initState() {
-    super.initState();
-    fetchMenu();
-  }
-
-  void fetchMenu() async {
+  String? uid;
+  DatabaseModel? dbService;
+  String? messId;
+  DocumentSnapshot? studentDoc;
+  
+  void fetchMenu(String uid) async {
   String today = getTodayDay(); // Get today's day
   try {
     // Fetch the Firestore document
+    dbService = DatabaseModel(uid: uid);
     DocumentSnapshot doc = await FirebaseFirestore.instance
         .collection('mess_menu')
         .doc('current_menu')
         .get();
 
+    studentDoc =await dbService!.getStudentInfo(uid);
+    messId = studentDoc!['mess']; // Get the 'mess' field
+    addon = await dbService!.fetchAddons(messId!);
+     
     if (doc.exists) {
       // Convert the document data to a Map
       var menuData = doc.data() as Map<String, dynamic>;
@@ -146,6 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
   final TextEditingController _feedbackController = TextEditingController();
+  
 
   void _showFeedbackDialog(BuildContext context, String mealType) {
     showDialog(
@@ -227,31 +235,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Text("Send", style: TextStyle(color: Colors.white)),
 
                         onPressed: () async {
-                          final uid = Provider.of<UserProvider>(context, listen: false).uid;
                           print("Feedback: ${_feedbackController.text}");
                           print("Image Path: ${_selectedImage?.path}");
-                          try {
-                            final studentDoc = await FirebaseFirestore.instance
-                                .collection('students')
-                                .doc(uid)
-                                .get();
-
-                            if (!studentDoc.exists) {
-                              print("student not found");
-                              throw Exception("Student not found");
-                              
-                            }
-
-                            print(studentDoc.data());
-
-
-                            final mess = studentDoc['mess']; // Get the 'mess' field
-                            print("Fetched Mess: $mess");
+                          try{
                             await submitFeedback(
                               uid: uid!,
                               text: _feedbackController.text.trim(),
                               image: _selectedImage,
-                              mess: mess,
+                              mess: messId!,
                             );
                             print("Feedback submitted successfully");
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -281,8 +272,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String? uid = Provider.of<UserProvider>(context).uid;
-    print("\nuser is : $uid");
+    uid = Provider.of<UserProvider>(context).uid;
+    print("uid: $uid");
+    if(isLoading) {
+      fetchMenu(uid!);
+    }
 
     return Scaffold(
       key: widget.scaffoldKey,
@@ -369,64 +363,73 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Add On section for today’s menu
   Widget _buildAddOns() {
-    final List<Map<String, String>> addOns = [
-      {"image": "assets/addon.jpg", "label": "Gulab Jamun"},
-      {"image": "assets/addon.jpg", "label": "Ice Cream"},
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            "TODAY'S ADD-ONS",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
+  return Padding(
+    padding: const EdgeInsets.only(top: 10),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          "TODAY'S ADD-ONS",
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: addOns.map((item) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(4), // Border thickness
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Color(0xFFF0753C), width: 1), // Border color & width
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          item["image"]!,
-                          height: 90, // Adjust for proper size
-                          width: 90,
-                          fit: BoxFit.cover,
+        ),
+        const SizedBox(height: 8),
+        addon!=null // Check if the list is not empty
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: addon!.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4), // Border thickness
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFF0753C),
+                              width: 1, // Border color & width
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: Image.asset("assets/addon.jpg",
+                              height: 90,
+                              width: 90,
+                              fit: BoxFit.cover,
+                            ), // Placeholder image for add-on
+                            
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item.name, // Display name of the add-on
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "₹ ${item.price.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item["label"]!,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
+                  );
+                }).toList(),
+              )
+            : const Text("No Add-Ons Available"), // Fallback for empty list
+      ],
+    ),
+  );
+}
+
 
   Widget _buildMenuAccordion(BuildContext context) {
     return Column(
