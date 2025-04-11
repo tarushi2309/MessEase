@@ -9,6 +9,7 @@ import 'package:webapp/services/database.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:webapp/models/student.dart';
 import 'package:webapp/pages/student/image.dart';
+import 'package:webapp/services/database.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,17 +64,17 @@ class _LoginScreenState extends State<LoginScreen>
               } else {
                 year = "20${entryNo.substring(0, 2)}";
               }
-              final DatabaseModel dbService = DatabaseModel(uid: uid);
-              StudentModel student = StudentModel(
-                name: name,
-                email: email,
-                uid: uid,
-                degree: selectedDegree ?? '',
-                entryNumber: entryNo,
-                year: year,
-                url: downloadUrl ?? '',
-              );
-              await dbService.addStudentDetails(student);
+              // final DatabaseModel dbService = DatabaseModel(uid: uid);
+              // StudentModel student = StudentModel(
+              //   name: name,
+              //   email: email,
+              //   uid: uid,
+              //   degree: selectedDegree ?? '',
+              //   entryNumber: entryNo,
+              //   year: year,
+              //   url: downloadUrl ?? '',
+              // );
+              // await dbService.addStudentDetails(student);
             }
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
@@ -119,52 +120,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<void> showDegreeDialog(BuildContext context) async {
-    List<String> degreeOptions = ['B.Tech', 'M.Tech', 'M.Sc', 'PHD', 'Intern'];
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent dismissing without selecting
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text("Select Your Degree"),
-              content: DropdownButton<String>(
-                isExpanded: true,
-                hint: const Text("Choose your degree"),
-                value: selectedDegree,
-                items: degreeOptions.map((degree) {
-                  return DropdownMenuItem(
-                    value: degree,
-                    child: Text(degree),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedDegree = value;
-                  });
-                },
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: selectedDegree == null
-                      ? null // Disable button if no selection is made
-                      : () {
-                          Navigator.of(context).pop(
-                              selectedDegree); // Pass the selected degree back
-                        },
-                  child: const Text("Continue"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-
+  
   Future<void> signIn(String role) async {
     if (_emailController.text.isNotEmpty &&
         _passwordController.text.isNotEmpty) {

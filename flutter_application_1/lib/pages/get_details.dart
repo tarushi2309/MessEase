@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_application_1/components/user_provider.dart';
+import 'package:flutter_application_1/pages/image.dart';
 import 'package:provider/provider.dart';
-import 'package:webapp/components/user_provider.dart';
-import 'package:webapp/pages/student/image.dart';
 
 class GetStudentDetails extends StatefulWidget {
   const GetStudentDetails({super.key});
@@ -46,8 +46,7 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text("Error saving profile picture to Firestore:\n$e"),
+        content: Text("Error saving profile picture to Firestore:\n$e"),
       ));
     }
   }
@@ -130,11 +129,13 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                           child: Column(
                             children: [
                               buildResponsiveTextField(
-                                "Year", yearController,
+                                "Year",
+                                yearController,
                                 keyboardType: TextInputType.number,
                               ),
                               buildResponsiveTextField(
-                                "Degree", degreeController,
+                                "Degree",
+                                degreeController,
                               ),
                               buildResponsiveTextField(
                                 "Bank Account Number",
@@ -142,7 +143,8 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                                 keyboardType: TextInputType.number,
                               ),
                               buildResponsiveTextField(
-                                "IFSC Code", ifscController,
+                                "IFSC Code",
+                                ifscController,
                               ),
                               const SizedBox(height: 20),
                               if (downloadUrl != null)
@@ -154,7 +156,7 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                                         height: 150),
                                   ),
                                 ),
-                                const Text(
+                              const Text(
                                 "Ensure size of image is less than 32MB",
                                 style: TextStyle(
                                   color: Color.fromARGB(255, 133, 131, 131),
@@ -164,10 +166,17 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                               const SizedBox(height: 4),
                               ElevatedButton.icon(
                                 onPressed: _uploadProfilePicture,
-                                icon: const Icon(Icons.upload, color: Colors.white,),
-                                label: const Text("Upload Profile Picture", style: TextStyle(color: Colors.white, 
-                                fontWeight: FontWeight.w500, fontSize: 16
-                                ),),
+                                icon: const Icon(
+                                  Icons.upload,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  "Upload Profile Picture",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF0753C),
                                   foregroundColor: Colors.white,
@@ -214,7 +223,7 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: FractionallySizedBox(
-        widthFactor: 0.85,
+        widthFactor: 0.95,
         child: TextFormField(
           controller: controller,
           keyboardType: keyboardType,
