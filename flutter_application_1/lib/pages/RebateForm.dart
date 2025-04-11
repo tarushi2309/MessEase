@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../components/footer.dart'; // Footer component
@@ -22,13 +23,11 @@ class _RebateFormPageState extends State<RebateFormPage> {
 
   // Controllers
   TextEditingController hostelController = TextEditingController();
-  TextEditingController messController = TextEditingController();
   TextEditingController roomController = TextEditingController();
   TextEditingController rebateFromController = TextEditingController();
   TextEditingController rebateToController = TextEditingController();
   TextEditingController daysController = TextEditingController();
   hostel? selectedHostel;
-  mess? selectedMess;
   
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -44,7 +43,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
     DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2023),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
     if (pickedDate != null) {
@@ -54,11 +53,11 @@ class _RebateFormPageState extends State<RebateFormPage> {
     }
   }
 
+  DocumentSnapshot? studentRef;
+
   void submitRebateForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-
-      DocumentReference studentRef = _firestore.collection('students').doc(uid);
 
       // Convert date format
       List<String> startParts = rebateFromController.text.split('/');
@@ -70,15 +69,15 @@ class _RebateFormPageState extends State<RebateFormPage> {
       Timestamp endDate = Timestamp.fromDate(
         DateTime(int.parse(endParts[2]), int.parse(endParts[1]), int.parse(endParts[0])),
       );
-
+      print('studentRef: ${studentRef!['mess']}');
       Rebate rebate = Rebate(
         req_id: '',
-        student_id: studentRef,
+        student_id: studentRef!.reference,
         start_date: startDate,
         end_date: endDate,
         status_: status.pending,
         hostel_: selectedHostel!,
-        mess_: selectedMess!,
+        mess_: studentRef!['mess'],
       );
 
       DocumentReference docRef = await _firestore.collection('rebates').add(rebate.toJson());
@@ -108,13 +107,11 @@ class _RebateFormPageState extends State<RebateFormPage> {
       try{
         setState(() {
           selectedHostel = null;
-          selectedMess = null;
           hostelController.clear();
           roomController.clear();
           rebateFromController.clear();
           rebateToController.clear();
           daysController.clear();
-          messController.clear();
         });
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -123,6 +120,45 @@ class _RebateFormPageState extends State<RebateFormPage> {
       }
     }
   }
+
+  void submitDate() async {
+  try {
+    // Parse the dates from the controllers
+    DateTime rebateFrom = DateFormat('dd/MM/yyyy').parse(rebateFromController.text);
+    DateTime rebateTo = DateFormat('dd/MM/yyyy').parse(rebateToController.text);
+    studentRef = await _firestore.collection('students').doc(uid).get();
+    // Calculate the difference in days
+    int difference = rebateTo.difference(rebateFrom).inDays+1;
+    // Check if the difference is valid
+    if (difference < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("The rebate period must be at least 3 days.")),
+      );
+      return;
+    }
+    DateTime lastRebateDate = (studentRef!['last_rebate'] as Timestamp).toDate();
+    
+    if (rebateFrom .isBefore(lastRebateDate)||rebateFrom.isAtSameMomentAs(lastRebateDate)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("The rebate for this period already exists.")),
+      );
+      return;
+    }
+    if (difference > (20-studentRef!['days_of_rebate'])) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Required days exceed the allowed limit of 20 days per semester. You only have ${20-studentRef!['days_of_rebate']} days left.")),
+      );
+      return;
+    }
+    print("submit rebate");
+    submitRebateForm();
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Invalid date format. Please select valid dates.")),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -197,38 +233,14 @@ class _RebateFormPageState extends State<RebateFormPage> {
                                 ),
                               ),
                               // mess part added in the form 
-                              Padding(
-                                  padding:EdgeInsets.symmetric(vertical: 10),
-                                 child: DropdownButtonFormField<mess>(
-                                value: selectedMess,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    selectedMess = newValue;
-                                  });
-                                },
-                                items: mess.values.map((mess m) {
-                                  return DropdownMenuItem<mess>(
-                                    value: m,
-                                    child: Text(m.name.toUpperCase()), // Display names in uppercase
-                                  );
-                                }).toList(),
-                                decoration: InputDecoration(
-                                  labelText: 'Select Mess',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                                ),
-                              ),
-
-
+                             
                                 buildTextField("Room Number", roomController),
                                 buildDateField("Rebate From", rebateFromController),
                                 buildDateField("Rebate To", rebateToController),
                                 //buildTextField("Number of Days", daysController, keyboardType: TextInputType.number),
                                 const SizedBox(height: 20),
                                 ElevatedButton(
-                                  onPressed: submitRebateForm,
+                                  onPressed: submitDate,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Color(0xFFF0753C),
                                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
@@ -300,7 +312,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
         onTap: () => _selectDate(context, controller),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return "Please select a date";
+            return "Please select a valid date";
           }
           return null;
         },
