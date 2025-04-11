@@ -100,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String text,
     File? image,
     required String mess,
+    required String meal,
   }) async {
     String? imageUrl;
 
@@ -129,6 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
             imageUrl: imageUrl,
             mess: mess,
             timestamp: DateTime.now(),
+            meal: meal, 
           );
 
           // Add to Firestore
@@ -252,6 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               text: _feedbackController.text.trim(),
                               image: _selectedImage,
                               mess: mess,
+                              meal: mealType, 
                             );
                             print("Feedback submitted successfully");
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -4,6 +4,7 @@ class FeedbackModel {
   final String? imageUrl;
   final DateTime timestamp;
   final String mess;
+  final String meal;
 
   FeedbackModel({
     required this.uid,
@@ -11,6 +12,7 @@ class FeedbackModel {
     this.imageUrl,
     required this.timestamp,
     required this.mess,
+    required this.meal,
   });
 
   Map<String, dynamic> toJson() {
@@ -20,6 +22,7 @@ class FeedbackModel {
       'imageUrl': imageUrl,
       'timestamp': timestamp.toIso8601String(), 
       'mess': mess,
+      'meal': meal,
     };
   }
 
@@ -30,6 +33,7 @@ class FeedbackModel {
       imageUrl: json['imageUrl'],
       timestamp: DateTime.parse(json['timestamp']),
       mess: json['mess'],
+      meal: json['meal'],
     );
   }
 }

@@ -4,10 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:webapp/pages/boha/menu_page.dart';
 import 'package:webapp/pages/mess_manager/current_rebate.dart';
-import 'package:webapp/pages/mess_manager/mess_committee.dart';
+import 'package:webapp/pages/mess_manager/mess_details.dart';
 import 'package:webapp/pages/mess_manager/feedback.dart';
 import 'package:webapp/pages/student/get_details.dart';
-
 import 'firebase_options.dart';
 import 'pages/mess_manager/pending_rebate.dart';
 import '../../components/user_provider.dart';
@@ -19,7 +18,7 @@ import 'package:webapp/pages/boha/home.dart' as boha;
 import 'package:webapp/pages/common/login.dart';
 import 'firebase_options.dart';
 import 'components/user_provider.dart';
-import 'pages/mess_manager/mess_committee.dart';
+import 'pages/mess_manager/mess_details.dart';
 import 'pages/admin/refund.dart';
 import 'pages/admin/mess_refund.dart';
 import 'package:url_strategy/url_strategy.dart';
@@ -82,7 +81,7 @@ class MyApp extends StatelessWidget {
         '/rebate_history': (context) => RebateHistoryPage(),
         '/mess_committee': (context) => MessCommitteePage(),
         '/announcements': (context) => AnnouncementPage(),
-        '/mess_committee_mess_manager' : (context) => MessCommitteeMessManagerPage(),
+        '/mess_details_mess_manager' : (context) => MessCommitteeMessManagerPage(),
         '/feedback': (context) => FeedbackScreen(),
         '/feedback_mess': (context) => FeedbackMessScreen(),
         '/get_student_details': (context) => GetStudentDetails(),

@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  DatabaseModel db = DatabaseModel();
+  final DatabaseModel db = DatabaseModel();
 
   @override
   void initState() {
@@ -25,10 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
     initialise();
   }
 
-  void initialise () async {
+  Future<void> initialise() async {
     await db.getMessId(FirebaseAuth.instance.currentUser!.uid);
     db.removePrevAddons();
   }
+
+  // ────────────────────────────────────────────────────────────────────
+  //  BUILD
+  // ────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<MessMenuModel?>(
@@ -40,14 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
         if (menusnapshot.hasError) {
           return Center(child: Text("Error: ${menusnapshot.error}"));
         }
-        String today = DateFormat('EEEE').format(DateTime.now());
-        MessMenuModel messMenu = menusnapshot.data ?? MessMenuModel(menu: {});
-        Map<String, List<String>> menuForDay =
-            messMenu.menu[today] ?? {'Breakfast': [], 'Lunch': [], 'Dinner': []};
 
-        if (messMenu.menu.containsKey(today)) {
-          menuForDay = messMenu.menu[today]!;
-        }
+        final String today = DateFormat('EEEE').format(DateTime.now());
+        final MessMenuModel messMenu =
+            menusnapshot.data ?? MessMenuModel(menu: {});
+        Map<String, List<String>> menuForDay =
+            messMenu.menu[today] ??
+                {'Breakfast': [], 'Lunch': [], 'Dinner': []};
+
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: PreferredSize(
@@ -55,55 +59,47 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Header(currentPage: 'Home'),
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              vertical: 16.0,
-              horizontal: 35.0,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 35),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Konark Mess',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
+                const Text('Konark Mess',
+                    style:
+                        TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex:3 , child: _buildAddOnsSection()),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Announcements",
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildAnnouncementsSection(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+
+                // ─── Add‑ons + Announcements (responsive) ──────────────
+                LayoutBuilder(builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 600;
+                  if (isNarrow) {
+                    // stack vertically on phones
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildAddOnsSection(),
+                        const SizedBox(height: 24),
+                        _buildAnnouncementsBlock(),
+                      ],
+                    );
+                  }
+                  // side‑by‑side on wider screens
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 3, child: _buildAddOnsSection()),
+                      const SizedBox(width: 16),
+                      Expanded(flex: 4, child: _buildAnnouncementsBlock()),
+                    ],
+                  );
+                }),
+
                 const SizedBox(height: 16),
-                const Text(
-                  "Today's Menu",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                _buildMealSection("Breakfast",menuForDay['Breakfast']!),
-                _buildMealSection("Lunch",menuForDay['Lunch']!),
-                _buildMealSection("Dinner",menuForDay['Dinner']!),
+                const Text("Today's Menu",
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                _buildMealSection("Breakfast", menuForDay['Breakfast']!),
+                _buildMealSection("Lunch", menuForDay['Lunch']!),
+                _buildMealSection("Dinner", menuForDay['Dinner']!),
               ],
             ),
           ),
@@ -112,6 +108,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ────────────────────────────────────────────────────────────────────
+  //  MEAL SECTION
+  // ────────────────────────────────────────────────────────────────────
   Widget _buildMealSection(String title, List<String> items) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -120,43 +119,36 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            child: Text(title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 200, // Make sure height is large enough
+            height: 200,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: items.length,
-              itemBuilder: (context, index) {
-                return Column(
-                  children: [
-                    Container(
-                      width: 150,
-                      height: 150,
-                      margin: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        image: DecorationImage(
-                          image: AssetImage('addon.jpg'),
-                          fit: BoxFit.cover,
-                        ),
+              itemBuilder: (context, index) => Column(
+                children: [
+                  Container(
+                    width: 150,
+                    height: 150,
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      image: const DecorationImage(
+                        image: AssetImage('addon.jpg'),
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      items[index],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(items[index],
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                );
-              },
+                          fontSize: 16, fontWeight: FontWeight.w500)),
+                ],
+              ),
             ),
           ),
         ],
@@ -164,29 +156,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ────────────────────────────────────────────────────────────────────
+  //  ADD‑ONS SECTION
+  // ────────────────────────────────────────────────────────────────────
   Widget _buildAddOnsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            const Text(
-              "Today's Add Ons",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            const Text("Today's Add Ons",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            IconButton(
+              icon: const Icon(Icons.add_circle),
+              onPressed: () => _showAddItemDialog(context, "Add‑On"),
             ),
             IconButton(
-              icon: const Icon(Icons.add_circle, size: 24),
-              onPressed: () => _showAddItemDialog(context, "Add-On"),
-            ),
-            IconButton(
-              icon: const Icon(Icons.remove_circle, size: 24),
-              onPressed: () => _showRemoveItemDialog(context, "Add-On"),
+              icon: const Icon(Icons.remove_circle),
+              onPressed: () => _showRemoveItemDialog(context, "Add‑On"),
             ),
           ],
         ),
         FutureBuilder<List<AddonModel>>(
-          future: db.fetchAddons(), // Call function from database.dart
+          future: db.fetchAddons(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -195,40 +187,35 @@ class _HomeScreenState extends State<HomeScreen> {
               return Center(child: Text("Error: ${snapshot.error}"));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text("No add-ons available"));
+              return const Center(child: Text("No add‑ons available"));
             }
 
-            List<AddonModel> addons = snapshot.data!;
-
+            final addons = snapshot.data!;
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children:
-                    addons.map((addon) {
-                      return Column(
-                        children: [
-                          Container(
-                            width: 150,
-                            height: 150,
-                            margin: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              image: DecorationImage(
-                                image: AssetImage('addon.jpg'),
-                                fit: BoxFit.cover,
+                children: addons
+                    .map((addon) => Column(
+                          children: [
+                            Container(
+                              width: 150,
+                              height: 150,
+                              margin: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                image: const DecorationImage(
+                                  image: AssetImage('addon.jpg'),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            '${addon.name} -  ₹ ${addon.price}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
+                            Text('${addon.name}  –  ₹${addon.price}',
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500)),
+                          ],
+                        ))
+                    .toList(),
               ),
             );
           },
@@ -236,6 +223,19 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
+
+  // ────────────────────────────────────────────────────────────────────
+  //  ANNOUNCEMENTS SECTION
+  // ────────────────────────────────────────────────────────────────────
+  Widget _buildAnnouncementsBlock() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Announcements",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          _buildAnnouncementsSection(),
+        ],
+      );
 
   Widget _buildAnnouncementsSection() {
     return Container(
@@ -260,29 +260,25 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: Text("No announcements available"));
           }
 
-          List<AnnouncementModel> announcements =
-              snapshot.data!.reversed.toList();
-
+          final announcements = snapshot.data!.reversed.toList();
           return Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children:
-                    announcements.map((doc) {
-                      String announcementText = doc.announcement;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("➤", style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(announcementText)),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                children: announcements
+                    .map((doc) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('➤', style: TextStyle(fontSize: 18)),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(doc.announcement)),
+                            ],
+                          ),
+                        ))
+                    .toList(),
               ),
             ),
           );
@@ -291,214 +287,123 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ────────────────────────────────────────────────────────────────────
+  //  ADD / REMOVE DIALOGS
+  // ────────────────────────────────────────────────────────────────────
   void _showAddItemDialog(BuildContext context, String title) {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController priceController = TextEditingController();
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Add $title',
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.5,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Add $title',
                     style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Item Name',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: priceController,
-                    decoration: InputDecoration(
-                      labelText: 'Price',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                              Colors.grey[100],
-                            ),
-                            foregroundColor: WidgetStateProperty.all(
-                              Colors.black,
-                            ),
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.all(8),
-                            ),
-                          ),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            String name = nameController.text.trim();
-                            String price = priceController.text.trim();
-
-                            String message = await db.addAddon(name, price);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(message),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                            Navigator.pop(context);
-                            setState(() {
-                              // Refresh the UI
-                            });
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                              Color(0xFFF0753C),
-                            ),
-                            foregroundColor: WidgetStateProperty.all(
-                              Colors.white,
-                            ),
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.all(8),
-                            ),
-                          ),
-                          child: const Text('Add'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                        fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                      labelText: 'Item Name', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(
+                      labelText: 'Price', border: OutlineInputBorder()),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 20),
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel')),
+                  ElevatedButton(
+                      onPressed: () async {
+                        final msg = await db.addAddon(
+                            nameController.text.trim(),
+                            priceController.text.trim());
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(msg)));
+                          Navigator.pop(context);
+                          setState(() {});
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF0753C)),
+                      child: const Text('Add')),
+                ]),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   void _showRemoveItemDialog(BuildContext context, String title) {
-    TextEditingController nameController = TextEditingController();
+    final nameController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Remove $title',
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.5,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Remove $title',
                     style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Item Name',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                              Colors.grey[100],
-                            ),
-                            foregroundColor: WidgetStateProperty.all(
-                              Colors.black,
-                            ),
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.all(8),
-                            ),
-                          ),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            String name = nameController.text.trim();
-
-                            String message = await db.removeAddon(name);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(message),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                            Navigator.pop(context);
-                            setState(() {
-                              // Refresh the UI
-                            });
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                              Color(0xFFF0753C),
-                            ),
-                            foregroundColor: WidgetStateProperty.all(
-                              Colors.white,
-                            ),
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.all(8),
-                            ),
-                          ),
-                          child: const Text('Remove'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                        fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                      labelText: 'Item Name', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 20),
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel')),
+                  ElevatedButton(
+                      onPressed: () async {
+                        final msg =
+                            await db.removeAddon(nameController.text.trim());
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(msg)));
+                          Navigator.pop(context);
+                          setState(() {});
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF0753C)),
+                      child: const Text('Remove')),
+                ]),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
-
 }

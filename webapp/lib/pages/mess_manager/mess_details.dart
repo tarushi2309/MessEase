@@ -58,7 +58,7 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          const Header(currentPage: 'Mess Committee'),
+          const Header(currentPage: 'Mess Details'),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
