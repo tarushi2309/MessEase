@@ -188,15 +188,34 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                                           dropdownColor: Colors.white, // Background color for dropdown menu
                                           menuMaxHeight: 300, // Ensures dropdown menu does not stretch too much
                                         ),
-                              buildResponsiveTextField(
-                                "Bank Account Number",
-                                bankaccountController,
-                                keyboardType: TextInputType.number,
-                              ),
-                              buildResponsiveTextField(
-                                "IFSC Code",
-                                ifscController,
-                              ),
+                             buildResponsiveTextField(
+                              "Bank Account Number",
+                              bankaccountController,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter Bank Account Number";
+                                }
+                                if (!RegExp(r'^\d{12}$').hasMatch(value)) {
+                                  return "Bank Account Number must be exactly 12 digits";
+                                }
+                                return null;
+                              },
+                            ),
+                            buildResponsiveTextField(
+                              "IFSC Code",
+                              ifscController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter IFSC Code";
+                                }
+                                if (!RegExp(r'^[A-Za-z]{4}0\d{6}$').hasMatch(value)) {
+                                  return "Invalid IFSC Code format (e.g., ABCD0123456)";
+                                }
+                                return null;
+                              },
+                            ),
+
                               const SizedBox(height: 20),
                               if (downloadUrl != null)
                                 Padding(
@@ -266,34 +285,36 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
     );
   }
 
-  Widget buildResponsiveTextField(
-    String label,
-    TextEditingController controller, {
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: FractionallySizedBox(
-        widthFactor: 0.95,
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            labelText: label,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+ Widget buildResponsiveTextField(
+  String label,
+  TextEditingController controller, {
+  TextInputType keyboardType = TextInputType.text,
+  String? Function(String?)? validator, // Accept custom validators
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: FractionallySizedBox(
+      widthFactor: 0.95,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return "Please enter $label";
-            }
-            return null;
-          },
+          filled: true,
+          fillColor: Colors.white,
         ),
+        validator: validator ?? (value) { // Use provided validator or default
+          if (value == null || value.isEmpty) {
+            return "Please enter $label";
+          }
+          return null;
+        },
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

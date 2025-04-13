@@ -245,12 +245,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               uid: uid!,
                               text: _feedbackController.text.trim(),
                               image: _selectedImage,
-<<<<<<< HEAD
-                              mess: mess,
                               meal: mealType, 
-=======
                               mess: messId!,
->>>>>>> dd1d8427fd8ed0c75bc8fdbaec14ad885f3564a1
                             );
                             print("Feedback submitted successfully");
                             ScaffoldMessenger.of(context).showSnackBar(
