@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen>
             // Navigate to your home screen after successful login.
             // Replace HomeScreen() with your actual home screen widget.
             Navigator.push(
-                context, MaterialPageRoute(builder: (context) => StudentHome()));
+                context, MaterialPageRoute(builder: (context) => HomeScreen()));
           } else {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 backgroundColor: Colors.orangeAccent,
