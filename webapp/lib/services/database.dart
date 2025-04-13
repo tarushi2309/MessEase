@@ -125,7 +125,7 @@ class DatabaseModel {
     }
     QuerySnapshot querySnapshot =
           await _firestore
-              .collection('addons').where('messId', isEqualTo: messId).where('date', isLessThan: Timestamp.fromDate(DateTime.now())).get();
+              .collection('addons').where('date', isLessThan: Timestamp.fromDate(DateTime.now())).get();
     print(querySnapshot.docs);
     for (var doc in querySnapshot.docs) {
       await doc.reference.delete();
@@ -186,7 +186,7 @@ class DatabaseModel {
 
    Future<dynamic> addMessDetails(MessModel mess) async {
     return await FirebaseFirestore.instance
-        .collection("mess").doc()
+        .collection("mess").doc('messAllotment')
         .set(mess.toJson());
   }
 

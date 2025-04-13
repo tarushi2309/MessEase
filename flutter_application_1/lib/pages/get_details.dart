@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/pages/image.dart';
+import 'package:flutter_application_1/pages/signin.dart';
 import 'package:provider/provider.dart';
 
 class GetStudentDetails extends StatefulWidget {
@@ -24,8 +25,10 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
   final TextEditingController degreeController = TextEditingController();
   final TextEditingController bankaccountController = TextEditingController();
   final TextEditingController ifscController = TextEditingController();
+  final TextEditingController entryNoController = TextEditingController();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final List<String> degreeOptions = ['BTech', 'MTech', 'PhD', 'MTech','MSc'];
 
   @override
   void initState() {
@@ -61,17 +64,18 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
       }
 
       try {
-        await _firestore.collection('students').doc(uid).set({
-          'year': yearController.text.trim(),
-          'degree': degreeController.text.trim(),
-          'bankAccount': bankaccountController.text.trim(),
-          'ifsc': ifscController.text.trim(),
-          'profileImage': downloadUrl,
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Details submitted successfully!"),
-        ));
+        String batch=degreeController.text.trim()+yearController.text.trim();
+        DocumentSnapshot messes =await FirebaseFirestore.instance.collection('mess').doc('messAllotment').get();
+        
+          Navigator.pop(context, {
+            'year': yearController.text.trim(),
+            'degree': degreeController.text.trim(),
+            'bankAccount': bankaccountController.text.trim(),
+            'ifsc': ifscController.text.trim(),
+            'downloadUrl': downloadUrl, // Add your URL handling logic here,
+            'entryNo': entryNoController.text.trim(),
+            'mess':messes['messAllot'][batch] as String,
+          });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Failed to submit details: $e"),
@@ -134,9 +138,56 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                                 keyboardType: TextInputType.number,
                               ),
                               buildResponsiveTextField(
-                                "Degree",
-                                degreeController,
+                                "Entry Number",
+                                entryNoController,
+                                keyboardType: TextInputType.number,
                               ),
+                                      const SizedBox(height: 10),
+                                      DropdownButtonFormField<String>(
+                                          validator: (value) {
+                                            if (value == null || value.isEmpty) {
+                                              return 'Please Select Degree Type';
+                                            }
+                                            return null;
+                                          },
+                                          decoration: InputDecoration(
+                                            labelText: 'Degree Type',
+                                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                                            hintText: 'Select Degree Type',
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                            border: authOutlineInputBorder,
+                                            enabledBorder: authOutlineInputBorder,
+                                            focusedBorder: authOutlineInputBorder.copyWith(
+                                              borderSide: const BorderSide(color: Color(0xFFFF7643)),
+                                            ),
+                                          ),
+                                          items: degreeOptions.map((degree) {
+                                            return DropdownMenuItem(
+                                              value: degree,
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0), // Padding inside the dropdown menu
+                                                child: Text(
+                                                  degree,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              degreeController.text = value!;
+                                            });
+                                          },
+                                          value: degreeController.text.isNotEmpty
+                                              ? degreeController.text
+                                              : null,
+                                          dropdownColor: Colors.white, // Background color for dropdown menu
+                                          menuMaxHeight: 300, // Ensures dropdown menu does not stretch too much
+                                        ),
                               buildResponsiveTextField(
                                 "Bank Account Number",
                                 bankaccountController,

@@ -49,6 +49,19 @@ Future<List<AddonModel>> fetchAddons(String messId) async {
         .map((doc) => AddonModel.fromJson(doc.data() as Map<String, dynamic>))
         .toList();
   }
+
+  Future<void> removePrevAddons(String messId) async{
+    if (messId == null) {
+      return;
+    }
+    QuerySnapshot querySnapshot =
+          await _firestore
+              .collection('addons').where('date', isLessThan: Timestamp.fromDate(DateTime.now())).get();
+    print(querySnapshot.docs);
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
   
   Future<void> addRebateFormDetails({
     required String hostelName,

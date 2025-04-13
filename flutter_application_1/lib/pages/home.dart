@@ -50,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     studentDoc =await dbService!.getStudentInfo(uid);
     messId = studentDoc!['mess']; // Get the 'mess' field
+    await dbService!.removePrevAddons(messId!);
     addon = await dbService!.fetchAddons(messId!);
      
     if (doc.exists) {
