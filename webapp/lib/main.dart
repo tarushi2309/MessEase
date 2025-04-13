@@ -27,6 +27,7 @@ import 'package:webapp/pages/boha/announcements.dart';
 import 'package:webapp/pages/boha/mess_committee.dart';
 import 'package:webapp/pages/boha/feedback.dart';
 import 'package:webapp/pages/student/profile.dart';
+import 'package:webapp/pages/student/rebateform.dart';
 
 
 void main() async{
@@ -66,31 +67,32 @@ class MyApp extends StatelessWidget {
         }),
         fontFamily: "Roboto",
       ),
-      initialRoute: '/login',
-      home: LoginScreen(),
-      routes: {
+      // initialRoute: '/login',
+      // home: LoginScreen(),
+      // routes: {
 
-        '/login': (context) => LoginScreen(),
-        '/home_admin': (context) => admin.HomeScreen(),
-        '/home_mess_manager': (context) => mess_manager.HomeScreen(),
-        '/home_boha': (context) => boha.HomeScreen(),
-        '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
-        //'/mess_committee_mess': (context) => MessCommitteeScreenMess(),
-        '/pending-request': (context) => PendingRequestPage(),
-        '/current-request': (context) => CurrentRequestPage(),
-        '/refund' : (content) => RefundPage(),
-        '/menu_page': (context) => MenuPage(),
-        '/rebate_history': (context) => RebateHistoryPage(),
-        '/mess_committee': (context) => MessCommitteePage(),
-        '/announcements': (context) => AnnouncementPage(),
-        '/mess_details_mess_manager' : (context) => MessCommitteeMessManagerPage(),
-        '/feedback': (context) => FeedbackScreen(),
-        '/feedback_mess': (context) => FeedbackMessScreen(),
-        '/get_student_details': (context) => GetStudentDetails(),
-        //'/profile': (context) => MessManagerProfile(),
-      },
+      //   '/login': (context) => LoginScreen(),
+      //   '/home_admin': (context) => admin.HomeScreen(),
+      //   '/home_mess_manager': (context) => mess_manager.HomeScreen(),
+      //   '/home_boha': (context) => boha.HomeScreen(),
+      //   '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
+      //   //'/mess_committee_mess': (context) => MessCommitteeScreenMess(),
+      //   '/pending-request': (context) => PendingRequestPage(),
+      //   '/current-request': (context) => CurrentRequestPage(),
+      //   '/refund' : (content) => RefundPage(),
+      //   '/menu_page': (context) => MenuPage(),
+      //   '/rebate_history': (context) => RebateHistoryPage(),
+      //   '/mess_committee': (context) => MessCommitteePage(),
+      //   '/announcements': (context) => AnnouncementPage(),
+      //   '/mess_details_mess_manager' : (context) => MessCommitteeMessManagerPage(),
+      //   '/feedback': (context) => FeedbackScreen(),
+      //   '/feedback_mess': (context) => FeedbackMessScreen(),
+      //   '/get_student_details': (context) => GetStudentDetails(),
+      //   //'/profile': (context) => MessManagerProfile(),
+      // },
       //home: ProfileScreen(),
       //home :GetStudentDetails(),
+      home : RebateForm(),
     );
   }
 }
