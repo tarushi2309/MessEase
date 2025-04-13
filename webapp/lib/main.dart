@@ -27,6 +27,9 @@ import 'package:webapp/pages/boha/mess.dart';
 import 'package:webapp/pages/boha/announcements.dart';
 import 'package:webapp/pages/boha/mess_committee.dart';
 import 'package:webapp/pages/boha/feedback.dart';
+import 'package:webapp/pages/student/profile.dart';
+import 'package:webapp/pages/student/rebateform.dart';
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,6 +92,9 @@ class MyApp extends StatelessWidget {
         '/get_student_details': (context) => GetStudentDetails(),
         //'/profile': (context) => MessManagerProfile(),
       },
+      //home: ProfileScreen(),
+      //home :GetStudentDetails(),
+      //home : RebateForm(),
     );
   }
 }

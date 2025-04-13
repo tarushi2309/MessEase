@@ -28,15 +28,15 @@ class _HomeScreenState extends State<HomeScreen> {
   async {
     Map<String,String> messAllot;
     messAllot = {
-      "BTech1": _selectedMessBtech_1,
-      "BTech2": _selectedMessBtech_2,
-      "BTech3": _selectedMessBtech_3,
-      "BTech4": _selectedMessBtech_4,
-      "MTech1": _selectedMessMtech_1,
-      "MTech2": _selectedMessMtech_2,
-      "MSc1": _selectedMessMsc_1,
-      "MSc2": _selectedMessMsc_2,
-      "PhD": _selectedMessPhd
+      "BTech2021": _selectedMessBtech_1,
+      "BTech2022": _selectedMessBtech_2,
+      "BTech2023": _selectedMessBtech_3,
+      "BTech2024": _selectedMessBtech_4,
+      "MTech2023": _selectedMessMtech_1,
+      "MTech2024": _selectedMessMtech_2,
+      "MSc2023": _selectedMessMsc_1,
+      "MSc2024": _selectedMessMsc_2,
+      "PhD": _selectedMessPhd,
     };
     MessModel mess = MessModel(messAllot : messAllot);
     DatabaseModel dbservice = DatabaseModel();
@@ -105,28 +105,28 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildFieldRow("BTech (1st Year)", _selectedMessBtech_1,
+                    _buildFieldRow("BTech 2021", _selectedMessBtech_1,
                         (val) => setState(() => _selectedMessBtech_1 = val ?? "")),
                     const SizedBox(height: 16),
-                    _buildFieldRow("BTech (2nd Year)", _selectedMessBtech_2,
+                    _buildFieldRow("BTech 2022", _selectedMessBtech_2,
                         (val) => setState(() => _selectedMessBtech_2 = val ?? "")),
                     const SizedBox(height: 16),
-                    _buildFieldRow("BTech (3rd Year)", _selectedMessBtech_3,
+                    _buildFieldRow("BTech 2023", _selectedMessBtech_3,
                         (val) => setState(() => _selectedMessBtech_3 = val ?? "")),
                     const SizedBox(height: 16),
-                    _buildFieldRow("BTech (4th Year)", _selectedMessBtech_4,
+                    _buildFieldRow("BTech 2024", _selectedMessBtech_4,
                         (val) => setState(() => _selectedMessBtech_4 = val ?? "")),
                     const SizedBox(height: 16),
-                    _buildFieldRow("MTech (1st Year)", _selectedMessMtech_1,
+                    _buildFieldRow("MTech 2023", _selectedMessMtech_1,
                         (val) => setState(() => _selectedMessMtech_1 = val ?? "")),
                     const SizedBox(height: 16),
-                    _buildFieldRow("MTech (2nd Year)", _selectedMessMtech_2,
+                    _buildFieldRow("MTech 2024", _selectedMessMtech_2,
                         (val) => setState(() => _selectedMessMtech_2 = val ?? "")),
                     const SizedBox(height: 16),
-                    _buildFieldRow("MSc (1st Year)", _selectedMessMsc_1,
+                    _buildFieldRow("MSc 2023", _selectedMessMsc_1,
                         (val) => setState(() => _selectedMessMsc_1 = val ?? "")),
                     const SizedBox(height: 16),
-                    _buildFieldRow("MSc (2nd Year)", _selectedMessMsc_2,
+                    _buildFieldRow("MSc 2024", _selectedMessMsc_2,
                         (val) => setState(() => _selectedMessMsc_2 = val ?? "")),
                     const SizedBox(height: 16),
                     _buildFieldRow("PhD", _selectedMessPhd,

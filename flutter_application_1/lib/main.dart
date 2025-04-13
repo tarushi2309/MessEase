@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         fontFamily: "Roboto",
       ),
       home: SignInScreen(),
-      initialRoute: '/get-details',  // Default screen when app starts
+      initialRoute: '/signin',  // Default screen when app starts
       routes: {
 
 

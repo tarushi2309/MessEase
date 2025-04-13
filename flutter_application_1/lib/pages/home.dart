@@ -50,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     studentDoc =await dbService!.getStudentInfo(uid);
     messId = studentDoc!['mess']; // Get the 'mess' field
+    await dbService!.removePrevAddons(messId!);
     addon = await dbService!.fetchAddons(messId!);
      
     if (doc.exists) {
@@ -244,8 +245,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               uid: uid!,
                               text: _feedbackController.text.trim(),
                               image: _selectedImage,
-                              mess: messId!,
                               meal: mealType, 
+                              mess: messId!,
                             );
                             print("Feedback submitted successfully");
                             ScaffoldMessenger.of(context).showSnackBar(
