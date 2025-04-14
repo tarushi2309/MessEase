@@ -130,7 +130,7 @@ class _UserPageState extends State<UserPage> {
                                 infoRow("Entry Number", student.entryNumber),
                                 infoRow("Degree", student.degree),
                                 infoRow("Year", student.year),
-                                infoRow("Mess", student.mess.toUpperCase()+ " MESS"),
+                                infoRow("Mess", "${student.mess.toUpperCase()} MESS"),
                              const SizedBox(height: 10),
                                 _buildBankDetailsTile(),
                                 _buildIssueNewMessIDTile(),
@@ -232,7 +232,7 @@ Widget _buildIssueNewMessIDTile() {
           children: [
             // infoRow("Account Number", "${student.bank_account_number}"),
             // infoRow("IFSC Code", "${student.ifsc_code}"),
-            infoRow("Account Number", "${student.bank_account_number}"),
+            infoRow("Account Number", student.bank_account_number),
             infoRow("IFSC Code", student.ifsc_code)
           ],
         ),
