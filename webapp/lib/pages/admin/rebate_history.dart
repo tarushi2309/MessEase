@@ -1,52 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/components/header_admin.dart';
-import 'package:webapp/services/notification.dart';
 import 'package:webapp/models/processed_rebate.dart';
+import 'package:webapp/services/notification.dart';
 import 'package:excel/excel.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:typed_data';
 
-class RebateData {
-  final String docId;
-  final String studentId;
-  final String name;
-  final String entryNumber;
-  final String year;
-  final String degree;
-  final int numberOfDays;
-  String bankAccountNumber;
-  final String ifscCode;
-  final int refund;
-  final String email;
-  final String status;
-
-  RebateData({
-    required this.docId,
-    required this.studentId,
-    required this.name,
-    required this.entryNumber,
-    required this.year,
-    required this.degree,
-    required this.numberOfDays,
-    required this.bankAccountNumber,
-    required this.ifscCode,
-    required this.refund,
-    required this.email,
-    required this.status,
-  });
-}
-
-Future<void> _exportToExcel(List<RebateData> rebateList) async {
+Future<void> _exportToExcel(List<ProcessedRebate> rebateList) async {
   final excel = Excel.createExcel();
-  final sheet = excel['RebateData'];
+  final sheet = excel['ProcessedRebate'];
 
   // Add header row
   sheet.appendRow([
     'Name',
     'Entry Number',
     'Year',
+    'Mess',
     'Degree',
     'Days',
     'Refund (₹)',
@@ -62,6 +33,7 @@ Future<void> _exportToExcel(List<RebateData> rebateList) async {
       r.name,
       r.entryNumber,
       r.year,
+      r.mess,
       r.degree,
       r.numberOfDays,
       r.refund,
@@ -84,20 +56,20 @@ Future<void> _exportToExcel(List<RebateData> rebateList) async {
   html.Url.revokeObjectUrl(url);
 }
 
-class RebateHistoryPage extends StatefulWidget {
-  const RebateHistoryPage({super.key});
+class RebateHistoryProcessedPage extends StatefulWidget {
+  const RebateHistoryProcessedPage({super.key});
   @override
-  State<RebateHistoryPage> createState() => _RebateHistoryPageState();
+  State<RebateHistoryProcessedPage> createState() => _RebateHistoryProcessedPageState();
 }
 
-class _RebateHistoryPageState extends State<RebateHistoryPage> {
-  late String messName;
-  List<RebateData> _rows = [];
+class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage> {
+  List<ProcessedRebate> _rows = [];
   bool _loadingRows = true;
 
   // Filters & sorting
   String searchQuery = '';
   String selectedYear = 'All';
+  String selectedMess = 'All';
   int? minDays;
   int? maxDays;
   String sortDir = 'Asc';
@@ -107,13 +79,15 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     return <String>['All', ...List.generate(10, (i) => (now - i).toString())];
   })();
 
+  late final List<String> messOptions = (() {
+    return <String>['All', 'konark', 'anusha', 'ideal'];
+  })();
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)!.settings.arguments;
-    messName = args is String ? args.toLowerCase() : 'unknown';
-    //print(messName);
-    fetchRebateHistory(messName).then((list) {
+    
+    fetchProcessedRebateHistory().then((list) {
       setState(() {
         _rows = list;
         _loadingRows = false;
@@ -121,58 +95,46 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     });
   }
 
-  Future<List<RebateData>> fetchRebateHistory(String messName) async {
+  Future<List<ProcessedRebate>> fetchProcessedRebateHistory() async {
     //print("fetching rebate history");
     final rebateQuery = await FirebaseFirestore.instance
-        .collection('students')
-        .where('mess', isEqualTo: messName)
-        .where('refund', isGreaterThan: 0)
+        .collection('processed_rebates')
         .get();
 
-    final List<RebateData> rebateList = [];
+    final List<ProcessedRebate> rebateList = [];
     for (final rebateDoc in rebateQuery.docs) {
       final data = rebateDoc.data();
       final docId = rebateDoc.id;
-      final studentId = data['uid'] is String
-          ? data['uid']
-          : data['uid'].path.split('/').last;
-
-      final studentSnap = await FirebaseFirestore.instance
-          .collection('students')
-          .where('uid', isEqualTo: studentId)
-          .get();
-
-      final studentData =
-          studentSnap.docs.isNotEmpty ? studentSnap.docs.first.data() : {};
-
-      rebateList.add(RebateData(
+      rebateList.add(ProcessedRebate(
         docId: docId,
-        studentId: studentId,
-        name: studentData['name']?.toString() ?? 'Unknown',
-        entryNumber: studentData['entryNumber']?.toString() ?? 'Unknown',
-        year: studentData['year']?.toString() ?? 'Unknown',
-        degree: studentData['degree']?.toString() ?? 'Unknown',
-        numberOfDays: studentData['days_of_rebate'] ?? 0,
+        studentId: data['uid']?.toString() ?? 'Unknown',
+        name: data['name']?.toString() ?? 'Unknown',
+        entryNumber: data['entryNumber']?.toString() ?? 'Unknown',
+        year: data['year']?.toString() ?? 'Unknown',
+        mess: data['mess']?.toString() ?? 'Unknown',
+        degree: data['degree']?.toString() ?? 'Unknown',
+        numberOfDays: data['numberOfDays'] ?? 0,
         bankAccountNumber:
-            studentData['bank_account_number']?.toString() ?? 'Unknown',
-        ifscCode: studentData['ifsc_code']?.toString() ?? 'Unknown',
-        refund: studentData['refund'] ?? 0,
-        email: studentData['email']?.toString() ?? 'Unknown',
+            data['bankAccountNumber']?.toString() ?? 'Unknown',
+        ifscCode: data['ifscCode']?.toString() ?? 'Unknown',
+        refund: data['refund'] ?? 0,
+        email: data['email']?.toString() ?? 'Unknown',
         status: data['status']?.toString() ?? 'Pending',
       ));
     }
     return rebateList;
   }
 
-  List<RebateData> _applyFilters(List<RebateData> list) {
+  List<ProcessedRebate> _applyFilters(List<ProcessedRebate> list) {
     final q = searchQuery.toLowerCase();
     final rows = list.where((r) {
       final okQ = r.name.toLowerCase().contains(q) ||
           r.entryNumber.toLowerCase().contains(q);
       final okY = selectedYear == 'All' || r.year == selectedYear;
+      final okM = selectedMess == 'All' || r.mess == selectedMess;
       final okMin = minDays == null || r.numberOfDays >= minDays!;
       final okMax = maxDays == null || r.numberOfDays <= maxDays!;
-      return okQ && okY && okMin && okMax;
+      return okQ && okY && okM && okMin && okMax;
     }).toList();
 
     rows.sort((a, b) => sortDir == 'Asc'
@@ -184,6 +146,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
   void _clearFilters() => setState(() {
         searchQuery = '';
         selectedYear = 'All';
+        selectedMess = 'All';
         minDays = null;
         maxDays = null;
       });
@@ -193,7 +156,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
-        child: Header(currentPage: 'Refund'),
+        child: Header(currentPage: 'Processed Refund'),
       ),
       body: Container(
         color: Colors.white,
@@ -208,7 +171,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                   child: Padding(
                     padding: const EdgeInsets.only(left: 20.0),
                     child: Text(
-                      '${messName[0].toUpperCase()}${messName.substring(1)} Mess Refunds',
+                      'Processed Mess Refunds',
                       style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
@@ -240,6 +203,19 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                         contentPadding:
                             EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
                     onChanged: (v) => setState(() => sortDir = v ?? 'Asc'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: DropdownButtonFormField<String>(
+                    value: selectedMess,
+                    items: messOptions
+                        .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                        .toList(),
+                    decoration: const InputDecoration(
+                        labelText: 'Mess', border: OutlineInputBorder()),
+                    onChanged: (v) => setState(() => selectedMess = v ?? 'All'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -323,27 +299,27 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                       ),
                     ),
                     onPressed: () async {
-                      final DateTime? selectedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 60)),
-                      );
+                        //selecting date till when complain can be made
+                        final DateTime? selectedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days:30)),
+                        );
 
-                      if (selectedDate == null) return;
+                        if (selectedDate == null) return;
 
-                      final String formattedDate =
-                          "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                        final String formattedDate =
+                            "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
 
-                      final String message =
-                          "We are processing the rebates for this semester, check your bank details and change them before this $formattedDate. No requests will be entertained later.";
+                        final String message =
+                            "The rebate for this semester has been processed. Please check you bank accounts and report any discrepancy to admin by $formattedDate";
 
-                      // TODO: Call your backend API or Firebase function here to send notification
-                      // await NotificationService.sendNotificationToApp(message);
+                        // await NotificationService.sendNotificationToApp(message);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Notification sent to app')),
-                      );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Notification sent to app')),
+                        );
                     },
                   ),
                 ],
@@ -361,7 +337,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     return LayoutBuilder(builder: (context, constraints) {
       final tableWidth = MediaQuery.of(context).size.width * 0.95;
       return Center(
-        child: SizedBox(
+        child: Container(
           width: tableWidth,
           child: Card(
             color: Colors.white,
@@ -386,11 +362,13 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                       _buildHeaderCell('Name'),
                       _buildHeaderCell('Entry Number'),
                       _buildHeaderCell('Year'),
+                      _buildHeaderCell('Mess'),
+                      _buildHeaderCell('Degree'),
                       _buildHeaderCell('Days'),
                       _buildHeaderCell('Amount'),
                       _buildHeaderCell('Account Number'),
                       _buildHeaderCell('IFSC Code'),
-                      _buildHeaderCell('Actions'),
+                      _buildHeaderCell('Status'),
                     ],
                   ),
                 ),
@@ -425,72 +403,13 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                                     _buildBodyCell(r.name),
                                     _buildBodyCell(r.entryNumber),
                                     _buildBodyCell(r.year),
+                                    _buildBodyCell(r.mess),
+                                    _buildBodyCell(r.degree),
                                     _buildBodyCell(r.numberOfDays),
                                     _buildBodyCell('₹${r.refund}'),
                                     _buildBodyCell(r.bankAccountNumber),
                                     _buildBodyCell(r.ifscCode),
-                                    Expanded(
-                                      child: Center(
-                                        child: TextButton(
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: Colors.white,
-                                            backgroundColor:
-                                                const Color(0xFFF0753C),
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 16, vertical: 8),
-                                          ),
-                                          
-                                          onPressed: () async {
-                                          try {
-                                            // Create a ProcessedRebate object from RebateData
-                                            final processedRebate = ProcessedRebate(
-                                              docId: r.docId,
-                                              studentId: r.studentId,
-                                              name: r.name,
-                                              entryNumber: r.entryNumber,
-                                              year: r.year,
-                                              mess: messName,
-                                              degree: r.degree,
-                                              numberOfDays: r.numberOfDays,
-                                              bankAccountNumber: r.bankAccountNumber,
-                                              ifscCode: r.ifscCode,
-                                              refund: r.refund,
-                                              email: r.email,
-                                              status: 'processed',
-                                            );
-
-                                            // Add to processed_rebates collection
-                                            await FirebaseFirestore.instance
-                                                .collection('processed_rebates')
-                                                .doc(r.docId)
-                                                .set(processedRebate.toJson());
-
-                                            // Optionally delete from the original students collection (uncomment if needed)
-                                            // await FirebaseFirestore.instance
-                                            //     .collection('students')
-                                            //     .doc(r.docId)
-                                            //     .delete();
-
-                                            // Update the UI
-                                            setState(() {
-                                              _rows.removeWhere((e) => e.docId == r.docId);
-                                            });
-
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Rebate marked as processed')),
-                                            );
-                                          } catch (e) {
-                                            print('Error while processing rebate: $e');
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Failed to process rebate')),
-                                            );
-                                          }
-                                        },
-
-                                          child: const Text('Process'),
-                                        ),
-                                      ),
-                                    ),
+                                     _buildBodyCell(r.status),
                                   ],
                                 ),
                               );

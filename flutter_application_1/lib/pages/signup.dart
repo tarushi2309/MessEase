@@ -103,6 +103,7 @@ class _SignUpFormState extends State<SignUpForm> {
           degree: selectedDegree ?? '',
           entryNumber: entry_nocontroller.text,
           year: "",
+          last_rebate: FieldValue.serverTimestamp(),
         );
         await dbService.addUserDetails(user);
         await dbService.addStudentDetails(student);

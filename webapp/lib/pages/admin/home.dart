@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       "PhD": _selectedMessPhd,
     };
     MessModel mess = MessModel(messAllot : messAllot);
-    DatabaseModel dbservice = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+    DatabaseModel dbservice = DatabaseModel();
     await dbservice.addMessDetails(mess);
   }
 
@@ -148,11 +148,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFFF0753C)),
-                  padding: MaterialStateProperty.all<EdgeInsets>(
+                  backgroundColor: WidgetStateProperty.all<Color>(const Color(0xFFF0753C)),
+                  padding: WidgetStateProperty.all<EdgeInsets>(
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                   ),
                 ),
@@ -297,11 +297,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.pushNamed(context, '/mess_details', arguments: messName);
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFFF0753C)),
-                          padding: MaterialStateProperty.all<EdgeInsets>(
+                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xFFF0753C)),
+                          padding: WidgetStateProperty.all<EdgeInsets>(
                             const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           ),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                           ),
                         ),

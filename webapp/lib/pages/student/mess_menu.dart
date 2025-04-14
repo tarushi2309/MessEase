@@ -14,7 +14,7 @@ class MessMenuStudentPage extends StatefulWidget {
 class _MessMenuStudentPageState extends State<MessMenuStudentPage> {
   int selectedIndex = 0;
 
-  DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+  DatabaseModel db = DatabaseModel();
 
   final List<String> days = [
     'Monday',

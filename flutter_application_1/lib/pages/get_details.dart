@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/pages/image.dart';
 import 'package:flutter_application_1/pages/signin.dart';
@@ -28,7 +27,7 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
   final TextEditingController entryNoController = TextEditingController();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final List<String> degreeOptions = ['BTech', 'MTech', 'PhD', 'MTech', 'MSc'];
+  final List<String> degreeOptions = ['BTech', 'MTech', 'PhD', 'MTech','MSc'];
 
   @override
   void initState() {
@@ -64,22 +63,18 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
       }
 
       try {
-        String batch =
-            degreeController.text.trim() + yearController.text.trim();
-        DocumentSnapshot messes = await FirebaseFirestore.instance
-            .collection('mess')
-            .doc('messAllotment')
-            .get();
-
-        Navigator.pop(context, {
-          'year': yearController.text.trim(),
-          'degree': degreeController.text.trim(),
-          'bankAccount': bankaccountController.text.trim(),
-          'ifsc': ifscController.text.trim(),
-          'downloadUrl': downloadUrl, // Add your URL handling logic here,
-          'entryNo': entryNoController.text.trim(),
-          'mess': messes['messAllot'][batch] as String,
-        });
+        String batch=degreeController.text.trim()+yearController.text.trim();
+        DocumentSnapshot messes =await FirebaseFirestore.instance.collection('mess').doc('messAllotment').get();
+        
+          Navigator.pop(context, {
+            'year': yearController.text.trim(),
+            'degree': degreeController.text.trim(),
+            'bankAccount': bankaccountController.text.trim(),
+            'ifsc': ifscController.text.trim(),
+            'downloadUrl': downloadUrl, // Add your URL handling logic here,
+            'entryNo': entryNoController.text.trim(),
+            'mess':messes['messAllot'][batch] as String,
+          });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Failed to submit details: $e"),
@@ -144,95 +139,82 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                               buildResponsiveTextField(
                                 "Entry Number",
                                 entryNoController,
-                                //keyboardType: TextInputType.text,
-                              ),
-                              const SizedBox(height: 10),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: DropdownButtonFormField<String>(
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please Select Degree Type';
-                                    }
-                                    return null;
-                                  },
-                                  decoration: InputDecoration(
-                                    labelText: 'Degree Type',
-                                    floatingLabelBehavior:
-                                        FloatingLabelBehavior.always,
-                                    hintText: 'Select Degree Type',
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 24, vertical: 12),
-                                    border: authOutlineInputBorder,
-                                    enabledBorder: authOutlineInputBorder,
-                                    focusedBorder:
-                                        authOutlineInputBorder.copyWith(
-                                      borderSide: const BorderSide(
-                                          color: Color(0xFFFF7643)),
-                                    ),
-                                  ),
-                                  items: degreeOptions.map((degree) {
-                                    return DropdownMenuItem(
-                                      value: degree,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                            horizontal:
-                                                12.0), // Padding inside the dropdown menu
-                                        child: Text(
-                                          degree,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      degreeController.text = value!;
-                                    });
-                                  },
-                                  value: degreeController.text.isNotEmpty
-                                      ? degreeController.text
-                                      : null,
-                                  dropdownColor: Colors
-                                      .white, // Background color for dropdown menu
-                                  menuMaxHeight:
-                                      300, // Ensures dropdown menu does not stretch too much
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              buildResponsiveTextField(
-                                "Bank Account Number",
-                                bankaccountController,
                                 keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return "Please enter Bank Account Number";
-                                  }
-                                  if (!RegExp(r'^\d{12}$').hasMatch(value)) {
-                                    return "Bank Account Number must be exactly 12 digits";
-                                  }
-                                  return null;
-                                },
                               ),
-                              buildResponsiveTextField(
-                                "IFSC Code",
-                                ifscController,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return "Please enter IFSC Code";
-                                  }
-                                  if (!RegExp(r'^[A-Za-z]{4}0\d{6}$')
-                                      .hasMatch(value)) {
-                                    return "Invalid IFSC Code format (e.g., ABCD0123456)";
-                                  }
-                                  return null;
-                                },
-                              ),
+                                      const SizedBox(height: 10),
+                                      DropdownButtonFormField<String>(
+                                          validator: (value) {
+                                            if (value == null || value.isEmpty) {
+                                              return 'Please Select Degree Type';
+                                            }
+                                            return null;
+                                          },
+                                          decoration: InputDecoration(
+                                            labelText: 'Degree Type',
+                                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                                            hintText: 'Select Degree Type',
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                            border: authOutlineInputBorder,
+                                            enabledBorder: authOutlineInputBorder,
+                                            focusedBorder: authOutlineInputBorder.copyWith(
+                                              borderSide: const BorderSide(color: Color(0xFFFF7643)),
+                                            ),
+                                          ),
+                                          items: degreeOptions.map((degree) {
+                                            return DropdownMenuItem(
+                                              value: degree,
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0), // Padding inside the dropdown menu
+                                                child: Text(
+                                                  degree,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              degreeController.text = value!;
+                                            });
+                                          },
+                                          value: degreeController.text.isNotEmpty
+                                              ? degreeController.text
+                                              : null,
+                                          dropdownColor: Colors.white, // Background color for dropdown menu
+                                          menuMaxHeight: 300, // Ensures dropdown menu does not stretch too much
+                                        ),
+                             buildResponsiveTextField(
+                              "Bank Account Number",
+                              bankaccountController,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter Bank Account Number";
+                                }
+                                if (!RegExp(r'^\d{12}$').hasMatch(value)) {
+                                  return "Bank Account Number must be exactly 12 digits";
+                                }
+                                return null;
+                              },
+                            ),
+                            buildResponsiveTextField(
+                              "IFSC Code",
+                              ifscController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter IFSC Code";
+                                }
+                                if (!RegExp(r'^[A-Za-z]{4}0\d{6}$').hasMatch(value)) {
+                                  return "Invalid IFSC Code format (e.g., ABCD0123456)";
+                                }
+                                return null;
+                              },
+                            ),
+
                               const SizedBox(height: 20),
                               if (downloadUrl != null)
                                 Padding(
@@ -302,37 +284,36 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
     );
   }
 
-  Widget buildResponsiveTextField(
-    String label,
-    TextEditingController controller, {
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator, // Accept custom validators
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: FractionallySizedBox(
-        widthFactor: 0.95,
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            labelText: label,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+ Widget buildResponsiveTextField(
+  String label,
+  TextEditingController controller, {
+  TextInputType keyboardType = TextInputType.text,
+  String? Function(String?)? validator, // Accept custom validators
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: FractionallySizedBox(
+      widthFactor: 0.95,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          validator: validator ??
-              (value) {
-                // Use provided validator or default
-                if (value == null || value.isEmpty) {
-                  return "Please enter $label";
-                }
-                return null;
-              },
+          filled: true,
+          fillColor: Colors.white,
         ),
+        validator: validator ?? (value) { // Use provided validator or default
+          if (value == null || value.isEmpty) {
+            return "Please enter $label";
+          }
+          return null;
+        },
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/models/announcement.dart';
@@ -17,7 +16,7 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
     // Fetch announcements from Firestore
     late Future<List<AnnouncementModel>> _announcements;
 
-    DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+    DatabaseModel db = DatabaseModel();
 
     //fetch announcements when this screen is accessed
     @override

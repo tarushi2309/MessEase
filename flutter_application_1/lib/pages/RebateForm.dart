@@ -126,9 +126,12 @@ class _RebateFormPageState extends State<RebateFormPage> {
     // Parse the dates from the controllers
     DateTime rebateFrom = DateFormat('dd/MM/yyyy').parse(rebateFromController.text);
     DateTime rebateTo = DateFormat('dd/MM/yyyy').parse(rebateToController.text);
+    print(rebateFrom);
+    print(rebateTo);
     studentRef = await _firestore.collection('students').doc(uid).get();
     // Calculate the difference in days
     int difference = rebateTo.difference(rebateFrom).inDays+1;
+    print(difference);
     // Check if the difference is valid
     if (difference < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,13 +140,14 @@ class _RebateFormPageState extends State<RebateFormPage> {
       return;
     }
     DateTime lastRebateDate = (studentRef!['last_rebate'] as Timestamp).toDate();
-    
+    print(lastRebateDate);
     if (rebateFrom .isBefore(lastRebateDate)||rebateFrom.isAtSameMomentAs(lastRebateDate)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("The rebate for this period already exists.")),
       );
       return;
     }
+    print("check1");
     if (difference > (20-studentRef!['days_of_rebate'])) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Required days exceed the allowed limit of 20 days per semester. You only have ${20-studentRef!['days_of_rebate']} days left.")),

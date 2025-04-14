@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:webapp/components/user_provider.dart';
 import 'package:webapp/pages/student/image.dart';
@@ -24,6 +23,7 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
   final TextEditingController degreeController = TextEditingController();
   final TextEditingController bankaccountController = TextEditingController();
   final TextEditingController ifscController = TextEditingController();
+  final TextEditingController entryNoController = TextEditingController();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -62,17 +62,18 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
       }
 
       try {
-        await _firestore.collection('students').doc(uid).set({
-          'year': yearController.text.trim(),
-          'degree': degreeController.text.trim(),
-          'bankAccount': bankaccountController.text.trim(),
-          'ifsc': ifscController.text.trim(),
-          'profileImage': downloadUrl,
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Details submitted successfully!"),
-        ));
+        String batch=degreeController.text.trim()+yearController.text.trim();
+        DocumentSnapshot messes =await FirebaseFirestore.instance.collection('mess').doc('messAllotment').get();
+        
+          Navigator.pop(context, {
+            'year': yearController.text.trim(),
+            'degree': degreeController.text.trim(),
+            'bankAccount': bankaccountController.text.trim(),
+            'ifsc': ifscController.text.trim(),
+            'downloadUrl': downloadUrl, // Add your URL handling logic here,
+            'entryNo': entryNoController.text.trim(),
+            'mess':messes['messAllot'][batch] as String,
+          });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Failed to submit details: $e"),
@@ -131,6 +132,10 @@ class _GetStudentDetailsState extends State<GetStudentDetails> {
                             children: [
                               buildResponsiveTextField(
                                 "Year", yearController,
+                                keyboardType: TextInputType.number,
+                              ),
+                               buildResponsiveTextField(
+                                "Entry No", entryNoController,
                                 keyboardType: TextInputType.number,
                               ),
                               buildResponsiveTextField(

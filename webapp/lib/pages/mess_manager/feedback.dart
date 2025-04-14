@@ -108,8 +108,9 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
 
       if (!allTime && ts.isBefore(cutoff)) return null;
       if (dateRange != null &&
-          (ts.isBefore(dateRange!.start) || ts.isAfter(dateRange!.end)))
+          (ts.isBefore(dateRange!.start) || ts.isAfter(dateRange!.end))) {
         return null;
+      }
 
       final stuUid = feedback['uid'] as String;
       final stuDoc = await FirebaseFirestore.instance
@@ -140,9 +141,13 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
     return list.where((f) {
       if (q.isNotEmpty &&
           !(f.studentName.toLowerCase().contains(q) ||
-              f.studentEntryNum.toLowerCase().contains(q))) return false;
+              f.studentEntryNum.toLowerCase().contains(q))) {
+        return false;
+      }
       if (selectedDay != 'All' &&
-          DateFormat.EEEE().format(f.timestamp) != selectedDay) return false;
+          DateFormat.EEEE().format(f.timestamp) != selectedDay) {
+        return false;
+      }
       if (selectedMeal != 'all' && f.meal != selectedMeal) return false;
       return true;
     }).toList();
@@ -486,8 +491,9 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
                                                   f.imageUrl!,
                                                   loadingBuilder:
                                                       (ctx, child, progress) {
-                                                    if (progress == null)
+                                                    if (progress == null) {
                                                       return child;
+                                                    }
                                                     final v = progress
                                                                 .expectedTotalBytes !=
                                                             null
