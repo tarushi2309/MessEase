@@ -1,308 +1,353 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:webapp/components/header_student.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:webapp/components/header_student.dart';
+import 'package:webapp/components/user_provider.dart';
+import 'package:webapp/models/rebate.dart';
+import 'package:webapp/pages/student/image.dart';
 
-class RebateForm extends StatefulWidget {
-  const RebateForm({Key? key}) : super(key: key);
+class RebateformPage extends StatefulWidget {
+  const RebateformPage({super.key});
 
   @override
-  State<RebateForm> createState() => _RebateFormState();
+  State<RebateformPage> createState() => _RebateformPageState();
 }
 
-class _RebateFormState extends State<RebateForm> {
+class _RebateformPageState extends State<RebateformPage> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Form controllers
-  final TextEditingController _roomNumberController = TextEditingController();
-  final TextEditingController _rebateFromController = TextEditingController();
-  final TextEditingController _rebateToController = TextEditingController();
-  final TextEditingController _numberOfDaysController = TextEditingController();
-  
-  String? _selectedHostel;
-  List<String> _hostelOptions = ['Konark','Anusha','Annapurna'];
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
-    final DateTime? picked = await showDatePicker(
+  String? uid;
+
+  // Controllers
+  TextEditingController hostelController = TextEditingController();
+  TextEditingController roomController = TextEditingController();
+  TextEditingController rebateFromController = TextEditingController();
+  TextEditingController rebateToController = TextEditingController();
+  TextEditingController daysController = TextEditingController();
+  hostel? selectedHostel;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    uid = Provider.of<UserProvider>(context, listen: false).uid;
+  }
+
+  // Function to show Date Picker
+  Future<void> _selectDate(
+      BuildContext context, TextEditingController controller) async {
+    DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
     );
-    
-    if (picked != null) {
+    if (pickedDate != null) {
       setState(() {
-        controller.text = DateFormat('dd/MM/yyyy').format(picked);
+        controller.text =
+            "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
       });
     }
   }
 
-  void _submitForm() {
+  DocumentSnapshot? studentRef;
+
+  void submitRebateForm() async {
     if (_formKey.currentState!.validate()) {
-      // Process form submission
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Submitting rebate request...')),
+      _formKey.currentState!.save();
+
+      // Convert date format
+      List<String> startParts = rebateFromController.text.split('/');
+      List<String> endParts = rebateToController.text.split('/');
+
+      Timestamp startDate = Timestamp.fromDate(
+        DateTime(int.parse(startParts[2]), int.parse(startParts[1]),
+            int.parse(startParts[0])),
       );
-      // Add your API call or submission logic here
+      Timestamp endDate = Timestamp.fromDate(
+        DateTime(int.parse(endParts[2]), int.parse(endParts[1]),
+            int.parse(endParts[0])),
+      );
+      print('studentRef: ${studentRef!['mess']}');
+      Rebate rebate = Rebate(
+        req_id: '',
+        student_id: studentRef!.reference,
+        start_date: startDate,
+        end_date: endDate,
+        status_: status.pending,
+        hostel_: selectedHostel!,
+        mess_: studentRef!['mess'],
+      );
+
+      DocumentReference docRef =
+          await _firestore.collection('rebates').add(rebate.toJson());
+      await docRef.update({'req_id': docRef.id});
+
+      /*ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rebate request submitted successfully!')),
+      );*/
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Success'),
+            content: const Text('Rebate request submitted successfully!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      try {
+        setState(() {
+          selectedHostel = null;
+          hostelController.clear();
+          roomController.clear();
+          rebateFromController.clear();
+          rebateToController.clear();
+          daysController.clear();
+        });
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
+    }
+  }
+
+  void submitDate() async {
+    try {
+      // Parse the dates from the controllers
+      DateTime rebateFrom =
+          DateFormat('dd/MM/yyyy').parse(rebateFromController.text);
+      DateTime rebateTo =
+          DateFormat('dd/MM/yyyy').parse(rebateToController.text);
+      studentRef = await _firestore.collection('students').doc(uid).get();
+      // Calculate the difference in days
+      int difference = rebateTo.difference(rebateFrom).inDays + 1;
+      // Check if the difference is valid
+      if (difference < 3) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("The rebate period must be at least 3 days.")),
+        );
+        return;
+      }
+      DateTime lastRebateDate =
+          (studentRef!['last_rebate'] as Timestamp).toDate();
+
+      if (rebateFrom.isBefore(lastRebateDate) ||
+          rebateFrom.isAtSameMomentAs(lastRebateDate)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("The rebate for this period already exists.")),
+        );
+        return;
+      }
+      if (difference > (20 - studentRef!['days_of_rebate'])) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  "Required days exceed the allowed limit of 20 days per semester. You only have ${20 - studentRef!['days_of_rebate']} days left.")),
+        );
+        return;
+      }
+      print("submit rebate");
+      submitRebateForm();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Invalid date format. Please select valid dates.")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    const mobileBreakpoint = 600.0;
-    final isDesktop = screenWidth > mobileBreakpoint;
-    
     return Scaffold(
-    drawer: const NavDrawer(),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF0753C),
-        automaticallyImplyLeading: false, // Don't show back button
-        flexibleSpace: Header(currentPage: 'Rebate'),
-        toolbarHeight: 50, // Match your header height
+      key: _scaffoldKey,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Header(currentPage: 'Rebate Form'),
       ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Container(
-                constraints: BoxConstraints(maxWidth: isDesktop ? 600 : double.infinity),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'REBATE FORM',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Enter the details below to submit a rebate request',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 30),
-                      
-                      // Hostel Dropdown
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: DropdownButtonFormField<String>(
-                            value: _selectedHostel,
-                            hint: Text('Select Hostel'),
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 16),
+      body: Container(
+        color: Colors.white,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            double cardWidth =
+                constraints.maxWidth < 650 ? constraints.maxWidth * 0.9 : 600;
+
+            return Center(
+              child: SingleChildScrollView(
+                child: Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  elevation: 2,
+                  child: Container(
+                    width: cardWidth,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 10),
+                          child: Text(
+                            "REBATE FORM",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
                             ),
-                            items: _hostelOptions.map((String hostel) {
-                              return DropdownMenuItem<String>(
-                                value: hostel,
-                                child: Text(hostel),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedHostel = newValue;
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please select a hostel';
-                              }
-                              return null;
-                            },
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Room Number
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: TextFormField(
-                            controller: _roomNumberController,
-                            decoration: InputDecoration(
-                              hintText: 'Room Number',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your room number';
-                              }
-                              return null;
-                            },
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 30),
+                          child: Text(
+                            "Enter the details below to submit a rebate request",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Color(0xFF757575)),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Rebate From Date
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: TextFormField(
-                            controller: _rebateFromController,
-                            decoration: InputDecoration(
-                              hintText: 'Rebate From',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 16),
-                              suffixIcon: IconButton(
-                                icon: Icon(Icons.calendar_today),
-                                onPressed: () => _selectDate(context, _rebateFromController),
+                        const SizedBox(height: 20),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              FractionallySizedBox(
+                                widthFactor: 0.85,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10.0),
+                                  child: DropdownButtonFormField<hostel>(
+                                    value: selectedHostel,
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        selectedHostel = newValue;
+                                      });
+                                    },
+                                    items: hostel.values.map((hostel h) {
+                                      return DropdownMenuItem<hostel>(
+                                        value: h,
+                                        child: Text(h.name
+                                            .toUpperCase()), // Display names in uppercase
+                                      );
+                                    }).toList(),
+                                    decoration: InputDecoration(
+                                      labelText: 'Select Hostel',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            readOnly: true,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please select start date';
-                              }
-                              return null;
-                            },
-                            onTap: () => _selectDate(context, _rebateFromController),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Rebate To Date
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: TextFormField(
-                            controller: _rebateToController,
-                            decoration: InputDecoration(
-                              hintText: 'Rebate To',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 16),
-                              suffixIcon: IconButton(
-                                icon: Icon(Icons.calendar_today),
-                                onPressed: () => _selectDate(context, _rebateToController),
+                              // mess part added in the form
+
+                              buildResponsiveTextField(
+                                  "Room Number", roomController),
+                              buildDateField(
+                                  "Rebate From", rebateFromController),
+                              buildDateField("Rebate To", rebateToController),
+                              //buildTextField("Number of Days", daysController, keyboardType: TextInputType.number),
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: submitDate,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFFF0753C),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 50, vertical: 15),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
+                                ),
+                                child: const Text(
+                                  "Submit Form",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            ),
-                            readOnly: true,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please select end date';
-                              }
-                              return null;
-                            },
-                            onTap: () => _selectDate(context, _rebateToController),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Number of Days
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: TextFormField(
-                            controller: _numberOfDaysController,
-                            decoration: InputDecoration(
-                              hintText: 'Number of Days',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter number of days';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      
-                      // Submit Button
-                      ElevatedButton(
-                        onPressed: _submitForm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFF0753C),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Text(
-                          'Submit Form',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Color(0xFFF0753C),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Rebate History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant_menu),
-            label: 'Mess Menu',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chat',
-          ),
-        ],
       ),
     );
   }
-  
-  @override
-  void dispose() {
-    _roomNumberController.dispose();
-    _rebateFromController.dispose();
-    _rebateToController.dispose();
-    _numberOfDaysController.dispose();
-    super.dispose();
+
+  Widget buildResponsiveTextField(
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: FractionallySizedBox(
+        widthFactor: 0.85,
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Please enter $label";
+            }
+            return null;
+          },
+        ),
+      ),
+    );
+  }
+
+  // Date picker field
+  Widget buildDateField(String label, TextEditingController controller) {
+    return FractionallySizedBox(
+      widthFactor: 0.85,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: TextFormField(
+          controller: controller,
+          readOnly: true,
+          decoration: InputDecoration(
+            labelText: label,
+            suffixIcon: const Icon(Icons.calendar_today,
+                color: Color.fromARGB(255, 8, 5, 0)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+          onTap: () => _selectDate(context, controller),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Please select a valid date";
+            }
+            return null;
+          },
+        ),
+      ),
+    );
   }
 }

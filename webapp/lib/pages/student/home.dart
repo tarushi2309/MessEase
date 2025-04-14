@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:webapp/components/header_manager.dart';
+import 'package:webapp/components/header_student.dart';
 import 'package:webapp/models/addon.dart';
 import 'package:webapp/models/announcement.dart';
 import 'package:webapp/models/mess_menu.dart';
