@@ -14,7 +14,7 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   int selectedIndex = 0; // Tracks selected day
 
-  DatabaseModel db = DatabaseModel();
+  DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
 
   final List<String> days = [
     'Monday',

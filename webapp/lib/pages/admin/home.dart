@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:webapp/components/header_admin.dart';
 import 'package:webapp/models/mess.dart';
@@ -39,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       "PhD": _selectedMessPhd,
     };
     MessModel mess = MessModel(messAllot : messAllot);
-    DatabaseModel dbservice = DatabaseModel();
+    DatabaseModel dbservice = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
     await dbservice.addMessDetails(mess);
   }
 

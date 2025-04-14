@@ -17,7 +17,7 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
     // Fetch announcements from Firestore
     late Future<List<AnnouncementModel>> _announcements;
 
-    DatabaseModel db = DatabaseModel();
+    DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
 
     //fetch announcements when this screen is accessed
     @override

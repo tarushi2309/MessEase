@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final DatabaseModel db = DatabaseModel();
+  final DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
 
   @override
   void initState() {
@@ -30,9 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
     db.removePrevAddons();
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  BUILD
-  // ────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<MessMenuModel?>(
@@ -108,9 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  MEAL SECTION
-  // ────────────────────────────────────────────────────────────────────
   Widget _buildMealSection(String title, List<String> items) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -156,9 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  ADD‑ONS SECTION
-  // ────────────────────────────────────────────────────────────────────
   Widget _buildAddOnsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,9 +215,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  ANNOUNCEMENTS SECTION
-  // ────────────────────────────────────────────────────────────────────
   Widget _buildAnnouncementsBlock() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -287,9 +275,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  ADD / REMOVE DIALOGS
-  // ────────────────────────────────────────────────────────────────────
   void _showAddItemDialog(BuildContext context, String title) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();

@@ -241,6 +241,8 @@ class _SignInFormState extends State<SignInForm> {
               style: TextStyle(fontSize: 18.0),
             )));
       }
+      else
+      {
       if (userInfo != null) {
         String? checkIIT = userInfo['hd'] ??'';
         if (checkIIT == "iitrpr.ac.in") {
@@ -300,7 +302,7 @@ class _SignInFormState extends State<SignInForm> {
               "No user found.",
               style: TextStyle(fontSize: 18.0),
             )));
-      }}
+      }}}
      on FirebaseAuthException {
       User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {

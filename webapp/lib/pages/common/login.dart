@@ -148,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen>
         // Replace HomeScreen() with your actual home screen widget.
 
         //print(1);
-        DatabaseModel db = DatabaseModel();
+        DatabaseModel db = DatabaseModel(uid: uid);
         DocumentSnapshot doc = await db.getUserInfo(uid);
 
         print(doc);

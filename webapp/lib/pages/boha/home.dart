@@ -18,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  DatabaseModel db = DatabaseModel();
+  DatabaseModel db = DatabaseModel( uid: FirebaseAuth.instance.currentUser!.uid);
   
   @override
   Widget build(BuildContext context) {
