@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/components/header_admin.dart';
 import 'package:webapp/services/notification.dart';
 import 'package:webapp/models/processed_rebate.dart';
+import 'package:webapp/models/rebate_days.dart';
 import 'package:excel/excel.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:universal_html/html.dart' as html;
@@ -441,50 +442,115 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                                           ),
                                           
                                           onPressed: () async {
-                                          try {
-                                            // Create a ProcessedRebate object from RebateData
-                                            final processedRebate = ProcessedRebate(
-                                              docId: r.docId,
-                                              studentId: r.studentId,
-                                              name: r.name,
-                                              entryNumber: r.entryNumber,
-                                              year: r.year,
-                                              mess: messName,
-                                              degree: r.degree,
-                                              numberOfDays: r.numberOfDays,
-                                              bankAccountNumber: r.bankAccountNumber,
-                                              ifscCode: r.ifscCode,
-                                              refund: r.refund,
-                                              email: r.email,
-                                              status: 'processed',
-                                            );
+                                            try{
+                                              // get the rebates of that student
+                                              final studentId = r.studentId;
 
-                                            // Add to processed_rebates collection
-                                            await FirebaseFirestore.instance
-                                                .collection('processed_rebates')
-                                                .doc(r.docId)
-                                                .set(processedRebate.toJson());
+                                              final rebatesQuery = await FirebaseFirestore.instance
+                                                                  .collection('rebates')
+                                                                  .where('student_id', isEqualTo: FirebaseFirestore.instance
+                                                                                                    .collection('students')
+                                                                                                    .doc(studentId))
+                                                                  .get();
 
-                                            // Optionally delete from the original students collection (uncomment if needed)
-                                            // await FirebaseFirestore.instance
-                                            //     .collection('students')
-                                            //     .doc(r.docId)
-                                            //     .delete();
+                                              //print('/students/${studentId}');
+                                              //print(rebatesQuery.docs);
+                                              
+                                              //get the start and end dates of all the rebates for the student
+                                              final rebatePeriods = <RebatePeriod>[];
+                                              for(final rebateDoc in rebatesQuery.docs){
+                                                final data = rebateDoc.data();
+                                                //print(data);
+                                                final startDate = data['start_date'] as Timestamp?;
+                                                final endDate = data['end_date'] as Timestamp?;
+                                                //print("startDate ${startDate}");
+                                                //print("endDate ${endDate}");
+                                                if (startDate != null && endDate != null) {
+                                                  //print("Entering in adding");
+                                                  rebatePeriods.add(RebatePeriod(
+                                                    startDate: startDate,
+                                                    endDate: endDate,
+                                                  ));
+                                                  //print("added");
+                                                }
+                                              }
+                                              
+                                              // add this to the rebateDate model
+                                              final rebateDates = RebateDates(
+                                                studentId: studentId,
+                                                rebatePeriods: rebatePeriods,
+                                                totalNumDays: r.numberOfDays,
+                                              );
 
-                                            // Update the UI
-                                            setState(() {
-                                              _rows.removeWhere((e) => e.docId == r.docId);
-                                            });
+                                              await FirebaseFirestore.instance
+                                                    .collection('rebate_dates')
+                                                    .doc(studentId)
+                                                    .set(rebateDates.toJson(), SetOptions(merge: true));
+                                              
+                                              // delete these rebates from the rebate collection
+                                              for (final rebateDoc in rebatesQuery.docs) {
+                                                await FirebaseFirestore.instance
+                                                    .collection('rebates')
+                                                    .doc(rebateDoc.id)
+                                                    .delete();
+                                              }
 
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Rebate marked as processed')),
-                                            );
-                                          } catch (e) {
-                                            print('Error while processing rebate: $e');
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Failed to process rebate')),
-                                            );
-                                          }
+                                            } catch(e){
+                                              print("Error deleting the rebates");
+                                            }
+
+                                            // add these details to the processedRebates table
+                                    
+                                            try {
+                                              // Create a ProcessedRebate object from RebateData
+                                              final processedRebate = ProcessedRebate(
+                                                docId: r.docId,
+                                                studentId: r.studentId,
+                                                name: r.name,
+                                                entryNumber: r.entryNumber,
+                                                year: r.year,
+                                                mess: messName,
+                                                degree: r.degree,
+                                                numberOfDays: r.numberOfDays,
+                                                bankAccountNumber: r.bankAccountNumber,
+                                                ifscCode: r.ifscCode,
+                                                refund: r.refund,
+                                                email: r.email,
+                                                status: 'processed',
+                                              );
+
+                                              // Add to processed_rebates collection
+                                              await FirebaseFirestore.instance
+                                                  .collection('processed_rebates')
+                                                  .doc(r.docId)
+                                                  .set(processedRebate.toJson());
+
+                                              // update refund and number of days in student collection
+                                              const int newRefund = 0;
+                                              const int newDays = 0;
+                                              await FirebaseFirestore.instance
+                                                        .collection('students')
+                                                        .doc(r.studentId)
+                                                        .update({
+                                                          'refund': newRefund,
+                                                          'days_of_rebate': newDays, 
+                                                        });
+                                              
+
+                                              // Update the UI
+                                              setState(() {
+                                                _rows.removeWhere((e) => e.docId == r.docId);
+                                              });
+
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Rebate marked as processed')),
+                                              );
+                                            } catch (e) {
+                                              print('Error while processing rebate: $e');
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Failed to process rebate')),
+                                              );
+                                            }
                                         },
 
                                           child: const Text('Process'),
