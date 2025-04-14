@@ -1,4 +1,3 @@
-import 'dart:ui_web' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -8,16 +7,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:webapp/components/user_provider.dart';
 import 'package:webapp/pages/student/get_details.dart';
-import 'package:webapp/pages/student/home.dart';
 import 'package:webapp/services/database.dart';
 import 'package:webapp/models/student.dart';
-import 'package:webapp/pages/student/image.dart';
-import 'package:webapp/services/database.dart';
-import 'package:google_sign_in_web/google_sign_in_web.dart';
-import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
-import 'package:google_identity_services_web/id.dart';
 
-import 'dart:html' as html;
 
 
 class LoginScreen extends StatefulWidget {
