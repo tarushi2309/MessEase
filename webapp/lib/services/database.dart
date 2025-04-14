@@ -215,54 +215,18 @@ class DatabaseModel {
         .set(mess.toJson());
   }
 
-  //function to add the addon into the database
-  Future<String> addAnnouncement(String description) async {
-    if (description.isEmpty) {
-      return "Please fill in all fields.";
-    }
-
-    try {
-      if (messId == null) {
-        return "Error: Mess ID not found";
-      }
-
-      AnnouncementModel announcement = AnnouncementModel(
-        announcement: description,
-        messId: messId!,
-        date: DateTime.now().toString(),
-      );
-
-      DocumentReference docRef = await _firestore
-          .collection('announcements')
-          .add(announcement.toJson());
-
-      return "Announcement added successfully!";
-    } catch (e) {
-      return "Error: ${e.toString()}";
-    }
-  }
 
   Future<List<AnnouncementModel>> fetchAnnouncements() async {
-
-    if (messId == null) {
-      print("No messId found.");
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('announcements').get();
+      return querySnapshot.docs
+          .map((doc) => AnnouncementModel.fromJson(doc.data()))
+          .toList();
+    } catch (e) {
+      print('Error fetching announcements: $e');
       return [];
     }
-
-    QuerySnapshot query =
-        await _firestore
-            .collection('announcements')
-            .where('messId', isEqualTo: messId)
-            .where('date', isEqualTo: DateTime.now().toString())
-            .get();
-    print(query.docs);
-
-    return query.docs
-        .map(
-          (doc) =>
-              AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>),
-        )
-        .toList();
   }
 
   Future<MessMenuModel?> getMenu() async {
