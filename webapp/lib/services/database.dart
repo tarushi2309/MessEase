@@ -10,7 +10,6 @@ import '../models/user.dart';
 class DatabaseModel {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String?messId;
-  DatabaseModel({required String uid});
 
   Future<dynamic> addStudentDetails(StudentModel student,String uid) async {
     return await FirebaseFirestore.instance
@@ -60,20 +59,7 @@ class DatabaseModel {
     }
   }
 
-  Future<DocumentSnapshot> getStudentInfo(String uid) async {
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-      .collection("students")
-      .where("uid", isEqualTo: uid)
-      .limit(1)  // Ensure only one document is returned
-      .get();
 
-  // Return the first document in the QuerySnapshot (if exists)
-  if (querySnapshot.docs.isNotEmpty) {
-    return querySnapshot.docs[0];  // Return the DocumentSnapshot
-  } else {
-    throw Exception("No student found for the provided uid");
-  }
-}
 
   //to get the mess manager info
   Future<DocumentSnapshot> getMessManagerInfo(String uid) async {

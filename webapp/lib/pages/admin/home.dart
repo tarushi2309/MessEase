@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       "PhD": _selectedMessPhd,
     };
     MessModel mess = MessModel(messAllot : messAllot);
-    DatabaseModel dbservice = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+    DatabaseModel dbservice = DatabaseModel();
     await dbservice.addMessDetails(mess);
   }
 
