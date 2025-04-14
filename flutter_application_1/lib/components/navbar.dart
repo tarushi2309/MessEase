@@ -56,7 +56,6 @@ class Navbar extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => RebateHistoryScreen()),
                     );
                   }),
-                  _buildDrawerItem(Icons.chat, 'Community Chat', () {}),
                   _buildDrawerItem(Icons.home, 'Home', () {
                     Navigator.push(
                       context,

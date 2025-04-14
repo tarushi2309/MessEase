@@ -37,38 +37,29 @@ class CurrentRequestPage extends StatefulWidget {
 }
 
 class _CurrentRequestsPageState extends State<CurrentRequestPage> {
-  // backend logic to get the rebate requests
-  //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   bool isLoading = true;
   late DatabaseModel db;
   String? uid;
   String messName = "";
-
   List<CurrentRebate> Rebates = [];
-
   List<CurrentRebate> CurrentRebates = [];
+
   @override
   void initState() {
     super.initState();
-    // Fetch UID in initState instead of the initializer
+    // Fetch uid from provider
     uid = Provider.of<UserProvider>(context, listen: false).uid;
     print(uid);
-    print("this is me debugging");
     fetchUserName();
   }
 
-  // fetch mess name from uid
-  @override
+  // Fetch mess name using uid
   void fetchUserName() async {
-    print("I am entering here");
     try {
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection('user').doc(uid).get();
-      print(userDoc);
-      print(userDoc['name']);
       if (userDoc.exists) {
-        messName = userDoc['name']; // Return the name from the document
+        messName = userDoc['name'];
       } else {
         print("User not found");
       }
@@ -81,8 +72,7 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
   String reqId = "";
 
   Future<List<CurrentRebate>> getCurrentRebates(String messName) async {
-    List<CurrentRebate> CurrentRebates = [];
-    // Fetch rebates where mess = messName and status = "Approved"
+    List<CurrentRebate> currentRebates = [];
     QuerySnapshot rebateSnapshot = await FirebaseFirestore.instance
         .collection('rebates')
         .where('mess', isEqualTo: messName)
@@ -90,27 +80,22 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
         .get();
     for (var doc in rebateSnapshot.docs) {
       Map<String, dynamic> rebate = doc.data() as Map<String, dynamic>;
-
       Timestamp startTimestamp = rebate['start_date'] as Timestamp;
       Timestamp endTimestamp = rebate['end_date'] as Timestamp;
+      // Only include rebates active on the current date
       if (startTimestamp.compareTo(Timestamp.now()) <= 0 &&
           endTimestamp.compareTo(Timestamp.now()) >= 0) {
-        String studentId =
-            rebate['student_id'].path.split('/').last; // Extract document ID
+        String studentId = rebate['student_id'].path.split('/').last;
         reqId = rebate['req_id'];
         // Fetch student data using studentId
         DocumentSnapshot studentDoc = await FirebaseFirestore.instance
             .collection('students')
             .doc(studentId)
             .get();
-
-        
-
-        if (studentDoc.exists ) {
-          String entryNumber = studentDoc['entryNumber']; // Get entry number
-          String studentName = studentDoc['name']; // Get student name
-
-          CurrentRebates.add(
+        if (studentDoc.exists) {
+          String entryNumber = studentDoc['entryNumber'];
+          String studentName = studentDoc['name'];
+          currentRebates.add(
             CurrentRebate(
               startDate: startTimestamp.toDate(),
               endDate: endTimestamp.toDate(),
@@ -119,28 +104,18 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
               studentName: studentName,
               studentId: studentId,
               req_id: reqId,
-              url:studentDoc['url'],
+              url: studentDoc['url'],
             ),
           );
         }
       }
     }
-
-    return CurrentRebates;
+    return currentRebates;
   }
 
   Future<void> fetchCurrentRebates() async {
     try {
       Rebates = await getCurrentRebates(messName);
-      /*for (var rebate in Rebates) {
-        print("Start Date: ${rebate.startDate}");
-        print("End Date: ${rebate.endDate}");
-        print("Hostel: ${rebate.hostel}");
-        print("Entry Number: ${rebate.entryNumber}");
-        print("Student Name: ${rebate.studentName}");
-        print("---------------------");
-      }*/
-
       setState(() {
         CurrentRebates = Rebates;
         isLoading = false;
@@ -151,11 +126,11 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
     }
   }
 
-  //function to change the status in the firebase of a rebate query
-
   String searchQuery = "";
   String selectedHostel = "";
   String selectedYear = "";
+
+  TextEditingController searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -167,87 +142,6 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
           rebate.entryNumber.toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
 
-    // return Scaffold(
-    //   backgroundColor: Colors.white,
-    //   appBar: PreferredSize(
-    //     preferredSize: const Size.fromHeight(60),
-    //     child: Header(currentPage: 'Current Rebates'),
-    //   ),
-    //   body: isLoading
-    //       ? Center(child: CircularProgressIndicator())
-    //       : CurrentRebates.isEmpty
-    //           ? Center(child: Text("No Current requests"))
-    //           : Padding(
-    //               padding: const EdgeInsets.all(16.0),
-    //               child: Column(
-    //                 children: [
-    //                   // Search Bar
-    //                   TextField(
-    //                     decoration: InputDecoration(
-    //                       hintText: "Search by Name or Entry No",
-    //                       prefixIcon: Icon(Icons.search),
-    //                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-    //                     ),
-    //                     onChanged: (value) {
-    //                       setState(() {
-    //                         searchQuery = value;
-    //                       });
-    //                     },
-    //                   ),
-    //                   SizedBox(height: 10),
-
-    //                   // Column Headers
-    //                   Container(
-    //                     padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-    //                     decoration: BoxDecoration(
-    //                       color: Colors.grey[300],
-    //                       borderRadius: BorderRadius.circular(8),
-    //                     ),
-    //                     child: Row(
-    //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    //                       children: [
-    //                         SizedBox(width: 120, child: Text("Name", style: TextStyle(fontWeight: FontWeight.bold))),
-    //                         SizedBox(width: 120, child: Text("Entry No", style: TextStyle(fontWeight: FontWeight.bold))),
-    //                         SizedBox(width: 120, child: Text("Hostel", style: TextStyle(fontWeight: FontWeight.bold))),
-    //                         SizedBox(width: 120, child: Text("Rebate From", style: TextStyle(fontWeight: FontWeight.bold))),
-    //                         SizedBox(width: 120, child: Text("Rebate Till", style: TextStyle(fontWeight: FontWeight.bold))),
-    //                         Icon(Icons.more_vert, color: Colors.transparent), // Placeholder for alignment
-    //                       ],
-    //                     ),
-    //                   ),
-    //                   SizedBox(height: 10),
-
-    //                   // List of Requests
-    //                   Expanded(
-    //                     child: ListView.builder(
-    //                       itemCount: filteredRequests.length,
-    //                       itemBuilder: (context, index) {
-    //                         var request = filteredRequests[index];
-    //                         return Card(
-    //                           elevation: 3,
-    //                           margin: EdgeInsets.symmetric(vertical: 10),
-    //                           child: Padding(
-    //                             padding: const EdgeInsets.all(16.0),
-    //                             child: Row(
-    //                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    //                               children: [
-    //                                 SizedBox(width: 120, child: Text(request.studentName)),
-    //                                 SizedBox(width: 120, child: Text(request.entryNumber)),
-    //                                 SizedBox(width: 120, child: Text(request.hostel)),
-    //                                 SizedBox(width: 120, child: Text(DateFormat('yyyy-MM-dd').format(request.startDate))),
-    //                                 SizedBox(width: 120, child: Text(DateFormat('yyyy-MM-dd').format(request.endDate))),
-    //                               ],
-    //                             ),
-    //                           ),
-    //                         );
-    //                       },
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //             ),
-
-    // );
     double maxWidth = MediaQuery.of(context).size.width * 0.95;
 
     return Scaffold(
@@ -261,18 +155,32 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
           : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
+                //crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Container(
                       width: maxWidth,
                       child: Row(
                         children: [
-                          // Search bar
                           Expanded(
                             flex: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Text(
+                                "Current Rebates",
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
                             child: TextField(
+                              controller: searchController,
                               decoration: InputDecoration(
-                                hintText: "Search by Name or Entry No",
+                                hintText: "Search by Name or Entry Number",
                                 prefixIcon: Icon(Icons.search),
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8)),
@@ -284,179 +192,57 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                               },
                             ),
                           ),
-                          SizedBox(width: 12),
-
-                          DropdownButtonHideUnderline(
-                            child: ButtonTheme(
-                              alignedDropdown: true,
-                              child: SizedBox(
-                                width:
-                                    180, // controls dropdown popup + field width
-                                child: DropdownButtonFormField<String>(
-                                  value: selectedHostel.isEmpty
-                                      ? null
-                                      : selectedHostel,
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    labelText: 'Degree Type',
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 14),
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    filled: true,
-                                    fillColor: Colors.grey[100],
-                                  ),
-                                  icon: Icon(Icons.arrow_drop_down,
-                                      color: Colors.grey[800]),
-                                  dropdownColor: Colors.white,
-                                  elevation: 6,
-                                  borderRadius: BorderRadius.circular(10),
-                                  items: [
-                                    'BTech.',
-                                    'Mtech.',
-                                    'Phd.',
-                                    'MSc.',
-                                  ]
-                                      .map((hostel) => DropdownMenuItem(
-                                            value: hostel.toLowerCase(),
-                                            child: SizedBox(
-                                              height:
-                                                  20, // 👈 custom height here (default is ~48)
-                                              child: Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  hostel,
-                                                  style: TextStyle(
-                                                      fontSize:
-                                                          14), // you can reduce font too
-                                                ),
-                                              ),
-                                            ),
-                                          ))
-                                      .toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      selectedHostel = value ?? '';
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                         ],
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          selectedHostel = '';
-                          selectedYear = '';
+                          searchController.clear();
+                          searchQuery = '';
                         });
                       },
                       icon: Icon(Icons.clear),
                       label: Text("Clear Filters"),
                     ),
                   ),
-
-                  // 🧾 Data Table
                   Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        double maxWidth =
-                            MediaQuery.of(context).size.width * 0.95;
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount;
+                          if (constraints.maxWidth > 1000) {
+                            crossAxisCount = 3; // large screens
+                          } else if (constraints.maxWidth > 600) {
+                            crossAxisCount = 2; // medium screens
+                          } else {
+                            crossAxisCount = 1; // small screens
+                          }
 
-                        return Center(
-                          child: Container(
-                            width: maxWidth,
-                            margin: EdgeInsets.only(bottom: 24),
-                            child: Card(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 2,
-                              child: Column(
-                                children: [
-                                  // HEADER
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(16),
-                                        topRight: Radius.circular(16),
-                                      ),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 14, horizontal: 8),
-                                    child: Row(
-                                      children: [
-                                        _buildHeaderCell("Student Image"),
-                                        _buildHeaderCell("Name"),
-                                        _buildHeaderCell("Entry No"),
-                                        _buildHeaderCell("Hostel"),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // BODY
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.only(
-                                        bottomLeft: Radius.circular(16),
-                                        bottomRight: Radius.circular(16),
-                                      ),
-                                      child: CurrentRebates.isEmpty
-                                          ? Center(
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(24),
-                                                child: Text(
-                                                  "No Current Rebates.",
-                                                  style: TextStyle(
-                                                      color: Colors.grey[600]),
-                                                ),
-                                              ),
-                                            )
-                                          : ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              itemCount:
-                                                  filteredRequests.length,
-                                              itemBuilder: (context, index) {
-                                                final rebate =
-                                                    filteredRequests[index];
-
-                                                 return Container(
-                                                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                                                  decoration: BoxDecoration(
-                                                    color: index % 2 == 0 ? Colors.grey[50] : Colors.grey[100], // Alternating row colors
-                                                    border: Border(
-                                                      bottom: BorderSide(color: Colors.grey[300]!),
-                                                    ),
-                                                  ),
-                                                  child: Row(
-                                                    children: [
-                                                      _buildBodyCell(rebate.url ?? ""), // Student Image
-                                                      _buildBodyCell(rebate.studentName), // Student Name
-                                                      _buildBodyCell(rebate.entryNumber), // Entry Number
-                                                      _buildBodyCell(rebate.hostel), // Hostel Name
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          return GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 24,
+                              mainAxisSpacing: 24,
+                              childAspectRatio: 2,
                             ),
-                          ),
-                        );
-                      },
+                            itemCount: filteredRequests.length,
+                            itemBuilder: (context, index) {
+                              final rebate = filteredRequests[index];
+                              return _buildStudentCard(context, rebate);
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -465,32 +251,79 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
     );
   }
 
-  Widget _buildHeaderCell(String label) {
-    return Expanded(
-      child: Center(
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: Colors.black87,
+  Widget _buildStudentCard(BuildContext context, CurrentRebate rebate) {
+    return Card(
+      color: Colors.white,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          // Orange vertical accent stripe on the left
+          Container(
+            width: 6,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF7643),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
           ),
-        ),
+          // Main card content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                children: [
+                  // Student image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      rebate.url ?? '',
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 150,
+                        height: 150,
+                        color: Colors.grey[300],
+                        child: Icon(Icons.person, color: Colors.grey[700]),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Student details
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          rebate.studentName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          rebate.entryNumber,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  Widget _buildBodyCell(dynamic content) {
-    return Expanded(
-    child: Center(
-      child: content is String && content.startsWith('http') // Check if it's a valid URL
-          ? CircleAvatar(
-              radius: 20,
-              backgroundImage: NetworkImage(content), // Display image from URL
-              onBackgroundImageError: (_, __) => Icon(Icons.person), // Fallback icon
-            )
-          : Text(content.toString(), style: TextStyle(fontSize: 14)),
-    ),
-  );
   }
 }

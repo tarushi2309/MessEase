@@ -1,48 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:webapp/models/addon.dart';
 import 'package:webapp/models/announcement.dart';
+import 'package:webapp/models/mess.dart';
 import 'package:webapp/models/mess_menu.dart';
 import '../models/student.dart';
 import '../models/user.dart';
-import '../models/rebate.dart';
-import '../models/mess_manager.dart';
-import '../models/mess.dart';
-import 'package:provider/provider.dart';
 
 class DatabaseModel {
-  final String uid;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  DatabaseModel({required this.uid});
+  String?messId;
+  DatabaseModel();
 
   Future<dynamic> addUserDetails(UserModel user) async {
     return await FirebaseFirestore.instance
         .collection("user")
-        .doc(uid)
+        .doc(user.uid)
         .set(user.toJson());
   }
 
-  Future<dynamic> addStudentDetails(StudentModel student) async {
-    return await FirebaseFirestore.instance
-        .collection("students")
-        .doc(uid)
-        .set(student.toJson());
-  }
-
-  Future<DocumentSnapshot> getStudentInfo(String uid) async {
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-      .collection("students")
-      .where("uid", isEqualTo: uid)
-      .limit(1)  // Ensure only one document is returned
-      .get();
-
-  // Return the first document in the QuerySnapshot (if exists)
-  if (querySnapshot.docs.isNotEmpty) {
-    return querySnapshot.docs[0];  // Return the DocumentSnapshot
-  } else {
-    throw Exception("No student found for the provided uid");
-  }
-}
 
   Future<DocumentSnapshot> getUserInfo(String uid) async {
     QuerySnapshot querySnapshot =
@@ -78,11 +54,11 @@ class DatabaseModel {
   }
 
   // to get the messId from the uid
-  Future<String?> getMessId() async {
+  Future<void> getMessId(String uid) async {
     try {
       DocumentSnapshot messManagerDoc = await getMessManagerInfo(uid);
       if (messManagerDoc.exists) {
-        return messManagerDoc['messId']; //extracted the messId
+        messId= messManagerDoc['messId']; //extracted the messId
       } else {
         print("No mess manager found for this uid");
         return null;
@@ -100,8 +76,8 @@ class DatabaseModel {
     }
 
     try {
-      double parsedPrice = double.parse(price); // Convert price to double
-      String? messId = await getMessId();
+      int parsedPrice = int.parse(price); // Convert price to double
+      print("messId: $messId");
       if (messId == null) {
         return "Error: Mess ID not found";
       }
@@ -118,7 +94,7 @@ class DatabaseModel {
         // If the add-on exists, update the price and set isSelected to true
         DocumentReference existingDoc = querySnapshot.docs.first.reference;
 
-        await existingDoc.update({'price': parsedPrice, 'isSelected': true});
+        await existingDoc.update({'price': parsedPrice});
 
         return "Add-on updated successfully!";
       } else {
@@ -126,8 +102,7 @@ class DatabaseModel {
         AddonModel addon = AddonModel(
           name: name,
           price: parsedPrice,
-          isSelected: true,
-          messId: messId,
+          messId: messId!,
           date: DateTime.now(),
         );
 
@@ -144,16 +119,14 @@ class DatabaseModel {
   }
 
   Future<void> removePrevAddons() async{
-    String? messId = await getMessId();
+    print("messId: $messId");
     if (messId == null) {
       return;
     }
-
     QuerySnapshot querySnapshot =
           await _firestore
-              .collection('addons')
-              .where('messId', isEqualTo: messId).where('date', isNotEqualTo: DateTime.now()).get();
-
+              .collection('addons').where('date', isLessThan: Timestamp.fromDate(DateTime.now())).get();
+    print(querySnapshot.docs);
     for (var doc in querySnapshot.docs) {
       await doc.reference.delete();
     }
@@ -165,7 +138,6 @@ class DatabaseModel {
     }
 
     try {
-      String? messId = await getMessId();
       if (messId == null) {
         return "Error: Mess ID not found";
       }
@@ -181,8 +153,7 @@ class DatabaseModel {
       if (querySnapshot.docs.isNotEmpty) {
         // If the add-on exists, update the price and set isSelected to true
         DocumentReference existingDoc = querySnapshot.docs.first.reference;
-
-        await existingDoc.update({'isSelected': false});
+        existingDoc.delete();
 
         return "Add-on removed successfully!";
       } else {
@@ -193,9 +164,7 @@ class DatabaseModel {
       return "Error: ${e.toString()}";
     }
   }
-
-  Future<List<AddonModel>> fetchSelectedAddons() async {
-    String? messId = await getMessId();
+  Future<List<AddonModel>> fetchAddons() async {
 
     if (messId == null) {
       print("No messId found.");
@@ -206,7 +175,6 @@ class DatabaseModel {
         await _firestore
             .collection('addons')
             .where('messId', isEqualTo: messId)
-            .where('isSelected', isEqualTo: true)
             .get();
 
     return query.docs
@@ -214,21 +182,28 @@ class DatabaseModel {
         .toList();
   }
 
-  /*//function to add the addon into the database
+  
+
+   Future<dynamic> addMessDetails(MessModel mess) async {
+    return await FirebaseFirestore.instance
+        .collection("mess").doc('messAllotment')
+        .set(mess.toJson());
+  }
+
+  //function to add the addon into the database
   Future<String> addAnnouncement(String description) async {
     if (description.isEmpty) {
       return "Please fill in all fields.";
     }
 
     try {
-      String? messId = await getMessId();
       if (messId == null) {
         return "Error: Mess ID not found";
       }
 
       AnnouncementModel announcement = AnnouncementModel(
         announcement: description,
-        messId: messId,
+        messId: messId!,
         date: DateTime.now().toString(),
       );
 
@@ -243,7 +218,6 @@ class DatabaseModel {
   }
 
   Future<List<AnnouncementModel>> fetchAnnouncements() async {
-    String? messId = await getMessId();
 
     if (messId == null) {
       print("No messId found.");
@@ -264,19 +238,7 @@ class DatabaseModel {
               AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>),
         )
         .toList();
-  } */
-
- // get the announcements from the database
-    Future<List<AnnouncementModel>> fetchAnnouncements() async {
-        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-            .collection("announcements")
-            .get();
-
-        return querySnapshot.docs.map((doc) {
-            Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-            return AnnouncementModel.fromJson(data);
-        }).toList();
-    }
+  }
 
   Future<MessMenuModel?> getMenu() async {
     DocumentSnapshot doc =

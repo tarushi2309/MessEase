@@ -2,12 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:webapp/pages/student/home.dart' as student;
 import 'package:webapp/pages/boha/menu_page.dart';
 import 'package:webapp/pages/mess_manager/current_rebate.dart';
-import 'package:webapp/pages/mess_manager/mess_committee.dart';
+import 'package:webapp/pages/mess_manager/mess_details.dart';
 import 'package:webapp/pages/mess_manager/feedback.dart';
-import 'package:webapp/pages/mess_manager/profile.dart';
-
+import 'package:webapp/pages/student/get_details.dart';
+import 'package:webapp/pages/student/mess_menu.dart';
 import 'firebase_options.dart';
 import 'pages/mess_manager/pending_rebate.dart';
 import '../../components/user_provider.dart';
@@ -19,14 +20,17 @@ import 'package:webapp/pages/boha/home.dart' as boha;
 import 'package:webapp/pages/common/login.dart';
 import 'firebase_options.dart';
 import 'components/user_provider.dart';
-import 'pages/mess_manager/mess_committee.dart';
+import 'pages/mess_manager/mess_details.dart';
 import 'pages/admin/refund.dart';
-import 'pages/admin/rebate_history.dart';
+import 'pages/admin/mess_refund.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'package:webapp/pages/boha/mess.dart';
 import 'package:webapp/pages/boha/announcements.dart';
 import 'package:webapp/pages/boha/mess_committee.dart';
 import 'package:webapp/pages/boha/feedback.dart';
+import 'package:webapp/pages/student/profile.dart';
+import 'package:webapp/pages/student/rebateform.dart'; // Ensure this file contains the RebateFormPage class
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,6 +77,7 @@ class MyApp extends StatelessWidget {
         '/home_admin': (context) => admin.HomeScreen(),
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
         '/home_boha': (context) => boha.HomeScreen(),
+        '/home_student' : (context) => student.HomeScreen(),
         '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
         //'/mess_committee_mess': (context) => MessCommitteeScreenMess(),
         '/pending-request': (context) => PendingRequestPage(),
@@ -82,11 +87,17 @@ class MyApp extends StatelessWidget {
         '/rebate_history': (context) => RebateHistoryPage(),
         '/mess_committee': (context) => MessCommitteePage(),
         '/announcements': (context) => AnnouncementPage(),
-        '/mess_committee_mess_manager' : (context) => MessCommitteeMessManagerPage(),
+        '/mess_details_mess_manager' : (context) => MessCommitteeMessManagerPage(),
         '/feedback': (context) => FeedbackScreen(),
         '/feedback_mess': (context) => FeedbackMessScreen(),
+        '/get_student_details': (context) => GetStudentDetails(),
+        '/rebate_form': (context) => RebateformPage(),
+        '/mess_menu_student': (context) => MessMenuStudentPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
+      //home: ProfileScreen(),
+      //home :GetStudentDetails(),
+      //home : RebateForm(),
     );
   }
 }

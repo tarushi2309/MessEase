@@ -28,11 +28,10 @@ class Header extends StatelessWidget {
           const Spacer(),
 
           // Navigation Links with Highlighting
-          _navLink("Home", "/home_mess_manager", context),
-          _navLink("Mess Details", "/mess_details_mess_manager", context),
-          _navLink("Pending Rebate", "/pending-request", context),
-          _navLink("Current Rebate", "/current-request", context),
-          _navLink("Feedback", "/feedback_mess", context),
+          _navLink("Home", "/home_student", context),
+          _navLink("Rebate Form", "/rebate_form", context),
+          _navLink("Rebate History", "/rebate_history_student", context),
+          _navLink("Mess Menu", "/mess_menu_student", context),
           _navLink("Logout", "/login", context),
 
           // Profile Icon (Clickable)
@@ -40,7 +39,7 @@ class Header extends StatelessWidget {
             padding: const EdgeInsets.all(10.0),
             child: InkWell(
               onTap: () {
-                Navigator.pushNamed(context, "/profile"); // Navigate to profile page
+                Navigator.pushNamed(context, "/profile_student"); // Navigate to profile page
               },
               child: const CircleAvatar(
                 radius: 16,

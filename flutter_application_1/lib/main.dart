@@ -1,7 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
+import 'package:flutter_application_1/pages/get_details.dart';
 import 'package:flutter_application_1/pages/home.dart';
 import 'package:provider/provider.dart';
 
@@ -56,6 +56,7 @@ class MyApp extends StatelessWidget {
         '/mess-menu': (context) => MessMenuScreen(),
         '/rebate-form': (context) => RebateFormPage(),
         '/signin': (context) => SignInScreen(),
+        '/get-details': (context) => GetStudentDetails(),
       },
     );
   }

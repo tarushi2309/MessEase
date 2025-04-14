@@ -9,7 +9,7 @@ class StudentModel {
   int refund=0;
   int monthly_refund;
   int days_of_rebate;
-  int bank_account_number;
+  String bank_account_number;
   String ifsc_code;
 
   StudentModel({
@@ -23,7 +23,7 @@ class StudentModel {
     refund=0,
     this.monthly_refund=0,
     this.days_of_rebate=0,
-    this.bank_account_number=0,
+    this.bank_account_number="",
     this.ifsc_code=""
   }) ;
 
@@ -39,7 +39,7 @@ class StudentModel {
         'refund':0,
         'monthly_refund':0,
         'days_of_rebate':0,
-        'bank_account_number':0,
+        'bank_account_number':"",
         'ifsc_code':""
       };
 
@@ -55,7 +55,7 @@ class StudentModel {
         refund: json['refund'] as int,
         monthly_refund: json['monthly_refund'] as int,
         days_of_rebate: json['days_of_rebate'] as int,
-        bank_account_number: json['bank_account_number'] as int,
+        bank_account_number: json['bank_account_number'] as String,
         ifsc_code: json['ifsc_code'] as String
       );
 }

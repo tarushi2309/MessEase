@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_application_1/models/addon.dart';
 import 'package:flutter_application_1/models/mess_menu.dart';
 import 'package:flutter_application_1/models/student.dart';
 class DatabaseModel{
@@ -34,6 +35,34 @@ class DatabaseModel{
 }
 
 
+Future<List<AddonModel>> fetchAddons(String messId) async {
+    if (messId == null) {
+      print("No messId found.");
+      return [];
+    }
+    QuerySnapshot query =
+        await _firestore
+            .collection('addons')
+            .where('messId', isEqualTo: messId)
+            .get();
+    return query.docs
+        .map((doc) => AddonModel.fromJson(doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> removePrevAddons(String messId) async{
+    if (messId == null) {
+      return;
+    }
+    QuerySnapshot querySnapshot =
+          await _firestore
+              .collection('addons').where('date', isLessThan: Timestamp.fromDate(DateTime.now())).get();
+    print(querySnapshot.docs);
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
+  
   Future<void> addRebateFormDetails({
     required String hostelName,
     required DateTime rebateFrom,
@@ -51,7 +80,7 @@ class DatabaseModel{
       });
     } catch (e) {
       print("Error adding rebate form: $e");
-      throw e;
+      rethrow;
     }
   }
 
@@ -69,7 +98,7 @@ if (querySnapshot.docs.isNotEmpty) {
       }
     } catch (e) {
       print("Error fetching rebate history: $e");
-      throw e;
+      rethrow;
     }
   }
 

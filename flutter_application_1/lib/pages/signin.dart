@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/models/student.dart';
+import 'package:flutter_application_1/pages/get_details.dart';
 import 'package:flutter_application_1/services/database.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -84,6 +86,7 @@ class _SignInFormState extends State<SignInForm> {
   final TextEditingController passwordController = TextEditingController();
   String? selectedDegree;
   String? downloadUrl;
+  String? uid;
   // This function authenticates the user using Firebase.
   Future<void> signIn() async {
     if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
@@ -150,45 +153,28 @@ class _SignInFormState extends State<SignInForm> {
           idToken: googleAuth?.idToken, accessToken: googleAuth?.accessToken);
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(cred);
+      uid = userCredential.user!.uid;
+      Provider.of<UserProvider>(context, listen: false).setUid(uid!);
 
       final AdditionalUserInfo? info = userCredential.additionalUserInfo;
       Map<String, dynamic>? userInfo = info?.profile;
+      bool newUser = info!.isNewUser;
+      if(newUser)
+      {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.orangeAccent,
+            content: Text(
+              "This account does not exist.Please signUp.",
+              style: TextStyle(fontSize: 18.0),
+            )));
+      }
       if (userInfo != null) {
         String checkIIT = userInfo['hd'];
         if (checkIIT == "iitrpr.ac.in") {
-          String email = userInfo['email'];
-          final digitRegex = RegExp(r'\d');
-          final firstDigitMatch = digitRegex.firstMatch(email);
-          final lastDigitMatch = digitRegex.allMatches(email).lastOrNull;
-          if (firstDigitMatch != null && lastDigitMatch != null) {
-            String uid = userCredential.user!.uid;
-            Provider.of<UserProvider>(context, listen: false).setUid(uid);
-            bool newUser = info!.isNewUser;
-            if (newUser) {
-              String name =
-                  userInfo['given_name'] + " " + userInfo['family_name'];
-              await showDegreeDialog(context);
-              await _uploadProfilePicture();
-              String entryNo =
-                  email.substring(firstDigitMatch.start, lastDigitMatch.end);
-              String year;
-              if (entryNo.length == 11) {
-                year = entryNo.substring(0, 4);
-              } else {
-                year = "20${entryNo.substring(0, 2)}";
-              }
-              final DatabaseModel dbService = DatabaseModel(uid: uid);
-              StudentModel student = StudentModel(
-                name: name,
-                email: email,
-                uid: uid,
-                degree: selectedDegree ?? '',
-                entryNumber: entryNo,
-                year: year,
-                url: downloadUrl ?? '',
-              );
-              await dbService.addStudentDetails(student);
-            }
+              final DatabaseModel dbService = DatabaseModel(uid: uid!);
+              DocumentSnapshot student=await dbService.getStudentInfo(uid!);
+              if(student.exists)
+              {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
                 "Sign In Successful",
@@ -233,71 +219,103 @@ class _SignInFormState extends State<SignInForm> {
     }
   }
 
-  Future<void> showDegreeDialog(BuildContext context) async {
-    List<String> degreeOptions = ['B.Tech', 'M.Tech', 'M.Sc', 'PHD', 'Intern'];
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent dismissing without selecting
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text("Select Your Degree"),
-              content: DropdownButton<String>(
-                isExpanded: true,
-                hint: const Text("Choose your degree"),
-                value: selectedDegree,
-                items: degreeOptions.map((degree) {
-                  return DropdownMenuItem(
-                    value: degree,
-                    child: Text(degree),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedDegree = value;
-                  });
-                },
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: selectedDegree == null
-                      ? null // Disable button if no selection is made
-                      : () {
-                          Navigator.of(context).pop(
-                              selectedDegree); // Pass the selected degree back
-                        },
-                  child: const Text("Continue"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _uploadProfilePicture() async {
+  Future<void> signUpGoogle() async {
     try {
-      // Show the dialog and wait for the returned URL
-      String? imageUrl = await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => ImageUploadDialog(),
-      );
-      if (imageUrl != null) {
-        setState(() {
-          downloadUrl = imageUrl; // Store the returned URL
-        });
+      await FirebaseAuth.instance.signOut();
+      await GoogleSignIn().signOut();
+      final googleUser = await GoogleSignIn().signIn();
+      final googleAuth = await googleUser?.authentication;
+      final cred = GoogleAuthProvider.credential(
+          idToken: googleAuth?.idToken, accessToken: googleAuth?.accessToken);
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(cred);
+
+      final AdditionalUserInfo? info = userCredential.additionalUserInfo;
+      Map<String, dynamic>? userInfo = info?.profile;
+      bool newUser = info!.isNewUser;
+      if(!newUser){
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.orangeAccent,
+            content: Text(
+              "You are already registered.",
+              style: TextStyle(fontSize: 18.0),
+            )));
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-            "Error saving profile picture to Firestore. Error details:\n$e"),
-      ));
+      if (userInfo != null) {
+        String? checkIIT = userInfo['hd'] ??'';
+        if (checkIIT == "iitrpr.ac.in") {
+              final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const GetStudentDetails()),
+              );
+              print("Result: $result");
+              Map<String, String?> _studentDetails=result as Map<String, String?>;
+              print(_studentDetails);
+              String name = userInfo['given_name'] + " " + userInfo['family_name'];
+              String email = userInfo['email'];
+              uid = userCredential.user!.uid;
+              Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+                      final DatabaseModel dbService = DatabaseModel(uid: uid!);
+                      StudentModel student = StudentModel(
+                        name: name,
+                        email: email,
+                        uid: uid!,
+                        degree: _studentDetails['degree'] ?? '',
+                        entryNumber: _studentDetails['entryNo'] ?? '',
+                        year: _studentDetails['year'] ?? '',
+                        url: _studentDetails['downloadUrl'] ?? '',
+                        bank_account_number: _studentDetails['bankAccount'] ?? '',
+                        ifsc_code: _studentDetails['ifsc'] ?? '',
+                        mess: _studentDetails['mess']!.toLowerCase(),
+                        last_rebate: DateTime.now(),
+                      );
+                      await dbService.addStudentDetails(student);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text(
+                        "Sign up Successful",
+                        style: TextStyle(fontSize: 20.0),
+                      ),
+                    ));
+                    // Navigate to your home screen after successful login.
+                    // Replace HomeScreen() with your actual home screen widget.
+                    Navigator.push(
+                        context, MaterialPageRoute(builder: (context) => HomeScreen()));
+              }
+                 else {
+                  print("User is not from IIT Ropar");
+                  await userCredential.user!.delete(); 
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "You are not authorised to use this app.",
+                style: TextStyle(fontSize: 18.0),
+              )));
+        }
+      } else {
+        print("User not found");
+        await userCredential.user!.delete(); 
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.orangeAccent,
+            content: Text(
+              "No user found.",
+              style: TextStyle(fontSize: 18.0),
+            )));
+      }}
+     on FirebaseAuthException {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await currentUser.delete(); 
+      }
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Colors.orangeAccent,
+          content: Text(
+            "Sign Up Failed. Please try again.",
+            style: TextStyle(fontSize: 18.0),
+          )));
     }
   }
 
+  
   @override
   void dispose() {
     // Clean up controllers when the widget is disposed.
@@ -311,7 +329,7 @@ class _SignInFormState extends State<SignInForm> {
     return Form(
       child: Column(
         children: [
-          Center(
+           Center(
             child: SizedBox(
               width: 250, // 👈 smaller width — adjust as you like
               child: ElevatedButton.icon(
@@ -327,9 +345,46 @@ class _SignInFormState extends State<SignInForm> {
                     ),
                   ),
                 ),
-                
                 label: const Text(
                   "Sign in with Google",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: Color(0xFFFF7643),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 20,),
+          Center(
+            child: SizedBox(
+              width: 250, // 👈 smaller width — adjust as you like
+              child: ElevatedButton.icon(
+                onPressed: signUpGoogle,
+                icon: ClipOval(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Image.asset(
+                      'assets/google_logo.png',
+                      height: 24,
+                      width: 24,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                label: const Text(
+                  "Sign up with Google",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,

@@ -1,27 +1,19 @@
 class MessModel {
-  final String messId;
-  final String messName;
-  final String location;
+  Map<String,String> messAllot;
 
   MessModel({
-    required this.messId,
-    required this.messName,
-    required this.location,
+    required this.messAllot,
   });
 
-  Map<String, dynamic> toJson() {
+  Map<String,dynamic> toJson() {
     return {
-      'messId': messId,
-      'messName': messName,
-      'location': location,
+      'messAllot': messAllot,
     };
   }
 
   factory MessModel.fromJson(Map<String, dynamic> json) {
     return MessModel(
-      messId: json['messId'],
-      messName: json['messName'],
-      location: json['location'],
+      messAllot: Map<String,String>.from(json['messAllot'] as Map<String, dynamic>),
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:webapp/components/header_manager.dart';
+import 'package:webapp/components/header_student.dart';
 import 'package:webapp/models/addon.dart';
 import 'package:webapp/models/announcement.dart';
 import 'package:webapp/models/mess_menu.dart';
@@ -30,9 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
     db.removePrevAddons();
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  BUILD
-  // ────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<MessMenuModel?>(
@@ -68,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
 
-                // ─── Add‑ons + Announcements (responsive) ──────────────
+                
                 LayoutBuilder(builder: (context, constraints) {
                   final isNarrow = constraints.maxWidth < 600;
                   if (isNarrow) {
@@ -108,9 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  MEAL SECTION
-  // ────────────────────────────────────────────────────────────────────
   Widget _buildMealSection(String title, List<String> items) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -156,9 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  ADD‑ONS SECTION
-  // ────────────────────────────────────────────────────────────────────
   Widget _buildAddOnsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,14 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Text("Today's Add Ons",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            IconButton(
-              icon: const Icon(Icons.add_circle),
-              onPressed: () => _showAddItemDialog(context, "Add‑On"),
-            ),
-            IconButton(
-              icon: const Icon(Icons.remove_circle),
-              onPressed: () => _showRemoveItemDialog(context, "Add‑On"),
-            ),
           ],
         ),
         FutureBuilder<List<AddonModel>>(
@@ -224,9 +207,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  //  ANNOUNCEMENTS SECTION
-  // ────────────────────────────────────────────────────────────────────
   Widget _buildAnnouncementsBlock() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -283,126 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  // ────────────────────────────────────────────────────────────────────
-  //  ADD / REMOVE DIALOGS
-  // ────────────────────────────────────────────────────────────────────
-  void _showAddItemDialog(BuildContext context, String title) {
-    final nameController = TextEditingController();
-    final priceController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.5,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Add $title',
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                      labelText: 'Item Name', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: priceController,
-                  decoration: const InputDecoration(
-                      labelText: 'Price', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 20),
-                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel')),
-                  ElevatedButton(
-                      onPressed: () async {
-                        final msg = await db.addAddon(
-                            nameController.text.trim(),
-                            priceController.text.trim());
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(msg)));
-                          Navigator.pop(context);
-                          setState(() {});
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF0753C)),
-                      child: const Text('Add')),
-                ]),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showRemoveItemDialog(BuildContext context, String title) {
-    final nameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.5,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Remove $title',
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                      labelText: 'Item Name', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 20),
-                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel')),
-                  ElevatedButton(
-                      onPressed: () async {
-                        final msg =
-                            await db.removeAddon(nameController.text.trim());
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(msg)));
-                          Navigator.pop(context);
-                          setState(() {});
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF0753C)),
-                      child: const Text('Remove')),
-                ]),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
