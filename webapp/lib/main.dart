@@ -15,6 +15,7 @@ import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/provider.dart';
 import 'package:webapp/pages/admin/home.dart' as admin;
+import 'package:webapp/pages/admin/rebate_history.dart';
 import 'package:webapp/pages/mess_manager/home.dart' as mess_manager;
 import 'package:webapp/pages/boha/home.dart' as boha;
 import 'package:webapp/pages/common/login.dart';
@@ -29,7 +30,7 @@ import 'package:webapp/pages/boha/announcements.dart';
 import 'package:webapp/pages/boha/mess_committee.dart';
 import 'package:webapp/pages/boha/feedback.dart';
 import 'package:webapp/pages/student/profile.dart';
-import 'package:webapp/pages/student/rebateform.dart'; // Ensure this file contains the RebateFormPage class
+import 'package:webapp/pages/student/rebateform.dart';
 
 
 void main() async{
@@ -93,6 +94,7 @@ class MyApp extends StatelessWidget {
         '/get_student_details': (context) => GetStudentDetails(),
         '/rebate_form': (context) => RebateformPage(),
         '/mess_menu_student': (context) => MessMenuStudentPage(),
+        '/processed_rebates': (context) => RebateHistoryProcessedPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
       //home: ProfileScreen(),

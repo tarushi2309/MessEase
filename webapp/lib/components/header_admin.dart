@@ -31,6 +31,7 @@ class Header extends StatelessWidget {
           _navLink("Home", "/home_admin", context),
           //_navLink("Menu Page", "/menu_page", context),
           _navLink("Refund", "/refund", context),
+          _navLink("Refund History", "/processed_rebates", context),
           _navLink("Logout", "/login", context),
 
           // Profile Icon (Clickable)
