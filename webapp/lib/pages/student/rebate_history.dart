@@ -19,14 +19,14 @@ class RebateHistoryStudentPage extends StatefulWidget {
 }
 
 class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
-  DatabaseModel db = DatabaseModel(uid: FirebaseAuth.instance.currentUser!.uid);
+  DatabaseModel db = DatabaseModel();
   late DatabaseModel dbService;
   List<Rebate> rebateHistory = [];
   List<Rebate> approvedRebates = [];
   bool isLoading = true;
 
   Future<void> _fetchRebateHistory(String uid) async {
-    dbService = DatabaseModel(uid: uid);
+    dbService = DatabaseModel();
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('rebates')
