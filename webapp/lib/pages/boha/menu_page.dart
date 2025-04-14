@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:webapp/components/header_boha.dart';
 import 'package:webapp/models/mess_menu.dart';

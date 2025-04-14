@@ -29,7 +29,7 @@ class PendingRebate {
 }
 
 class PendingRequestPage extends StatefulWidget {
-  PendingRequestPage({super.key});
+  const PendingRequestPage({super.key});
   @override
   _PendingRequestsPageState createState() => _PendingRequestsPageState();
 }
@@ -256,7 +256,7 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
               child: Column(
                 children: [
                   Center(
-                    child: Container(
+                    child: SizedBox(
                       width: maxWidth,
                       child: Row(
                         children: [

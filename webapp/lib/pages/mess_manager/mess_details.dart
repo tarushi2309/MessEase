@@ -109,7 +109,7 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      "${member.name}",
+                                      member.name,
                                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                       overflow: TextOverflow.ellipsis,
                                     ),

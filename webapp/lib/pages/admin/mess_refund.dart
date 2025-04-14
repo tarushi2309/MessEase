@@ -227,10 +227,10 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                       style: TextStyle(fontSize: 16, color: Colors.white)),
                   style: ButtonStyle(
                     backgroundColor:
-                        MaterialStateProperty.all<Color>(const Color(0xFFF0753C)),
-                    padding: MaterialStateProperty.all<EdgeInsets>(
+                        WidgetStateProperty.all<Color>(const Color(0xFFF0753C)),
+                    padding: WidgetStateProperty.all<EdgeInsets>(
                         const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
-                    shape: MaterialStateProperty.all<OutlinedBorder>(
+                    shape: WidgetStateProperty.all<OutlinedBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -256,7 +256,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     return LayoutBuilder(builder: (context, constraints) {
       final tableWidth = MediaQuery.of(context).size.width * 0.95;
       return Center(
-        child: Container(
+        child: SizedBox(
           width: tableWidth,
           child: Card(
             color: Colors.white,

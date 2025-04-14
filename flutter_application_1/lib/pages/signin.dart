@@ -88,61 +88,6 @@ class _SignInFormState extends State<SignInForm> {
   String? downloadUrl;
   String? uid;
   // This function authenticates the user using Firebase.
-  Future<void> signIn() async {
-    if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
-      try {
-        // Attempt to sign in using Firebase Authentication.
-        UserCredential userCredential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-                email: emailController.text, password: passwordController.text);
-
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-            "Sign In Successful",
-            style: TextStyle(fontSize: 20.0),
-          ),
-        ));
-        String uid = userCredential.user!.uid;
-        Provider.of<UserProvider>(context, listen: false).setUid(uid);
-        // Navigate to your home screen after successful login.
-        // Replace HomeScreen() with your actual home screen widget.
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => HomeScreen()));
-      } on FirebaseAuthException catch (e) {
-        if (e.code == "user-not-found") {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              backgroundColor: Colors.orangeAccent,
-              content: Text(
-                "No user found with that email.",
-                style: TextStyle(fontSize: 18.0),
-              )));
-        } else if (e.code == "wrong-password") {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              backgroundColor: Colors.orangeAccent,
-              content: Text(
-                "Incorrect password.",
-                style: TextStyle(fontSize: 18.0),
-              )));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              backgroundColor: Colors.orangeAccent,
-              content: Text(
-                "Sign In Failed. Please try again.",
-                style: TextStyle(fontSize: 18.0),
-              )));
-        }
-      }
-    } else {
-      // If any of the fields are empty, inform the user.
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          backgroundColor: Colors.orangeAccent,
-          content: Text(
-            "Please fill in both email and password.",
-            style: TextStyle(fontSize: 18.0),
-          )));
-    }
-  }
-
   Future<void> signInGoogle() async {
     try {
       await FirebaseAuth.instance.signOut();
@@ -161,6 +106,7 @@ class _SignInFormState extends State<SignInForm> {
       bool newUser = info!.isNewUser;
       if(newUser)
       {
+        await userCredential.user!.delete(); 
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             backgroundColor: Colors.orangeAccent,
             content: Text(

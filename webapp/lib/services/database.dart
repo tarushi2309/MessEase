@@ -12,6 +12,30 @@ class DatabaseModel {
   String?messId;
   DatabaseModel({required String uid});
 
+  Future<dynamic> addStudentDetails(StudentModel student,String uid) async {
+    return await FirebaseFirestore.instance
+        .collection("students")
+        .doc(uid)
+        .set(student.toJson());
+  }
+
+  
+
+  Future<DocumentSnapshot> getStudentInfo(String uid) async {
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      .collection("students")
+      .where("uid", isEqualTo: uid)
+      .limit(1)  // Ensure only one document is returned
+      .get();
+
+  // Return the first document in the QuerySnapshot (if exists)
+  if (querySnapshot.docs.isNotEmpty) {
+    return querySnapshot.docs[0];  // Return the DocumentSnapshot
+  } else {
+    throw Exception("No student found for the provided uid");
+  }
+}
+
   Future<dynamic> addUserDetails(UserModel user) async {
     return await FirebaseFirestore.instance
         .collection("user")
@@ -76,11 +100,11 @@ class DatabaseModel {
         messId= messManagerDoc['messId']; //extracted the messId
       } else {
         print("No mess manager found for this uid");
-        return null;
+        return;
       }
     } catch (e) {
       print("Error getting the messId: $e");
-      return null;
+      return;
     }
   }
 
