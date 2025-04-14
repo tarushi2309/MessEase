@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:webapp/pages/student/home.dart' as student;
@@ -13,15 +11,11 @@ import 'firebase_options.dart';
 import 'pages/mess_manager/pending_rebate.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:provider/provider.dart';
 import 'package:webapp/pages/admin/home.dart' as admin;
 import 'package:webapp/pages/admin/rebate_history.dart';
 import 'package:webapp/pages/mess_manager/home.dart' as mess_manager;
 import 'package:webapp/pages/boha/home.dart' as boha;
 import 'package:webapp/pages/common/login.dart';
-import 'firebase_options.dart';
-import 'components/user_provider.dart';
-import 'pages/mess_manager/mess_details.dart';
 import 'pages/admin/refund.dart';
 import 'pages/admin/mess_refund.dart';
 import 'package:url_strategy/url_strategy.dart';
@@ -95,6 +89,7 @@ class MyApp extends StatelessWidget {
         '/rebate_form': (context) => RebateformPage(),
         '/mess_menu_student': (context) => MessMenuStudentPage(),
         '/processed_rebates': (context) => RebateHistoryProcessedPage(),
+        '/profile_student': (context) => ProfileStudentPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
       //home: ProfileScreen(),

@@ -1,15 +1,24 @@
+import 'dart:ui_web' as ui;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 //import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:webapp/components/user_provider.dart';
+import 'package:webapp/pages/student/get_details.dart';
 import 'package:webapp/pages/student/home.dart';
 import 'package:webapp/services/database.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:webapp/models/student.dart';
 import 'package:webapp/pages/student/image.dart';
 import 'package:webapp/services/database.dart';
+import 'package:google_sign_in_web/google_sign_in_web.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
+import 'package:google_identity_services_web/id.dart';
+
+import 'dart:html' as html;
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,56 +35,47 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
   String? selectedDegree;
   String? downloadUrl;
+  String? uid;
 
-  Future<void> signInGoogle() async {
+  final GoogleSignIn googleSignIn = GoogleSignIn(
+  clientId: "848249088068-ho514oghje4aga9qalj0l1fb65pi4lh9.apps.googleusercontent.com", // Add your Web Client ID here
+  
+  );
+
+  
+   Future<void> signInGoogle() async {
     try {
       await FirebaseAuth.instance.signOut();
       await GoogleSignIn().signOut();
-      final googleUser = await GoogleSignIn().signIn();
-      final googleAuth = await googleUser?.authentication;
-      final cred = GoogleAuthProvider.credential(
-          idToken: googleAuth?.idToken, accessToken: googleAuth?.accessToken);
+      
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
       UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(cred);
+          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+      uid = userCredential.user!.uid;
+      Provider.of<UserProvider>(context, listen: false).setUid(uid!);
 
       final AdditionalUserInfo? info = userCredential.additionalUserInfo;
       Map<String, dynamic>? userInfo = info?.profile;
+      bool newUser = info!.isNewUser;
+      if(newUser)
+      {
+        await userCredential.user!.delete(); 
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.orangeAccent,
+            content: Text(
+              "This account does not exist.Please signUp.",
+              style: TextStyle(fontSize: 18.0),
+            )));
+      }
       if (userInfo != null) {
         String checkIIT = userInfo['hd'];
         if (checkIIT == "iitrpr.ac.in") {
-          String email = userInfo['email'];
-          final digitRegex = RegExp(r'\d');
-          final firstDigitMatch = digitRegex.firstMatch(email);
-          final lastDigitMatch = digitRegex.allMatches(email).lastOrNull;
-          if (firstDigitMatch != null && lastDigitMatch != null) {
-            String uid = userCredential.user!.uid;
-            Provider.of<UserProvider>(context, listen: false).setUid(uid);
-            bool newUser = info!.isNewUser;
-            if (newUser) {
-              String name =
-                  userInfo['given_name'] + " " + userInfo['family_name'];
-              // await showDegreeDialog(context);
-              // await _uploadProfilePicture();
-              String entryNo =
-                  email.substring(firstDigitMatch.start, lastDigitMatch.end);
-              String year;
-              if (entryNo.length == 11) {
-                year = entryNo.substring(0, 4);
-              } else {
-                year = "20${entryNo.substring(0, 2)}";
-              }
-              // final DatabaseModel dbService = DatabaseModel(uid: uid);
-              // StudentModel student = StudentModel(
-              //   name: name,
-              //   email: email,
-              //   uid: uid,
-              //   degree: selectedDegree ?? '',
-              //   entryNumber: entryNo,
-              //   year: year,
-              //   url: downloadUrl ?? '',
-              // );
-              // await dbService.addStudentDetails(student);
-            }
+              final DatabaseModel dbService = DatabaseModel();
+              DocumentSnapshot student=await dbService.getStudentInfo(uid!);
+              if(student.exists)
+              {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
                 "Sign In Successful",
@@ -84,8 +84,7 @@ class _LoginScreenState extends State<LoginScreen>
             ));
             // Navigate to your home screen after successful login.
             // Replace HomeScreen() with your actual home screen widget.
-            Navigator.push(
-                context, MaterialPageRoute(builder: (context) => HomeScreen()));
+            Navigator.pushReplacementNamed(context, "/home_student");
           } else {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 backgroundColor: Colors.orangeAccent,
@@ -110,11 +109,105 @@ class _LoginScreenState extends State<LoginScreen>
               style: TextStyle(fontSize: 18.0),
             )));
       }
-    } on FirebaseAuthException {
+      } on FirebaseAuthException {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.orangeAccent,
           content: Text(
             "Sign In Failed. Please try again.",
+            style: TextStyle(fontSize: 18.0),
+          )));
+    }
+  }
+
+  Future<void> signUpGoogle() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      await GoogleSignIn().signOut();
+      GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      googleProvider.setCustomParameters({'prompt': 'select_account'});
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+      final AdditionalUserInfo? info = userCredential.additionalUserInfo;
+      Map<String, dynamic>? userInfo = info?.profile;
+      bool newUser = info!.isNewUser;
+      if(!newUser){
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.orangeAccent,
+            content: Text(
+              "You are already registered.",
+              style: TextStyle(fontSize: 18.0),
+            )));
+            return;
+      }
+      if (userInfo != null) {
+        String? checkIIT = userInfo['hd'] ??'';
+        if (checkIIT == "iitrpr.ac.in") {
+              final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const GetStudentDetails()),
+              );
+              print("Result: $result");
+              Map<String, String?> studentDetails=result as Map<String, String?>;
+              print(studentDetails);
+              String name = userInfo['given_name'] + " " + userInfo['family_name'];
+              String email = userInfo['email'];
+              uid = userCredential.user!.uid;
+              Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+                      final DatabaseModel dbService = DatabaseModel();
+                      StudentModel student = StudentModel(
+                        name: name,
+                        email: email,
+                        uid: uid!,
+                        degree: studentDetails['degree'] ?? '',
+                        entryNumber: studentDetails['entryNo'] ?? '',
+                        year: studentDetails['year'] ?? '',
+                        url: studentDetails['downloadUrl'] ?? '',
+                        bank_account_number: studentDetails['bankAccount'] ?? '',
+                        ifsc_code: studentDetails['ifsc'] ?? '',
+                        mess: studentDetails['mess']!.toLowerCase(),
+                        last_rebate: DateTime.now(),
+                      );
+                      await dbService.addStudentDetails(student,uid!);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text(
+                        "Sign up Successful",
+                        style: TextStyle(fontSize: 20.0),
+                      ),
+                    ));
+                    // Navigate to your home screen after successful login.
+                    // Replace HomeScreen() with your actual home screen widget.
+                   Navigator.pushReplacementNamed(context, "/home_student");
+              }
+                 else {
+                  print("User is not from IIT Ropar");
+                  await userCredential.user!.delete(); 
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.orangeAccent,
+              content: Text(
+                "You are not authorised to use this app.",
+                style: TextStyle(fontSize: 18.0),
+              )));
+        }
+      } else {
+        print("User not found");
+        await userCredential.user!.delete(); 
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.orangeAccent,
+            content: Text(
+              "No user found.",
+              style: TextStyle(fontSize: 18.0),
+            )));
+      }}
+     on FirebaseAuthException {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await currentUser.delete(); 
+      }
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Colors.orangeAccent,
+          content: Text(
+            "Sign Up Failed. Please try again.",
             style: TextStyle(fontSize: 18.0),
           )));
     }
@@ -319,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen>
               ? 300
               : MediaQuery.of(context).size.width * 0.8,
           child: ElevatedButton.icon(
-            onPressed: () => signInGoogle(),
+            onPressed: () => signUpGoogle(),
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFFF0753C),
               padding: const EdgeInsets.symmetric(vertical: 15),

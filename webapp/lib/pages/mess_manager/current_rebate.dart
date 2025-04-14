@@ -31,7 +31,7 @@ class CurrentRebate {
 }
 
 class CurrentRequestPage extends StatefulWidget {
-  CurrentRequestPage({super.key});
+  const CurrentRequestPage({super.key});
   @override
   _CurrentRequestsPageState createState() => _CurrentRequestsPageState();
 }
@@ -158,7 +158,7 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                 //crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
-                    child: Container(
+                    child: SizedBox(
                       width: maxWidth,
                       child: Row(
                         children: [

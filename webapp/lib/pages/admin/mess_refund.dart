@@ -361,7 +361,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     return LayoutBuilder(builder: (context, constraints) {
       final tableWidth = MediaQuery.of(context).size.width * 0.95;
       return Center(
-        child: Container(
+        child: SizedBox(
           width: tableWidth,
           child: Card(
             color: Colors.white,
