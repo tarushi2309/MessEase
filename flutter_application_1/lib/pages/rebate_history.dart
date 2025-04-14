@@ -186,6 +186,8 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
       ),
     );
   }
+
+  
 }
 
 class RebateSummaryCard extends StatelessWidget {

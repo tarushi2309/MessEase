@@ -9,6 +9,7 @@ import 'package:webapp/pages/mess_manager/mess_details.dart';
 import 'package:webapp/pages/mess_manager/feedback.dart';
 import 'package:webapp/pages/student/get_details.dart';
 import 'package:webapp/pages/student/mess_menu.dart';
+import 'package:webapp/pages/student/rebate_history.dart';
 import 'firebase_options.dart';
 import 'pages/mess_manager/pending_rebate.dart';
 import '../../components/user_provider.dart';
@@ -79,7 +80,6 @@ class MyApp extends StatelessWidget {
         '/home_boha': (context) => boha.HomeScreen(),
         '/home_student' : (context) => student.HomeScreen(),
         '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
-        //'/mess_committee_mess': (context) => MessCommitteeScreenMess(),
         '/pending-request': (context) => PendingRequestPage(),
         '/current-request': (context) => CurrentRequestPage(),
         '/refund' : (content) => RefundPage(),
@@ -94,11 +94,8 @@ class MyApp extends StatelessWidget {
         '/rebate_form': (context) => RebateformPage(),
         '/mess_menu_student': (context) => MessMenuStudentPage(),
         '/profile_student': (context) => ProfileStudentPage(),
-        //'/profile': (context) => MessManagerProfile(),
+        '/rebate_history_student': (context) => RebateHistoryStudentPage(),
       },
-      //home: ProfileScreen(),
-      //home :GetStudentDetails(),
-      //home : RebateForm(),
     );
   }
 }
