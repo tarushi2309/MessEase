@@ -187,8 +187,6 @@ class _SignInFormState extends State<SignInForm> {
               style: TextStyle(fontSize: 18.0),
             )));
       }
-      else
-      {
       if (userInfo != null) {
         String? checkIIT = userInfo['hd'] ??'';
         if (checkIIT == "iitrpr.ac.in") {
@@ -197,8 +195,8 @@ class _SignInFormState extends State<SignInForm> {
               MaterialPageRoute(builder: (context) => const GetStudentDetails()),
               );
               print("Result: $result");
-              Map<String, String?> _studentDetails=result as Map<String, String?>;
-              print(_studentDetails);
+              Map<String, String?> studentDetails=result as Map<String, String?>;
+              print(studentDetails);
               String name = userInfo['given_name'] + " " + userInfo['family_name'];
               String email = userInfo['email'];
               uid = userCredential.user!.uid;
@@ -208,13 +206,13 @@ class _SignInFormState extends State<SignInForm> {
                         name: name,
                         email: email,
                         uid: uid!,
-                        degree: _studentDetails['degree'] ?? '',
-                        entryNumber: _studentDetails['entryNo'] ?? '',
-                        year: _studentDetails['year'] ?? '',
-                        url: _studentDetails['downloadUrl'] ?? '',
-                        bank_account_number: _studentDetails['bankAccount'] ?? '',
-                        ifsc_code: _studentDetails['ifsc'] ?? '',
-                        mess: _studentDetails['mess']!.toLowerCase(),
+                        degree: studentDetails['degree'] ?? '',
+                        entryNumber: studentDetails['entryNo'] ?? '',
+                        year: studentDetails['year'] ?? '',
+                        url: studentDetails['downloadUrl'] ?? '',
+                        bank_account_number: studentDetails['bankAccount'] ?? '',
+                        ifsc_code: studentDetails['ifsc'] ?? '',
+                        mess: studentDetails['mess']!.toLowerCase(),
                         last_rebate: DateTime.now(),
                       );
                       await dbService.addStudentDetails(student);
@@ -248,7 +246,7 @@ class _SignInFormState extends State<SignInForm> {
               "No user found.",
               style: TextStyle(fontSize: 18.0),
             )));
-      }}}
+      }}
      on FirebaseAuthException {
       User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
