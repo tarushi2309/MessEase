@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
         '/rebate_form': (context) => RebateformPage(),
         '/mess_menu_student': (context) => MessMenuStudentPage(),
         '/processed_rebates': (context) => RebateHistoryProcessedPage(),
-        '/profile_student': (context) => ProfileStudentPage(),
+        //'/profile_student': (context) => ProfileStudentPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
       //home: ProfileScreen(),
