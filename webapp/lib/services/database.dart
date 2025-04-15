@@ -21,18 +21,18 @@ class DatabaseModel {
   
 
   Future<DocumentSnapshot> getStudentInfo(String uid) async {
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-      .collection("students")
-      .where("uid", isEqualTo: uid)
-      .limit(1)  // Ensure only one document is returned
-      .get();
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection("students")
+        .where("uid", isEqualTo: uid)
+        .limit(1)  // Ensure only one document is returned
+        .get();
 
-  // Return the first document in the QuerySnapshot (if exists)
-  if (querySnapshot.docs.isNotEmpty) {
-    return querySnapshot.docs[0];  // Return the DocumentSnapshot
-  } else {
-    throw Exception("No student found for the provided uid");
-  }
+    // Return the first document in the QuerySnapshot (if exists)
+    if (querySnapshot.docs.isNotEmpty) {
+      return querySnapshot.docs[0];  // Return the DocumentSnapshot
+    } else {
+      throw Exception("No student found for the provided uid");
+    }
 }
 
   Future<dynamic> addUserDetails(UserModel user) async {
@@ -84,9 +84,26 @@ class DatabaseModel {
       DocumentSnapshot messManagerDoc = await getMessManagerInfo(uid);
       if (messManagerDoc.exists) {
         messId= messManagerDoc['messId']; //extracted the messId
-        print("messId: $messId");
+        //print("messId: $messId");
       } else {
         print("No mess manager found for this uid");
+        return;
+      }
+    } catch (e) {
+      print("Error getting the messId: $e");
+      return;
+    }
+  }
+
+  // to get the messId from the uid
+  Future<void> getMessIdStudent(String uid) async {
+    try {
+      DocumentSnapshot studentDoc = await getStudentInfo(uid);
+      if (studentDoc.exists) {
+        messId= studentDoc['mess'];
+        //print("messId: $messId");
+      } else {
+        print("No student found for this uid");
         return;
       }
     } catch (e) {

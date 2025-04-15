@@ -154,6 +154,14 @@ class _RebateFormPageState extends State<RebateFormPage> {
       );
       return;
     }
+    if ((difference + studentRef!['days_of_rebate']) > 20) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  "Adding current rebate will make you exceed the current 20 day limit per semester. Rebate request denied.")),
+        );
+        return;
+      }
     print("submit rebate");
     submitRebateForm();
   } catch (e) {

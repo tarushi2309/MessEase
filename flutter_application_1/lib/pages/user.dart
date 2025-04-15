@@ -43,6 +43,8 @@ class _UserPageState extends State<UserPage> {
       setState(() {
         student =
             StudentModel.fromJson(studentInfo.data() as Map<String, dynamic>);
+            print("Student data");
+            print(studentInfo.data());
         isDataLoaded = true; // Set the loading flag to true
       });
     } catch (e) {
@@ -228,17 +230,137 @@ Widget _buildIssueNewMessIDTile() {
             "Bank Details",
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
           ),
-          childrenPadding: EdgeInsets.all(20),
+          childrenPadding: const EdgeInsets.all(20),
           children: [
-            // infoRow("Account Number", "${student.bank_account_number}"),
-            // infoRow("IFSC Code", "${student.ifsc_code}"),
             infoRow("Account Number", student.bank_account_number),
-            infoRow("IFSC Code", student.ifsc_code)
+            infoRow("IFSC Code", student.ifsc_code),
+            const SizedBox(height: 10),
+            Center(
+              child: ElevatedButton(
+                onPressed: _showBankDetailsDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF0753C),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("Change Bank Details"),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  void _showBankDetailsDialog() {
+    final _formKey = GlobalKey<FormState>();
+    String accountNumber = '';
+    String ifscCode = '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Update Bank Details'),
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Bank Account Number',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter account number';
+                    } else if (!RegExp(r'^\d{12}$').hasMatch(value)) {
+                      return 'Account number must be exactly 12 digits';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    accountNumber = value;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'IFSC Code',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter IFSC code';
+                    } else if (!RegExp(r'^[A-Za-z]{4}0\d{6}$').hasMatch(value)) {
+                      return 'Enter a valid IFSC (e.g., SBIN0123456)';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    ifscCode = value.toUpperCase();
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF0753C),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                if (_formKey.currentState!.validate()) {
+                  try {
+                    await FirebaseFirestore.instance
+                        .collection('students')
+                        .doc(student.uid)
+                        .update({
+                      'bank_account_number': accountNumber,
+                      'ifsc_code': ifscCode,
+                    });
+                    //print("bank details updated");
+
+                    setState(() {
+                      student.bank_account_number = accountNumber;
+                      student.ifsc_code = ifscCode;
+                    });
+
+                    Navigator.of(context).pop();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Bank details updated successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } catch (e) {
+                    print("Error updating bank details: $e");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to update details. Try again.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 
   Widget infoRow(String label, String value) {
     return Padding(
