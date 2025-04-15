@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:webapp/pages/admin/mess_details.dart';
+import 'package:webapp/pages/boha/mess_committee.dart';
 import 'package:webapp/pages/student/home.dart' as student;
 import 'package:webapp/pages/boha/menu_page.dart';
 import 'package:webapp/pages/mess_manager/current_rebate.dart';
@@ -21,9 +22,8 @@ import 'package:webapp/pages/common/login.dart';
 import 'pages/admin/refund.dart';
 import 'pages/admin/mess_refund.dart';
 import 'package:url_strategy/url_strategy.dart';
-import 'package:webapp/pages/boha/mess.dart';
+import 'package:webapp/pages/boha/mess_details.dart';
 import 'package:webapp/pages/boha/announcements.dart';
-import 'package:webapp/pages/boha/mess_committee.dart';
 import 'package:webapp/pages/boha/feedback.dart';
 import 'package:webapp/pages/student/profile.dart';
 import 'package:webapp/pages/student/rebateform.dart';
@@ -75,13 +75,13 @@ class MyApp extends StatelessWidget {
         '/home_mess_manager': (context) => mess_manager.HomeScreen(),
         '/home_boha': (context) => boha.HomeScreen(),
         '/home_student' : (context) => student.HomeScreen(),
-        '/mess_committee_boha': (context) => MessCommitteeScreenBoha(),
+        '/mess_committee_boha': (context) => MessCommittePageBoha(),
         '/pending-request': (context) => PendingRequestPage(),
         '/current-request': (context) => CurrentRequestPage(),
         '/refund' : (content) => RefundPage(),
         '/menu_page': (context) => MenuPage(),
         '/rebate_history': (context) => RebateHistoryPage(),
-        '/mess_committee': (context) => MessCommitteePage(),
+        '/mess_details': (context) => MessDetailsPageBoha(),
         '/announcements': (context) => AnnouncementPage(),
         '/mess_details_mess_manager' : (context) => MessCommitteeMessManagerPage(),
         '/feedback': (context) => FeedbackScreen(),
