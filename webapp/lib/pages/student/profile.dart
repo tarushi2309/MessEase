@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:webapp/components/header_student.dart';
 import 'package:webapp/models/student.dart';
 import 'package:webapp/services/database.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
 
 class ProfileStudentPage extends StatefulWidget {
   const ProfileStudentPage({super.key});
@@ -35,8 +37,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
     try {
       DocumentSnapshot studentInfo = await dbService.getStudentInfo(uid);
       setState(() {
-        student =
-            StudentModel.fromJson(studentInfo.data() as Map<String, dynamic>);
+        student = StudentModel.fromJson(studentInfo.data() as Map<String, dynamic>);
         isDataLoaded = true;
       });
     } catch (e) {
@@ -99,8 +100,8 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Text(
-                          "Name",
+                        Text(
+                          student?.name ?? "Unknown",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -129,13 +130,13 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildInfoRow("Entry Number", "2022csb1112"),
-                          _buildInfoRow("Email", "2022csb1112@iitrpr.ac.in"),
-                          _buildInfoRow("Degree", "btech"),
-                          _buildInfoRow("Year", "2022"),
-                          _buildInfoRow("Bank Account", "123456789"),
-                          _buildInfoRow("IFSC Code", "1234"),
-                          _buildInfoRow("Mess", "konark"),
+                          _buildInfoRow("Entry Number", student?.name ?? "N/A"),
+                          _buildInfoRow("Email", student?.email ?? "N/A"),
+                          _buildInfoRow("Degree", student?.degree ?? "N/A"),
+                          _buildInfoRow("Year", student?.year ?? "N/A"),
+                          _buildInfoRow("Bank Account", student?.bank_account_number ?? "N/A"),
+                          _buildInfoRow("IFSC Code", student?.ifsc_code ?? "N/A"),
+                          _buildInfoRow("Mess", student?.mess ?? "N/A"),
                         ],
                       ),
                     ),
@@ -168,7 +169,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                     backgroundColor: Color(0xFFF0753C),
                   ),
                   onPressed: () {
-                    // Issue new mess card
+                    _showMessCardIssueDialog();
                   },
                   child: const Text("ISSUE NEW MESS CARD", 
                       style: TextStyle(color: Colors.white)),
@@ -180,82 +181,232 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
       ),
     );
   }
-  void _showBankDetailsDialog() {
-  final _formKey = GlobalKey<FormState>();
-  String accountNumber = '';
-  String ifscCode = '';
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Update Bank Details'),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Bank Account Number',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter account number';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  accountNumber = value;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'IFSC Code',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter IFSC code';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  ifscCode = value;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0753C),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                // TODO: Save to Firebase or local state
-                print('Account Number: $accountNumber');
-                print('IFSC Code: $ifscCode');
-                Navigator.of(context).pop();
+  void _showMessCardIssueDialog() {
+    File? selectedImage;
+    final ImagePicker picker = ImagePicker();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> pickImage() async {
+              final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                String extension = path.extension(pickedFile.path).toLowerCase();
+                if (extension == '.jpg' || extension == '.jpeg' || extension == '.png') {
+                  setState(() {
+                    selectedImage = File(pickedFile.path);
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Only JPG, JPEG, and PNG files are allowed.')),
+                  );
+                }
               }
-            },
-            child: const Text('Save'),
+            }
+
+            Future<void> uploadImage() async {
+              if (selectedImage == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please select an image first.')),
+                );
+                return;
+              }
+
+              try {
+                var request = http.MultipartRequest(
+                  'POST',
+                  Uri.parse('https://your-backend-url.com/upload'),
+                );
+                request.files.add(await http.MultipartFile.fromPath('file', selectedImage!.path));
+                var response = await request.send();
+
+                if (response.statusCode == 200) {
+                  Navigator.of(context).pop(); // Close the dialog
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Upload Successful'),
+                      content: const Text(
+                          'Photo uploaded successfully. You can collect your ID card from the mess manager in 2-3 days.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  throw Exception("Failed to upload");
+                }
+              } catch (e) {
+                print('Error uploading image: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Upload failed. Please try again.')),
+                );
+              }
+            }
+
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('Issue New Mess ID Card'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  selectedImage == null
+                      ? const Text("No image selected.")
+                      : Image.file(selectedImage!, height: 100),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: pickImage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6F2B),
+                    ),
+                    child: const Text(
+                      "Upload Photo",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: uploadImage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF6F2B),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  void _showBankDetailsDialog() {
+    final _formKey = GlobalKey<FormState>();
+    String accountNumber = '';
+    String ifscCode = '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Update Bank Details'),
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Bank Account Number',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter account number';
+                    } else if (!RegExp(r'^\d{12}$').hasMatch(value)){
+                      return 'Account number must be exactly 12 digits';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    accountNumber = value;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'IFSC Code',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter IFSC code';
+                    } else if (!RegExp(r'^[A-Za-z]{4}0\d{6}$').hasMatch(value)){
+                      return 'Invalid IFSC code format';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    ifscCode = value;
+                  },
+                ),
+              ],
+            ),
           ),
-        ],
-      );
-    },
-  );
-}
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF0753C),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                if (_formKey.currentState!.validate()) {
+                  try {
+                    final currentUser = FirebaseAuth.instance.currentUser;
+
+                    if (currentUser != null) {
+                      final uid = currentUser.uid;
+
+                      await FirebaseFirestore.instance
+                          .collection('students')
+                          .doc(uid)
+                          .update({
+                        'bank_account_number': accountNumber,
+                        'ifsc_code': ifscCode,
+                      });
+
+                      print('Bank details updated for $uid');
+                      Navigator.of(context).pop();
+
+                      // Optionally show a lil confirmation snackie
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Bank details updated successfully'),
+                          backgroundColor: Color(0xFF4CAF50),
+                        ),
+                      );
+                    } else {
+                      print("User not logged in");
+                    }
+                  } catch (e) {
+                    print(' Error updating bank details: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to update bank details'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 
   Widget _buildInfoRow(String title, String value) {
