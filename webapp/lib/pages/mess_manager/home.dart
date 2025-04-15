@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:webapp/components/header_manager.dart';
+import 'package:webapp/components/user_provider.dart';
 import 'package:webapp/models/addon.dart';
 import 'package:webapp/models/announcement.dart';
 import 'package:webapp/models/mess_menu.dart';
@@ -18,21 +20,79 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final DatabaseModel db = DatabaseModel();
+  String? uid;
+  String messName = "";
+  bool isLoading = true;
+  bool isError = false;
+  String? errorMessage;
+  late Future<List<AnnouncementModel>> announcementFuture;
 
   @override
   void initState() {
     super.initState();
-    initialise();
+    // Fetch UID using Provider (ensure UserProvider is registered in the widget tree)
+    uid = Provider.of<UserProvider>(context, listen: false).uid;
+    print("UID: $uid");
+    if (uid == null) {
+      print("UID is null");
+      return;
+    }
+    db.getMessId(uid!);
+    db.removePrevAddons();
+    _initFetch();
   }
 
-  Future<void> initialise() async {
-    await db.getMessId(FirebaseAuth.instance.currentUser!.uid);
-    db.removePrevAddons();
+  Future<void> _initFetch() async {
+    // Wait for the user name to be fetched so that messName is set properly
+    await fetchUserName();
+    setState(() {
+      announcementFuture = _fetchAnnouncementHistory(messName);
+    });
+  }
+
+  Future<void> fetchUserName() async {
+    print("Fetching user name");
+    try {
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('user').doc(uid).get();
+      if (userDoc.exists) {
+        messName = userDoc['name']; // Sets the mess name from the document
+        messName = messName[0].toUpperCase() +
+            messName.substring(1).toLowerCase(); // Capitalize the first letter
+        print("Mess Name: $messName");  
+      } else {
+        print("User not found");
+      }
+    } catch (e) {
+      print("Error fetching user: $e");
+    }
+    print("Mess Name: $messName");
+  }
+
+  Future<List<AnnouncementModel>> _fetchAnnouncementHistory(
+      String messId) async {
+    print("Fetching announcements for mess: $messId");
+    try {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('announcements')
+          .orderBy('date', descending: true)
+          .get();
+      final List<AnnouncementModel> loadedAnnouncements = snapshot.docs
+          .map((doc) =>
+              AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
+          .where((announcement) => announcement.mess.contains(messId))
+          .toList();
+      print(loadedAnnouncements);
+      return loadedAnnouncements;
+    } catch (e) {
+      print("Error fetching announcements: $e");
+      throw Exception("Failed to load the announcements.");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<MessMenuModel?>(
+    return FutureBuilder(
       future: db.getMenu(),
       builder: (context, menusnapshot) {
         if (menusnapshot.connectionState == ConnectionState.waiting) {
@@ -41,13 +101,11 @@ class _HomeScreenState extends State<HomeScreen> {
         if (menusnapshot.hasError) {
           return Center(child: Text("Error: ${menusnapshot.error}"));
         }
-
         final String today = DateFormat('EEEE').format(DateTime.now());
         final MessMenuModel messMenu =
             menusnapshot.data ?? MessMenuModel(menu: {});
-        Map<String, List<String>> menuForDay =
-            messMenu.menu[today] ??
-                {'Breakfast': [], 'Lunch': [], 'Dinner': []};
+        Map<String, List<String>> menuForDay = messMenu.menu[today] ??
+            {'Breakfast': [], 'Lunch': [], 'Dinner': []};
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -64,12 +122,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     style:
                         TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-
-                // ─── Add‑ons + Announcements (responsive) ──────────────
                 LayoutBuilder(builder: (context, constraints) {
                   final isNarrow = constraints.maxWidth < 600;
                   if (isNarrow) {
-                    // stack vertically on phones
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -79,7 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     );
                   }
-                  // side‑by‑side on wider screens
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -89,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   );
                 }),
-
                 const SizedBox(height: 16),
                 const Text("Today's Menu",
                     style:
@@ -150,6 +203,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // original
+
   Widget _buildAddOnsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,8 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             Text('${addon.name}  –  ₹${addon.price}',
                                 style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500)),
+                                    fontSize: 16, fontWeight: FontWeight.w500)),
                           ],
                         ))
                     .toList(),
@@ -232,11 +286,11 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.only(top: 4),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Colors.grey[200],
         borderRadius: BorderRadius.circular(10),
       ),
       child: FutureBuilder<List<AnnouncementModel>>(
-        future: db.fetchAnnouncements(),
+        future: announcementFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -244,28 +298,29 @@ class _HomeScreenState extends State<HomeScreen> {
           if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No announcements available"));
+          final announcements = snapshot.data ?? [];
+          if (announcements.isEmpty) {
+            return const Center(child: Text("No announcements found"));
           }
-
-          final announcements = snapshot.data!.reversed.toList();
           return Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: announcements
-                    .map((doc) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('➤', style: TextStyle(fontSize: 18)),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(doc.announcement)),
-                            ],
-                          ),
-                        ))
+                    .map(
+                      (a) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('➤', style: TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(a.announcement)),
+                          ],
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -283,8 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (_) => Dialog(
         backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.5,
           child: Padding(
@@ -320,8 +374,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             nameController.text.trim(),
                             priceController.text.trim());
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(msg)));
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(SnackBar(content: Text(msg)));
                           Navigator.pop(context);
                           setState(() {});
                         }
@@ -345,8 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (_) => Dialog(
         backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.5,
           child: Padding(
@@ -374,8 +427,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         final msg =
                             await db.removeAddon(nameController.text.trim());
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(msg)));
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(SnackBar(content: Text(msg)));
                           Navigator.pop(context);
                           setState(() {});
                         }

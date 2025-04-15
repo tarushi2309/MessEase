@@ -84,6 +84,7 @@ class DatabaseModel {
       DocumentSnapshot messManagerDoc = await getMessManagerInfo(uid);
       if (messManagerDoc.exists) {
         messId= messManagerDoc['messId']; //extracted the messId
+        print("messId: $messId");
       } else {
         print("No mess manager found for this uid");
         return;
@@ -219,7 +220,8 @@ class DatabaseModel {
   Future<List<AnnouncementModel>> fetchAnnouncements() async {
     try {
       final querySnapshot =
-          await FirebaseFirestore.instance.collection('announcements').get();
+          await FirebaseFirestore.instance.collection('announcements')
+          .get();
       return querySnapshot.docs
           .map((doc) => AnnouncementModel.fromJson(doc.data()))
           .toList();

@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum status {
   pending,
-  approved,
-  rejected,
+  approve,
+  reject,
 }
 
 enum hostel {

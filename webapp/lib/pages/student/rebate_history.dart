@@ -54,7 +54,7 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
         // get the approved requests to show in the pie chart
         approvedRebates = rebateHistory
             .where((rebate) =>
-                rebate.status_.toString().toLowerCase() == "status.approved")
+                rebate.status_.toString().toLowerCase() == "status.approve")
             .toList();
 
         isLoading = false;
@@ -195,7 +195,7 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
                                                     .split('.')
                                                     .last
                                                     .toLowerCase() ==
-                                                "approved"
+                                                "approve"
                                             ? Colors.green.withOpacity(0.2)
                                             : Colors.red.withOpacity(0.2),
                                       ),
@@ -223,7 +223,7 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
                                                     .split('.')
                                                     .last
                                                     .toLowerCase() ==
-                                                "approved"
+                                                "approve"
                                             ? Colors.green
                                             : Colors.red,
                                       ),
