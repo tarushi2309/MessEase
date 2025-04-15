@@ -25,12 +25,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   bool isError = false;
   String? errorMessage;
-  late Future<List<AnnouncementModel>> announcementFuture;
+  Future<List<AnnouncementModel>>? announcementFuture; // Made nullable
 
   @override
   void initState() {
     super.initState();
-    // Fetch UID using Provider (ensure UserProvider is registered in the widget tree)
     uid = Provider.of<UserProvider>(context, listen: false).uid;
     print("UID: $uid");
     if (uid == null) {
@@ -43,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initFetch() async {
-    // Wait for the user name to be fetched so that messName is set properly
     await fetchUserName();
     setState(() {
       announcementFuture = _fetchAnnouncementHistory(messName);
@@ -56,10 +54,12 @@ class _HomeScreenState extends State<HomeScreen> {
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection('user').doc(uid).get();
       if (userDoc.exists) {
-        messName = userDoc['name']; // Sets the mess name from the document
-        messName = messName[0].toUpperCase() +
-            messName.substring(1).toLowerCase(); // Capitalize the first letter
-        print("Mess Name: $messName");  
+        setState(() {
+          messName = userDoc['name'];
+          messName = messName[0].toUpperCase() + 
+                     messName.substring(1).toLowerCase();
+          print("Mess Name: $messName");  
+        });
       } else {
         print("User not found");
       }
@@ -69,8 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
     print("Mess Name: $messName");
   }
 
-  Future<List<AnnouncementModel>> _fetchAnnouncementHistory(
-      String messId) async {
+  Future<List<AnnouncementModel>> _fetchAnnouncementHistory(String messId) async {
     print("Fetching announcements for mess: $messId");
     try {
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
@@ -78,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .orderBy('date', descending: true)
           .get();
       final List<AnnouncementModel> loadedAnnouncements = snapshot.docs
-          .map((doc) =>
+          .map((doc) => 
               AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
           .where((announcement) => announcement.mess.contains(messId))
           .toList();
@@ -118,9 +117,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Konark Mess',
-                    style:
-                        TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                Text('$messName Mess',
+                    style: const TextStyle(
+                        fontSize: 32, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 LayoutBuilder(builder: (context, constraints) {
                   final isNarrow = constraints.maxWidth < 600;
@@ -145,8 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 }),
                 const SizedBox(height: 16),
                 const Text("Today's Menu",
-                    style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold)),
                 _buildMealSection("Breakfast", menuForDay['Breakfast']!),
                 _buildMealSection("Lunch", menuForDay['Lunch']!),
                 _buildMealSection("Dinner", menuForDay['Dinner']!),
@@ -167,8 +166,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Text(title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -203,8 +202,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // original
-
   Widget _buildAddOnsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,14 +209,15 @@ class _HomeScreenState extends State<HomeScreen> {
         Row(
           children: [
             const Text("Today's Add Ons",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.bold)),
             IconButton(
               icon: const Icon(Icons.add_circle),
-              onPressed: () => _showAddItemDialog(context, "Add‑On"),
+              onPressed: () => _showAddItemDialog(context, "Add-On"),
             ),
             IconButton(
               icon: const Icon(Icons.remove_circle),
-              onPressed: () => _showRemoveItemDialog(context, "Add‑On"),
+              onPressed: () => _showRemoveItemDialog(context, "Add-On"),
             ),
           ],
         ),
@@ -233,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return Center(child: Text("Error: ${snapshot.error}"));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text("No add‑ons available"));
+              return const Center(child: Text("No add-ons available"));
             }
 
             final addons = snapshot.data!;
@@ -255,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             ),
-                            Text('${addon.name}  –  ₹${addon.price}',
+                            Text('${addon.name} – ₹${addon.price}',
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w500)),
                           ],
@@ -273,7 +271,8 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text("Announcements",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildAnnouncementsSection(),
         ],
@@ -289,44 +288,46 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(10),
       ),
-      child: FutureBuilder<List<AnnouncementModel>>(
-        future: announcementFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
-          final announcements = snapshot.data ?? [];
-          if (announcements.isEmpty) {
-            return const Center(child: Text("No announcements found"));
-          }
-          return Scrollbar(
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: announcements
-                    .map(
-                      (a) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('➤', style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(a.announcement)),
-                          ],
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
+      child: announcementFuture == null
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder<List<AnnouncementModel>>(
+              future: announcementFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                }
+                final announcements = snapshot.data ?? [];
+                if (announcements.isEmpty) {
+                  return const Center(child: Text("No announcements found"));
+                }
+                return Scrollbar(
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: announcements
+                          .map(
+                            (a) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('➤', style: TextStyle(fontSize: 18)),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(a.announcement)),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -338,7 +339,8 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (_) => Dialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)),
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.5,
           child: Padding(
@@ -399,7 +401,8 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (_) => Dialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)),
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.5,
           child: Padding(

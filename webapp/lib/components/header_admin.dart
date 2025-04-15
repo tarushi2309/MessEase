@@ -35,19 +35,19 @@ class Header extends StatelessWidget {
           _navLink("Logout", "/login", context),
 
           // Profile Icon (Clickable)
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, "/profile"); // Navigate to profile page
-              },
-              child: const CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Color(0xFFF0753C)),
-              ),
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.all(10.0),
+          //   child: InkWell(
+          //     onTap: () {
+          //       Navigator.pushNamed(context, "/profile"); // Navigate to profile page
+          //     },
+          //     child: const CircleAvatar(
+          //       radius: 16,
+          //       backgroundColor: Colors.white,
+          //       child: Icon(Icons.person, color: Color(0xFFF0753C)),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

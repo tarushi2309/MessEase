@@ -1,58 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/models/mess_committee.dart';
-import 'package:webapp/components/header_manager.dart';
+import 'package:webapp/components/header_admin.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 
-class MessCommitteeMessManagerPage extends StatefulWidget {
-  const MessCommitteeMessManagerPage({super.key});
+class MessDetailsPage extends StatefulWidget {
+  const MessDetailsPage({super.key});
 
   @override
-  _MessCommitteeMessManagerPageState createState() =>
-      _MessCommitteeMessManagerPageState();
+  _MessDetailsPageState createState() =>
+      _MessDetailsPageState();
 }
 
-class _MessCommitteeMessManagerPageState
-    extends State<MessCommitteeMessManagerPage> {
+class _MessDetailsPageState
+    extends State<MessDetailsPage> {
   String? uid;
-  String messName = "";
+  late String messName;
   String mess = "";
   int totalStudents = 0;
   List<String> batches = [];
   final ScrollController _scrollController = ScrollController(); // Added scroll controller
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get mess name from route arguments
+    final args = ModalRoute.of(context)!.settings.arguments as String?;
+    if (args != null) {
+      messName = args;
+      fetchData();
+    }
+  }
+
+  void fetchData() {
+    fetchTotalStudents();
+    fetchBatches();
+  }
+
+  @override
   void initState() {
     super.initState();
     uid = Provider.of<UserProvider>(context, listen: false).uid;
-    fetchUserName();
   }
 
   @override
   void dispose() {
     _scrollController.dispose(); // Dispose the controller
     super.dispose();
-  }
-
-  Future<void> fetchUserName() async {
-    try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection('user').doc(uid).get();
-
-      if (userDoc.exists) {
-        setState(() {
-          messName = userDoc['name'];
-          mess = messName[0].toUpperCase() + messName.substring(1).toLowerCase();
-        });
-        fetchTotalStudents();
-        fetchBatches(); // Call these after setting messName
-      } else {
-        print("User not found");
-      }
-    } catch (e) {
-      print("Error fetching user: $e");
-    }
   }
 
   void fetchTotalStudents() async {
@@ -101,10 +96,10 @@ class _MessCommitteeMessManagerPageState
     }
   }
 
-  Future<List<MessCommitteeModel>> fetchCommitteeMembers(String messName) async {
+  Future<List<MessCommitteeModel>> fetchCommitteeMembers() async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection("mess_committee")
-        .where('messName', isEqualTo: messName)
+        .where('messName', isEqualTo: messName.toLowerCase())
         .get();
 
     return querySnapshot.docs.map((doc) {
@@ -133,7 +128,7 @@ class _MessCommitteeMessManagerPageState
                         Padding(
                           padding: const EdgeInsets.only(left: 16),
                           child: Text(
-                            "$mess Mess Details",
+                            "$messName Mess Details",
                             style: const TextStyle(
                                 fontSize: 22, fontWeight: FontWeight.bold),
                           ),
@@ -169,7 +164,7 @@ class _MessCommitteeMessManagerPageState
                             minHeight: 200,
                           ),
                           child: FutureBuilder<List<MessCommitteeModel>>(
-                            future: fetchCommitteeMembers(messName),
+                            future: fetchCommitteeMembers(),
                             builder: (context, snapshot) {
                               int crossAxisCount;
                               double screenWidth = constraints.maxWidth;

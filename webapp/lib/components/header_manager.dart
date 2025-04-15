@@ -30,25 +30,25 @@ class Header extends StatelessWidget {
           // Navigation Links with Highlighting
           _navLink("Home", "/home_mess_manager", context),
           _navLink("Mess Details", "/mess_details_mess_manager", context),
-          _navLink("Pending Rebate", "/pending-request", context),
-          _navLink("Current Rebate", "/current-request", context),
+          _navLink("Pending Rebates", "/pending-request", context),
+          _navLink("Current Rebates", "/current-request", context),
           _navLink("Feedback", "/feedback_mess", context),
           _navLink("Logout", "/login", context),
 
-          // Profile Icon (Clickable)
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, "/profile"); // Navigate to profile page
-              },
-              child: const CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Color(0xFFF0753C)),
-              ),
-            ),
-          ),
+          // // Profile Icon (Clickable)
+          // Padding(
+          //   padding: const EdgeInsets.all(10.0),
+          //   child: InkWell(
+          //     onTap: () {
+          //       Navigator.pushNamed(context, "/profile"); // Navigate to profile page
+          //     },
+          //     child: const CircleAvatar(
+          //       radius: 16,
+          //       backgroundColor: Colors.white,
+          //       child: Icon(Icons.person, color: Color(0xFFF0753C)),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

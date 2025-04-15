@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:webapp/pages/admin/mess_details.dart';
 import 'package:webapp/pages/student/home.dart' as student;
 import 'package:webapp/pages/boha/menu_page.dart';
 import 'package:webapp/pages/mess_manager/current_rebate.dart';
@@ -91,6 +92,7 @@ class MyApp extends StatelessWidget {
         '/processed_rebates': (context) => RebateHistoryProcessedPage(),
         '/profile_student': (context) => ProfileStudentPage(),
         '/rebate_history_student' : (context) => RebateHistoryStudentPage(),
+        '/mess_details_admin' : (context, ) => MessDetailsPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
     );
