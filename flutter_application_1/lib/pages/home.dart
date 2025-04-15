@@ -156,121 +156,140 @@ class _HomeScreenState extends State<HomeScreen> {
   File? _selectedImage;
   final TextEditingController _feedbackController = TextEditingController();
   
+  bool _isFeedbackAllowed(String mealType) {
+    final now = DateTime.now();
+    switch (mealType) {
+      case 'Breakfast':
+        return now.hour > 7 || (now.hour == 7 && now.minute >= 45);
+      case 'Lunch':
+        return now.hour > 12 || (now.hour == 12 && now.minute >= 45);
+      case 'Dinner':
+        return now.hour > 19 || (now.hour == 19 && now.minute >= 45);
+      default:
+        return false;
+    }
+  }
 
   void _showFeedbackDialog(BuildContext context, String mealType) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: SizedBox(
-            height: 300,
-            width: double.infinity,
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
+  TextEditingController feedbackController = TextEditingController();
+  File? selectedImage;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            child: SizedBox(
+              height: 300,
+              width: double.infinity,
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Feedback Form ! Your input matters :)',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ),
-                  child: const Text(
-                    'Feedback Form ! You input matters :)',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(12),
+                      child: selectedImage != null
+                          ? Stack(
+                              alignment: Alignment.topRight,
+                              children: [
+                                Image.file(selectedImage!, height: 100),
+                                IconButton(
+                                  icon: Icon(Icons.close, color: Colors.red),
+                                  onPressed: () {
+                                    setState(() => selectedImage = null);
+                                  },
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
                   ),
-                ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(12),
-                    child: _selectedImage != null
-                        ? Image.file(_selectedImage!, height: 100)
-                        : const Text(''),
-                  ),
-                ),
-
-                // Bottom Input + Buttons
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: Colors.grey.shade300)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _feedbackController,
-                          decoration: const InputDecoration(
-                            hintText: 'Type your message here',
-                            border: InputBorder.none,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: Colors.grey.shade300)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: feedbackController,
+                            decoration: const InputDecoration(
+                              hintText: 'Type your message here',
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        const SizedBox(width: 4),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.black87,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: const Text("Attach", style: TextStyle(color: Colors.white)),
+                          onPressed: () async {
+                            final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                            if (image != null) {
+                              setState(() => selectedImage = File(image.path));
+                            }
+                          },
                         ),
-                        child: const Text("Attach", style: TextStyle(color: Colors.white)),
-                        onPressed: () async {
-                          final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-                          if (image != null) {
-                            setState(() {
-                            _selectedImage = File(image.path); // Convert XFile to File
-                          });
-                          }
-                          Navigator.of(context).pop();
-                          _showFeedbackDialog(context, mealType); // Refresh UI
-                        },
-                      ),
-                      const SizedBox(width: 4),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        const SizedBox(width: 4),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.black87,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: const Text("Send", style: TextStyle(color: Colors.white)),
+                          onPressed: () async {
+                            try {
+                              await submitFeedback(
+                                uid: uid!,
+                                text: feedbackController.text.trim(),
+                                image: selectedImage,
+                                meal: mealType,
+                                mess: messId!,
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Feedback submitted!')),
+                              );
+                              Navigator.of(context).pop();
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Failed to submit feedback')),
+                              );
+                            }
+                          },
                         ),
-                        child: const Text("Send", style: TextStyle(color: Colors.white)),
-
-                        onPressed: () async {
-                          print("Feedback: ${_feedbackController.text}");
-                          print("Image Path: ${_selectedImage?.path}");
-                          try{
-                            await submitFeedback(
-                              uid: uid!,
-                              text: _feedbackController.text.trim(),
-                              image: _selectedImage,
-                              meal: mealType, 
-                              mess: messId!,
-                            );
-                            print("Feedback submitted successfully");
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Feedback submitted!')),
-                            );
-                            _feedbackController.clear();
-                            _selectedImage = null;
-                            Navigator.of(context).pop();
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Failed to submit feedback')),
-                            );
-                          }
-                        }
-                      ),
-                    ],
-                  ),
-                )
-              ],
+                      ],
+                    ),
+                  )
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    },
+  );
+}
+
 
 
   @override
@@ -486,7 +505,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.feedback, color: Colors.deepOrange),
-              onPressed: () => _showFeedbackDialog(context, title),
+              onPressed: () {
+                if (!_isFeedbackAllowed(title)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Feedback for $title hasn\'t opened yet'),
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.only(bottom: 70),
+                    ),
+                  );
+                  return;
+                }
+                _showFeedbackDialog(context, title);
+              },
               tooltip: 'Give Feedback',
             ),
           ],
