@@ -7,6 +7,7 @@ import 'package:flutter_application_1/pages/messmenu.dart';
 import 'package:flutter_application_1/pages/rebate_history.dart';
 import 'package:flutter_application_1/pages/rebateform.dart';
 import 'package:flutter_application_1/pages/user.dart';
+import 'package:flutter_application_1/pages/announcements.dart';
 import 'package:flutter_application_1/models/feedback.dart';
 import 'package:flutter_application_1/services/database.dart';
 import 'package:provider/provider.dart';
@@ -545,7 +546,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       MaterialPageRoute(builder: (context) => RebateHistoryScreen()),
                     );
                   }),
-                  _buildDrawerItem(Icons.chat, 'Community Chat', () {}),
+                  _buildDrawerItem(Icons.chat, 'Announcements', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AnnouncementScreen()),
+                    );
+                  }),
                   _buildDrawerItem(Icons.home, 'Home', () {
                     Navigator.push(
                       context,
