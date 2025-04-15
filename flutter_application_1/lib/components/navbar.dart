@@ -5,6 +5,7 @@ import '../pages/home.dart';
 import '../pages/messmenu.dart';
 import '../pages/rebate_history.dart';
 import '../pages/user.dart';
+import '../pages/announcements.dart';
 
 class Navbar extends StatelessWidget {
   const Navbar({super.key});
@@ -54,6 +55,12 @@ class Navbar extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => RebateHistoryScreen()),
+                    );
+                  }),
+                  _buildDrawerItem(Icons.history, 'Announcements', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AnnouncementScreen()),
                     );
                   }),
                   _buildDrawerItem(Icons.home, 'Home', () {
