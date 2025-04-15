@@ -11,8 +11,8 @@ class StudentModel {
   int refund=0;
   int monthly_refund;
   int days_of_rebate;
-  final String bank_account_number;
-  final String ifsc_code;
+  String bank_account_number;
+  String ifsc_code;
 
   StudentModel({
     required this.uid,
