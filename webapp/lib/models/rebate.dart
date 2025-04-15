@@ -10,15 +10,8 @@ enum hostel {
   raavi,
   chenab,
   brahmaputra,
-  beas, 
+  beas,
   satluj,
-}
-
-// adding the mess option in the form part
-enum mess {
-  konark,
-  anusha,
-  ideal,
 }
 
 class Rebate {
@@ -28,7 +21,7 @@ class Rebate {
   final Timestamp end_date;
   final status status_;
   final hostel hostel_;
-  final mess mess_;
+  final String mess_;
 
   Rebate({
     required this.req_id,
@@ -38,24 +31,24 @@ class Rebate {
     required this.status_,
     required this.hostel_,
     required this.mess_,
-  }) ;
+  });
 
   factory Rebate.fromJson(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
     // Convert the status field from a string to an enum
-    status status_= status.values.firstWhere(
-      (e) => e.toString() == 'status.${data['status']}',
-      orElse: () => status.pending, // Default to 'pending' if not found
+    status status_ = status.values.firstWhere(
+      (e) => e.name.toLowerCase() == data['status'].toString().toLowerCase(),
+      orElse: () => status.pending,
     );
 
-    hostel hostel_= hostel.values.firstWhere(
+    hostel hostel_ = hostel.values.firstWhere(
       (e) => e.toString() == 'hostel.${data['hostel']}',
     );
 
-    mess mess_ = mess.values.firstWhere(
-      (e) => e.toString() == 'mess.${data['mess']}',
-    );
+    // String mess_ = mess.values.firstWhere(
+    //   (e) => e.toString() == 'mess.${data['mess']}',
+    // );
 
     return Rebate(
       req_id: doc.id,
@@ -64,7 +57,7 @@ class Rebate {
       end_date: data['end_date'],
       status_: status_,
       hostel_: hostel_,
-      mess_:mess_,
+      mess_: data['mess'],
     );
   }
 
@@ -96,5 +89,4 @@ class Rebate {
       ),
     );
   }*/
-
 }

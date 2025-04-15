@@ -54,7 +54,7 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
         // get the approved requests to show in the pie chart
         approvedRebates = rebateHistory
             .where((rebate) =>
-                rebate.status_.toString().toLowerCase() == "status.approve")
+                rebate.status_.toString().toLowerCase() == "status.approved")
             .toList();
 
         isLoading = false;
@@ -70,6 +70,10 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
   @override
   Widget build(BuildContext context) {
     String? uid = Provider.of<UserProvider>(context).uid;
+
+    if (uid == null) {
+    return const Center(child: CircularProgressIndicator()); // Wait until user is ready
+  }
 
     if (isLoading) {
       _fetchRebateHistory(uid!);
@@ -118,72 +122,125 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
   }
 
   Widget _buildAllRebates() {
-    return Card(
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : rebateHistory.isEmpty
-                      ? Center(child: Text("No rebate history available."))
-                      : ListView.builder(
-                          itemCount: rebateHistory.length,
-                          itemBuilder: (context, index) {
-                            String formattedStatus = rebateHistory[index].status_.toString().split('.').last;
-                            formattedStatus = formattedStatus[0].toUpperCase() + formattedStatus.substring(1);
-                            return _buildRebateCard(
-                              DateFormat('dd-MM-yyyy').format(rebateHistory[index].start_date.toDate()),
-                              DateFormat('dd-MM-yyyy').format(rebateHistory[index].end_date.toDate()), 
-                              ((rebateHistory[index].end_date.seconds - rebateHistory[index].start_date.seconds) ~/ 86400) + 1,
-                              //actual status fetched form the database
-                              //rebateHistory[index].status_.toString().split('.').last,
-                              formattedStatus,
-                            );
-                          },
+  return Card(
+    color: Colors.white,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    elevation: 4,
+    child: isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : rebateHistory.isEmpty
+            ? const Center(child: Text("No rebate history available."))
+            : SizedBox(
+                height: 600, 
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Row
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
                         ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          _buildHeaderCell('From'),
+                          _buildHeaderCell('To'),
+                          _buildHeaderCell('Number of Days'),
+                          _buildHeaderCell('Status'),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 0),
+                    // Scrollable Table Body
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: rebateHistory.length,
+                        itemBuilder: (context, index) {
+                          final rebate = rebateHistory[index];
+                          // Print the status of each rebate for debugging
+                          print("Rebate Status: ${rebate.status_.toString().toLowerCase()}");
 
-  Widget _buildRebateCard(String from, String to, int days, String status) {
-    Color statusColor = status == 'Approve' ? Colors.green : Colors.red;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      elevation: 2,
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListTile(
-          title: Text(
-            'From: $from \nTo: $to',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          subtitle: Text('Number of days: $days'),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              status,
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+                          final fromDate = DateTime.fromMillisecondsSinceEpoch(
+                              rebate.start_date.seconds * 1000);
+                          final toDate = DateTime.fromMillisecondsSinceEpoch(
+                              rebate.end_date.seconds * 1000);
+                          final days =
+                              toDate.difference(fromDate).inDays + 1;
+
+                          final bgColor = index % 2 == 0
+                              ? Colors.white
+                              : Colors.grey.shade100;
+
+                          return Container(
+                            color: bgColor,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
+                              children: [
+                                _buildBodyCell(
+                                    "${fromDate.day}/${fromDate.month}/${fromDate.year}"),
+                                _buildBodyCell(
+                                    "${toDate.day}/${toDate.month}/${toDate.year}"),
+                                _buildBodyCell(days.toString()),
+                                _buildBodyCell(
+                                  TextButton(
+                                    onPressed: () {},
+                                    style: ButtonStyle(
+                                      backgroundColor:
+                                          MaterialStateProperty.all(
+                                        rebate.status_
+                                                    .toString()
+                                                    .split('.')
+                                                    .last
+                                                    .toLowerCase() ==
+                                                "approved"
+                                            ? Colors.green.withOpacity(0.2)
+                                            : Colors.red.withOpacity(0.2),
+                                      ),
+                                      shape: MaterialStateProperty.all(
+                                        RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      padding: MaterialStateProperty.all(
+                                        const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      rebate.status_
+                                          .toString()
+                                          .split('.')
+                                          .last
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: rebate.status_
+                                                    .toString()
+                                                    .split('.')
+                                                    .last
+                                                    .toLowerCase() ==
+                                                "approved"
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+  );
+}
 
   Widget _buildRebateChart() {
     return Card(
@@ -191,7 +248,6 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        padding: const EdgeInsets.all(16.0),
         constraints: BoxConstraints(
           minHeight: 600,
         ),
