@@ -15,10 +15,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DatabaseModel db = DatabaseModel();
-  
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<MessMenuModel?>(
@@ -52,11 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Konark Mess',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -151,75 +145,75 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
- 
   Widget _buildAnnouncementsSection() {
-  return Container(
-    height: 150,
-    width: double.infinity,
-    margin: const EdgeInsets.only(top: 4),
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-    decoration: BoxDecoration(
-      color: Colors.grey[100],
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: FutureBuilder<List<AnnouncementModel>>(
-      future: db.fetchAnnouncements(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("No announcements available"));
-        }
+    return Container(
+      height: 150,
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: FutureBuilder<List<AnnouncementModel>>(
+        future: db.fetchAnnouncements(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No announcements available"));
+          }
 
-        // Get only today's announcements
-        DateTime today = DateTime.now();
-        List<AnnouncementModel> announcements = snapshot.data!
-            .where((a) {
-              try {
-                DateTime announcementDate = DateTime.parse(a.date);
-                return announcementDate.year == today.year &&
-                    announcementDate.month == today.month &&
-                    announcementDate.day == today.day;
-              } catch (e) {
-                return false;
-              }
-            })
-            .toList()
-            .reversed
-            .toList();
+          // Get only today's announcements
+          DateTime today = DateTime.now();
+          List<AnnouncementModel> announcements = snapshot.data!
+              .where((a) {
+                try {
+                  DateTime announcementDate = DateTime.parse(a.date);
+                  return announcementDate.year == today.year &&
+                      announcementDate.month == today.month &&
+                      announcementDate.day == today.day;
+                } catch (e) {
+                  return false;
+                }
+              })
+              .toList()
+              .reversed
+              .toList();
 
-        if (announcements.isEmpty) {
-          return const Center(child: Text("No announcements for today"));
-        }
+          if (announcements.isEmpty) {
+            return const Center(child: Text("No announcements for today"));
+          }
 
-        return Scrollbar(
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: announcements.map((doc) {
-                String announcementText = doc.announcement;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("➤", style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(announcementText)),
-                    ],
-                  ),
-                );
-              }).toList(),
+          return Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: announcements.map((doc) {
+                  String announcementText = doc.announcement;
+                  List<String> messname = doc.mess;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("➤", style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text("${announcementText} - ${messname.join(", ")}")),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
 }
