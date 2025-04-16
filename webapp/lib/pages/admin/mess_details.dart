@@ -17,6 +17,7 @@ class _MessDetailsPageState
     extends State<MessDetailsPage> {
   String? uid;
   late String messName;
+  late String messNameSmall;
   String mess = "";
   int totalStudents = 0;
   List<String> batches = [];
@@ -52,9 +53,12 @@ class _MessDetailsPageState
 
   void fetchTotalStudents() async {
     try {
+      //print("Fetching the students for the mess ${messName}");
+      messNameSmall = messName[0].toLowerCase() + messName.substring(1);
+      //print(messName);
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection("students")
-          .where('mess', isEqualTo: messName)
+          .where('mess', isEqualTo: messNameSmall)
           .get();
 
       setState(() {
