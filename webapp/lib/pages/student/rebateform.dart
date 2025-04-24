@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:webapp/components/header_student.dart';
 import 'package:webapp/components/user_provider.dart';
 import 'package:webapp/models/rebate.dart';
-import 'package:webapp/pages/student/image.dart';
 
 class RebateformPage extends StatefulWidget {
   const RebateformPage({super.key});
@@ -161,14 +159,32 @@ class _RebateformPageState extends State<RebateformPage> {
         );
         return;
       }
-      if ((difference + studentRef!['days_of_rebate']) > 20) {
+      final existingRebates = await _firestore
+      .collection('rebates')
+      .where('student_id', isEqualTo: studentRef!.reference)
+      .get();
+
+    
+    for (var doc in existingRebates.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final DateTime existingStart = (data['start_date'] as Timestamp).toDate();
+      final DateTime existingEnd   = (data['end_date']   as Timestamp).toDate();
+
+      
+      if (!(rebateTo.isBefore(existingStart) || rebateFrom.isAfter(existingEnd))) {
+        final fmtStart = DateFormat('dd/MM/yyyy').format(existingStart);
+        final fmtEnd   = DateFormat('dd/MM/yyyy').format(existingEnd);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(
-                  "Adding current rebate will make you exceed the current 20 day limit per semester. Rebate request denied.")),
+            content: Text(
+              "Your requested period overlaps with an existing rebate\n"
+              "from $fmtStart to $fmtEnd. You can delete a pending rebate if you want any change"
+            )
+          )
         );
         return;
       }
+    }
       print("submit rebate");
       submitRebateForm();
     } catch (e) {
