@@ -88,10 +88,10 @@ class _MessDetailsPageBohaState extends State<MessDetailsPageBoha> {
                   return GridView.builder(
                     padding: const EdgeInsets.only(bottom: 16),
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 600,
+                      maxCrossAxisExtent: 550,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 3.5, // Adjusted aspect ratio
+                      childAspectRatio: 2.8, // Adjusted aspect ratio
                     ),
                     itemCount: _messOptions.length,
                     itemBuilder: (context, index) {
