@@ -81,7 +81,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Future<void> _load() async {
     final userDoc =
         await FirebaseFirestore.instance.collection('user').doc(uid).get();
-    messName = userDoc['name'];
     await _refresh();
   }
 
