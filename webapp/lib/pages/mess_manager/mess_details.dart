@@ -13,8 +13,7 @@ class MessCommitteeMessManagerPage extends StatefulWidget {
       _MessCommitteeMessManagerPageState();
 }
 
-class _MessCommitteeMessManagerPageState
-    extends State<MessCommitteeMessManagerPage> {
+class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerPage> {
   String? uid;
   String messName = "";
   String mess = "";
@@ -22,10 +21,13 @@ class _MessCommitteeMessManagerPageState
   List<String> batches = [];
   final ScrollController _scrollController = ScrollController(); // Added scroll controller
 
+  late Future<void> _initialLoad;
+
   @override
   void initState() {
     super.initState();
     uid = Provider.of<UserProvider>(context, listen: false).uid;
+    _initialLoad = _initPageData();
   }
 
   @override
@@ -34,26 +36,24 @@ class _MessCommitteeMessManagerPageState
     super.dispose();
   }
 
-  Future<void> fetchUserName() async {
+  Future<void> _initPageData() async {
     try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection('user').doc(uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('user').doc(uid).get();
 
       if (userDoc.exists) {
-        setState(() {
-          messName = userDoc['name'];
-          mess = messName[0].toUpperCase() + messName.substring(1).toLowerCase();
-        });
-        print("Mess name: $messName");
-        print("Mess: $mess");
+        messName = userDoc['name'];
+        mess = messName[0].toUpperCase() + messName.substring(1).toLowerCase();
+        //print("Mess name: $messName");
+        //print("Mess: $mess");
+
         await fetchTotalStudents();
-        await fetchBatches(); // Call these after setting messName
+        await fetchBatches();
       } else {
         print("User not found");
       }
     } catch (e) {
-      print("Error fetching user: $e");
-      rethrow; // Ensure the error propagates to the FutureBuilder
+      print("Error during page data init: $e");
+      rethrow;
     }
   }
 
@@ -66,7 +66,7 @@ class _MessCommitteeMessManagerPageState
 
       setState(() {
         totalStudents = querySnapshot.docs.length;
-        print("Total students in $messName: $totalStudents");
+        //print("Total students in $messName: $totalStudents");
       });
     } catch (e) {
       print("Error fetching total students: $e");
@@ -79,7 +79,7 @@ class _MessCommitteeMessManagerPageState
           .collection("mess")
           .doc("messAllotment") 
           .get();
-      print("Mess allotment document: ${messAllotDoc.data()}");
+      //print("Mess allotment document: ${messAllotDoc.data()}");
       if (messAllotDoc.exists) {
         Map<String, dynamic>? messAllotData = messAllotDoc.data() as Map<String, dynamic>?;
         List<String> matchingBatches = [];
@@ -125,7 +125,7 @@ class _MessCommitteeMessManagerPageState
           const Header(currentPage: 'Mess Details'),
           Expanded(
             child: FutureBuilder(
-              future: fetchUserName(),
+              future: _initialLoad,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -199,6 +199,7 @@ class _MessCommitteeMessManagerPageState
                                     }
 
                                     if (snapshot.connectionState == ConnectionState.waiting) {
+                                      //print("in waiting state");
                                       return const Center(child: CircularProgressIndicator());
                                     } else if (snapshot.hasError) {
                                       return Column(
