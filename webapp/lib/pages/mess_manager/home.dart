@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final DatabaseModel db = DatabaseModel();
   String? uid;
   String messName = "";
@@ -70,22 +68,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<AnnouncementModel>> _fetchAnnouncementHistory(String messId) async {
-    print("Fetching announcements for mess: $messId");
+    print("Fetching today's announcements for mess: $messId");
     try {
+      final today = DateTime.now();
+      final startOfDay = DateTime(today.year, today.month, today.day);
+
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('announcements')
-          .orderBy('date', descending: true)
+          .where('mess', arrayContains: messId)
           .get();
+
       final List<AnnouncementModel> loadedAnnouncements = snapshot.docs
-          .map((doc) => 
-              AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
-          .where((announcement) => announcement.mess.contains(messId))
+          .map((doc) => AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
+          .where((announcement) {
+            final announcementDate = DateTime.parse(announcement.date);
+            return announcementDate.isAfter(startOfDay) && announcementDate.isBefore(startOfDay.add(const Duration(days: 1)));
+          })
           .toList();
+
       print(loadedAnnouncements);
       return loadedAnnouncements;
     } catch (e) {
-      print("Error fetching announcements: $e");
-      throw Exception("Failed to load the announcements.");
+      print("Error fetching today's announcements: $e");
+      throw Exception("Failed to load today's announcements.");
     }
   }
 
@@ -288,46 +293,44 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(10),
       ),
-      child: announcementFuture == null
-          ? const Center(child: CircularProgressIndicator())
-          : FutureBuilder<List<AnnouncementModel>>(
-              future: announcementFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
-                }
-                final announcements = snapshot.data ?? [];
-                if (announcements.isEmpty) {
-                  return const Center(child: Text("No announcements found"));
-                }
-                return Scrollbar(
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: announcements
-                          .map(
-                            (a) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('➤', style: TextStyle(fontSize: 18)),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: Text(a.announcement)),
-                                ],
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                );
-              },
+      child: FutureBuilder<List<AnnouncementModel>>(
+        future: announcementFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          final announcements = snapshot.data ?? [];
+          if (announcements.isEmpty) {
+            return const Center(child: Text("No announcements found"));
+          }
+          return Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: announcements
+                    .map(
+                      (a) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('➤', style: TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(a.announcement)),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
+          );
+        },
+      ),
     );
   }
 

@@ -458,66 +458,81 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
                 borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(12),
                     bottomRight: Radius.circular(12)),
-                child: rows.isEmpty
-                    ? Container(
+                child: FutureBuilder<List<FeedbackModelUI>>(
+                  future: _feedbacksFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    final rows = _applyClientFilters(snapshot.data ?? []);
+                    if (rows.isEmpty) {
+                      return Container(
                         color: Colors.grey[50],
-                        child: const Center(child: Text('No feedback found')))
-                    : ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: rows.length,
-                        itemBuilder: (c, i) {
-                          final f = rows[i];
-                          final bg =
-                              i.isEven ? Colors.grey[50] : Colors.grey[100];
-                          return Container(
-                            color: bg,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 8),
-                            child: Row(children: [
-                              _buildBodyCell(f.studentName),
-                              _buildBodyCell(f.studentEntryNum),
-                              _buildBodyCell(SizedBox(
-                                  width: 300,
-                                  child: Text(f.text, softWrap: true))),
-                              Expanded(
-                                  child: Center(
-                                child: f.imageUrl != null
-                                    ? TextButton(
-                                        child: const Text("View Image"),
-                                        onPressed: () => showDialog(
-                                            context: context,
-                                            builder: (_) => AlertDialog(
-                                                    content: Image.network(
-                                                  f.imageUrl!,
-                                                  loadingBuilder:
-                                                      (ctx, child, progress) {
-                                                    if (progress == null) {
-                                                      return child;
-                                                    }
-                                                    final v = progress
-                                                                .expectedTotalBytes !=
-                                                            null
-                                                        ? progress
-                                                                .cumulativeBytesLoaded /
-                                                            progress
-                                                                .expectedTotalBytes!
-                                                        : null;
-                                                    return SizedBox(
-                                                        width: 120,
-                                                        height: 120,
-                                                        child: Center(
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                                    value: v)));
-                                                  },
-                                                ))))
-                                    : const Text('No image'),
-                              )),
-                              _buildBodyCell(DateFormat('dd‑MM‑yyyy HH:mm')
-                                  .format(f.timestamp)),
-                            ]),
-                          );
-                        }),
+                        child: const Center(child: Text('No feedback found')),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: rows.length,
+                      itemBuilder: (c, i) {
+                        final f = rows[i];
+                        final bg =
+                            i.isEven ? Colors.grey[50] : Colors.grey[100];
+                        return Container(
+                          color: bg,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 8),
+                          child: Row(children: [
+                            _buildBodyCell(f.studentName),
+                            _buildBodyCell(f.studentEntryNum),
+                            _buildBodyCell(SizedBox(
+                                width: 300,
+                                child: Text(f.text, softWrap: true))),
+                            Expanded(
+                                child: Center(
+                              child: f.imageUrl != null
+                                  ? TextButton(
+                                      child: const Text("View Image"),
+                                      onPressed: () => showDialog(
+                                          context: context,
+                                          builder: (_) => AlertDialog(
+                                                  content: Image.network(
+                                                f.imageUrl!,
+                                                loadingBuilder:
+                                                    (ctx, child, progress) {
+                                                  if (progress == null) {
+                                                    return child;
+                                                  }
+                                                  final v = progress
+                                                              .expectedTotalBytes !=
+                                                          null
+                                                      ? progress
+                                                              .cumulativeBytesLoaded /
+                                                          progress
+                                                              .expectedTotalBytes!
+                                                      : null;
+                                                  return SizedBox(
+                                                      width: 120,
+                                                      height: 120,
+                                                      child: Center(
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                  value: v)));
+                                                },
+                                              ))))
+                                  : const Text('No image'),
+                            )),
+                            _buildBodyCell(DateFormat('dd‑MM‑yyyy HH:mm')
+                                .format(f.timestamp)),
+                          ]),
+                        );
+                      },
+                    );
+                  },
+                ),
               )),
             ]),
           );

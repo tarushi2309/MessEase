@@ -407,76 +407,87 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                                         bottomLeft: Radius.circular(16),
                                         bottomRight: Radius.circular(16),
                                       ),
-                                      child: filteredRequests.isEmpty
+                                      child: isLoading
                                           ? Center(
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(24),
-                                                child: Text(
-                                                  "No pending rebate requests found.",
-                                                  style: TextStyle(
-                                                      color:
-                                                          Colors.grey[600]),
-                                                ),
+                                              child: CircularProgressIndicator(
+                                                color: Colors.grey[300],
+                                                strokeWidth: 2,
                                               ),
                                             )
-                                          : ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              itemCount:
-                                                  filteredRequests.length,
-                                              itemBuilder: (context, index) {
-                                                final rebate =
-                                                    filteredRequests[index];
-                                                final numberOfDays = ((rebate
-                                                                .endDate
-                                                                .millisecondsSinceEpoch -
-                                                            rebate.startDate
-                                                                .millisecondsSinceEpoch) ~/
-                                                        86400000) +
-                                                    1;
-                                    
-                                                return Container(
-                                                  padding:
-                                                      EdgeInsets.symmetric(
-                                                          vertical: 12,
-                                                          horizontal: 8),
-                                                  decoration: BoxDecoration(
-                                                    color: index % 2 == 0
-                                                        ? Colors.grey[50]
-                                                        : Colors.grey[
-                                                            100], // alternating row color
-                                                    border: Border(
-                                                      bottom: BorderSide(
-                                                          color: Colors
-                                                              .grey[300]!),
+                                          : filteredRequests.isEmpty
+                                              ? Center(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            24),
+                                                    child: Text(
+                                                      "No pending rebates",
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        color: Colors
+                                                            .grey[600],
+                                                      ),
                                                     ),
                                                   ),
-                                                  child: Row(
-                                                    children: [
-                                                      _buildBodyCell(
-                                                          rebate.studentName),
-                                                      _buildBodyCell(
-                                                          rebate.entryNumber),
-                                                      _buildBodyCell(
-                                                          rebate.hostel),
-                                                      _buildBodyCell(DateFormat(
-                                                              'yyyy-MM-dd')
-                                                          .format(rebate
-                                                              .startDate)),
-                                                      _buildBodyCell(
-                                                          DateFormat(
+                                                )
+                                              : ListView.builder(
+                                                  padding: EdgeInsets.zero,
+                                                  itemCount:
+                                                      filteredRequests.length,
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final rebate =
+                                                        filteredRequests[index];
+                                                    final numberOfDays = ((rebate
+                                                                    .endDate
+                                                                    .millisecondsSinceEpoch -
+                                                                rebate.startDate
+                                                                    .millisecondsSinceEpoch) ~/
+                                                            86400000) +
+                                                        1;
+
+                                                    return Container(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 12,
+                                                              horizontal: 8),
+                                                      decoration:
+                                                          BoxDecoration(
+                                                        color: index % 2 == 0
+                                                            ? Colors.grey[50]
+                                                            : Colors.grey[
+                                                                100], // alternating row color
+                                                        border: Border(
+                                                          bottom: BorderSide(
+                                                              color: Colors
+                                                                  .grey[300]!),
+                                                        ),
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          _buildBodyCell(rebate
+                                                              .studentName),
+                                                          _buildBodyCell(rebate
+                                                              .entryNumber),
+                                                          _buildBodyCell(
+                                                              rebate.hostel),
+                                                          _buildBodyCell(DateFormat(
+                                                                  'yyyy-MM-dd')
+                                                              .format(rebate
+                                                                  .startDate)),
+                                                          _buildBodyCell(DateFormat(
                                                                   'yyyy-MM-dd')
                                                               .format(rebate
                                                                   .endDate)),
-                                                      _buildBodyCell(
-                                                          buildActionsMenu(
-                                                              rebate,
-                                                              numberOfDays)),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            ),
+                                                          _buildBodyCell(
+                                                              buildActionsMenu(
+                                                                  rebate,
+                                                                  numberOfDays)),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                     ),
                                   ),
                                 ],

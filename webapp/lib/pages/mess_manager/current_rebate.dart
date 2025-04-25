@@ -150,104 +150,110 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
         preferredSize: const Size.fromHeight(60),
         child: Header(currentPage: 'Current Rebates'),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Column(
-                //crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: SizedBox(
-                      width: maxWidth,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 4,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Text(
-                                "Current Rebates",
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          children: [
+            Center(
+              child: SizedBox(
+                width: maxWidth,
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Text(
+                          "Current Rebates",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Expanded(
-                            flex: 2,
-                            child: TextField(
-                              controller: searchController,
-                              decoration: InputDecoration(
-                                hintText: "Search by Name or Entry Number",
-                                prefixIcon: Icon(Icons.search),
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8)),
-                              ),
-                              onChanged: (value) {
-                                setState(() {
-                                  searchQuery = value;
-                                });
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          searchController.clear();
-                          searchQuery = '';
-                        });
-                      },
-                      icon: Icon(Icons.clear),
-                      label: Text("Clear Filters"),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          int crossAxisCount;
-                          if (constraints.maxWidth > 1000) {
-                            crossAxisCount = 3; // large screens
-                          } else if (constraints.maxWidth > 600) {
-                            crossAxisCount = 2; // medium screens
-                          } else {
-                            crossAxisCount = 1; // small screens
-                          }
-
-                          return GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              crossAxisSpacing: 24,
-                              mainAxisSpacing: 24,
-                              childAspectRatio: 2,
-                            ),
-                            itemCount: filteredRequests.length,
-                            itemBuilder: (context, index) {
-                              final rebate = filteredRequests[index];
-                              return _buildStudentCard(context, rebate);
-                            },
-                          );
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: "Search by Name or Entry Number",
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            searchQuery = value;
+                          });
                         },
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                  ],
+                ),
               ),
             ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    searchController.clear();
+                    searchQuery = '';
+                  });
+                },
+                icon: Icon(Icons.clear),
+                label: Text("Clear Filters"),
+              ),
+            ),
+            Expanded(
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : CurrentRebates.isEmpty
+                      ? Center(
+                          child: Text(
+                            "No Current Rebates",
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 16),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              int crossAxisCount;
+                              if (constraints.maxWidth > 1000) {
+                                crossAxisCount = 3; // large screens
+                              } else if (constraints.maxWidth > 600) {
+                                crossAxisCount = 2; // medium screens
+                              } else {
+                                crossAxisCount = 1; // small screens
+                              }
+
+                              return GridView.builder(
+                                padding: const EdgeInsets.all(16),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: 24,
+                                  mainAxisSpacing: 24,
+                                  childAspectRatio: 2,
+                                ),
+                                itemCount: filteredRequests.length,
+                                itemBuilder: (context, index) {
+                                  final rebate = filteredRequests[index];
+                                  return _buildStudentCard(context, rebate);
+                                },
+                              );
+                            },
+                          ),
+                        ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
