@@ -44,7 +44,7 @@ class _MessDetailsPageBohaState extends State<MessDetailsPageBoha> {
       backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
-        child: Header(currentPage: 'Mess Page'),
+        child: Header(currentPage: 'Mess Details'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -80,18 +80,17 @@ class _MessDetailsPageBohaState extends State<MessDetailsPageBoha> {
                 builder: (context, constraints) {
                   if (_messOptions.isEmpty) {
                     return const Center(
-                      child: Text("No messes available",
-                          style: TextStyle(fontSize: 16)),
+                      child: CircularProgressIndicator(),
                     );
                   }
 
                   return GridView.builder(
                     padding: const EdgeInsets.only(bottom: 16),
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 600,
+                      maxCrossAxisExtent: 610,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 3.5, // Adjusted aspect ratio
+                      childAspectRatio: 2.6, // Adjusted aspect ratio
                     ),
                     itemCount: _messOptions.length,
                     itemBuilder: (context, index) {

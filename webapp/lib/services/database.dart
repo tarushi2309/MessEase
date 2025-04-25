@@ -248,6 +248,23 @@ class DatabaseModel {
     }
   }
 
+  Future<List<AnnouncementModel>> fetchAnnouncementsRecent() async {
+    try {
+      final twoWeeksAgo = DateTime.now().subtract(const Duration(days: 14));
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('announcements')
+          .where('date', isGreaterThanOrEqualTo: twoWeeksAgo.toIso8601String())
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => AnnouncementModel.fromJson(doc.data()))
+          .toList();
+    } catch (e) {
+      print('Error fetching recent announcements: $e');
+      return [];
+    }
+  }
+
   Future<MessMenuModel?> getMenu() async {
     DocumentSnapshot doc =
         await _firestore.collection('mess_menu').doc('current_menu').get();
