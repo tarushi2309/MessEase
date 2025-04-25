@@ -38,7 +38,7 @@ void main() async{
   setPathUrlStrategy();
   runApp(
     ChangeNotifierProvider(
-      create: (context) => UserProvider(), // Provide the UserProvider globally
+      create: (_) => UserProvider(), // Provide the UserProvider globally
       child: MyApp(),
     ),
   );

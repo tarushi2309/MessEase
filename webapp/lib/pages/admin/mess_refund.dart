@@ -121,6 +121,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
     });
   }
 
+  
   Future<List<RebateData>> fetchRebateHistory(String messName) async {
     //print("fetching rebate history");
     final rebateQuery = await FirebaseFirestore.instance

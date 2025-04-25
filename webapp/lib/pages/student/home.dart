@@ -26,53 +26,40 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isError = false;
   String? errorMessage;
   String messNameAnnouncement = "";
-  late Future<List<AnnouncementModel>> announcementFuture;
+  Future<List<AnnouncementModel>>? announcementFuture;
 
   @override
   void initState() {
     super.initState();
-    // Fetch UID using Provider (ensure UserProvider is registered in the widget tree)
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    //print("UID: $uid");
-    if (uid == null) {
-      print("UID is null");
-      return;
-    }
-    db.getMessIdStudent(uid!);
-    db.removePrevAddons();
-    _initFetch();
+    // Do not fetch UID here; wait for the provider in build.
   }
 
-  Future<void> _initFetch() async {
+  Future<void> _initFetch(String uid) async {
     // Wait for the user name to be fetched so that messName is set properly
-    await fetchUserName();
+    await fetchUserName(uid);
     setState(() {
       announcementFuture = _fetchAnnouncementHistory(messNameAnnouncement);
     });
   }
 
-  Future<void> fetchUserName() async {
-    //print("Fetching user name");
+  Future<void> fetchUserName(String uid) async {
     try {
       DocumentSnapshot studentDoc =
           await FirebaseFirestore.instance.collection('students').doc(uid).get();
       if (studentDoc.exists) {
-        messName = studentDoc['mess']; // Sets the mess name from the document
+        messName = studentDoc['mess'];
         messNameAnnouncement = messName[0].toUpperCase() +
-            messName.substring(1).toLowerCase(); // Capitalize the first letter
-        //print("Mess Name: $messName");  
+            messName.substring(1).toLowerCase();
       } else {
         print("Student not found");
       }
     } catch (e) {
       print("Error fetching user: $e");
     }
-    //print("Mess Name: $messNameAnnouncement");
   }
 
   Future<List<AnnouncementModel>> _fetchAnnouncementHistory(
       String messId) async {
-    //print("Fetching announcements for mess: $messNameAnnouncement");
     try {
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('announcements')
@@ -83,7 +70,6 @@ class _HomeScreenState extends State<HomeScreen> {
               AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
           .where((announcement) => announcement.mess.contains(messId))
           .toList();
-      //print(loadedAnnouncements);
       return loadedAnnouncements;
     } catch (e) {
       print("Error fetching announcements: $e");
@@ -132,16 +118,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
   void _showLeavingDatePopup(BuildContext context, String messName) async {
     final DateTime today = DateTime.now();
-    final DateTime firstDate = DateTime(today.year, today.month, today.day); // Set time to midnight
+    final DateTime firstDate = DateTime(today.year, today.month, today.day);
 
     DateTime? selectedDate = await showDatePicker(
       context: context,
       initialDate: firstDate,
       firstDate: firstDate,
-      lastDate: today.add(Duration(days: 60)), // up to 2 months ahead
+      lastDate: today.add(Duration(days: 60)),
       helpText: 'Select Leaving Date',
       confirmText: 'Submit',
       cancelText: 'Cancel',
@@ -149,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: Colors.deepPurple, // your theme color
+              primary: Colors.deepPurple,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -161,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (selectedDate != null) {
-
       print("Student selected date: ${selectedDate.toString()}");
       await addHostelLeavingData(context, selectedDate);
 
@@ -179,15 +163,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else {
-      // User canceled or dismissed
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("No date selected.")),
       );
     }
   }
 
-  Future<bool> checkIfSubmitted(BuildContext context) async {
-
+  Future<bool> checkIfSubmitted(BuildContext context, String? uid) async {
+    if (uid == null) return false;
     final doc = await FirebaseFirestore.instance
         .collection('hostel_leaving_data')
         .where('uid', isEqualTo: uid)
@@ -198,67 +181,80 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: db.getMenu(),
-      builder: (context, menusnapshot) {
-        if (menusnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) {
+        final uid = userProvider.uid;
+        if (uid == null) {
+          // Show loading or login prompt until UID is available
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-        if (menusnapshot.hasError) {
-          return Center(child: Text("Error: ${menusnapshot.error}"));
+        // Only initialize data when UID changes
+        if (announcementFuture == null) {
+          _initFetch(uid);
         }
-        final String today = DateFormat('EEEE').format(DateTime.now());
-        final MessMenuModel messMenu =
-            menusnapshot.data ?? MessMenuModel(menu: {});
-        Map<String, List<String>> menuForDay = messMenu.menu[today] ??
-            {'Breakfast': [], 'Lunch': [], 'Dinner': []};
+        return FutureBuilder(
+          future: db.getMenu(),
+          builder: (context, menusnapshot) {
+            if (menusnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (menusnapshot.hasError) {
+              return Center(child: Text("Error: ${menusnapshot.error}"));
+            }
+            final String today = DateFormat('EEEE').format(DateTime.now());
+            final MessMenuModel messMenu =
+                menusnapshot.data ?? MessMenuModel(menu: {});
+            Map<String, List<String>> menuForDay = messMenu.menu[today] ??
+                {'Breakfast': [], 'Lunch': [], 'Dinner': []};
 
-        return Scaffold(
-          backgroundColor: Colors.white,
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(60),
-            child: Header(currentPage: 'Home'),
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 35),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('${messNameAnnouncement} mess',
-                    style:
-                        TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                LayoutBuilder(builder: (context, constraints) {
-                  final isNarrow = constraints.maxWidth < 600;
-                  if (isNarrow) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildAddOnsSection(),
-                        const SizedBox(height: 24),
-                        _buildAnnouncementsBlock(),
-                      ],
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 3, child: _buildAddOnsSection()),
-                      const SizedBox(width: 16),
-                      Expanded(flex: 4, child: _buildAnnouncementsBlock()),
-                    ],
-                  );
-                }),
-                const SizedBox(height: 16),
-                const Text("Today's Menu",
-                    style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                _buildMealSection("Breakfast", menuForDay['Breakfast']!),
-                _buildMealSection("Lunch", menuForDay['Lunch']!),
-                _buildMealSection("Dinner", menuForDay['Dinner']!),
-              ],
-            ),
-          ),
+            return Scaffold(
+              backgroundColor: Colors.white,
+              appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(60),
+                child: Header(currentPage: 'Home'),
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 35),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${messNameAnnouncement} mess',
+                        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    LayoutBuilder(builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 600;
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAddOnsSection(),
+                            const SizedBox(height: 24),
+                            _buildAnnouncementsBlock(uid),
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 3, child: _buildAddOnsSection()),
+                          const SizedBox(width: 16),
+                          Expanded(flex: 4, child: _buildAnnouncementsBlock(uid)),
+                        ],
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                    const Text("Today's Menu",
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    _buildMealSection("Breakfast", menuForDay['Breakfast']!),
+                    _buildMealSection("Lunch", menuForDay['Lunch']!),
+                    _buildMealSection("Dinner", menuForDay['Dinner']!),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -308,8 +304,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  // original
 
   Widget _buildAddOnsSection() {
     return Column(
@@ -367,17 +361,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAnnouncementsBlock() => Column(
+  Widget _buildAnnouncementsBlock(String? uid) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text("Announcements",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          _buildAnnouncementsSection(),
+          _buildAnnouncementsSection(uid),
         ],
       );
 
-  Widget _buildAnnouncementsSection() {
+  Widget _buildAnnouncementsSection(String? uid) {
     return Container(
       height: 150,
       width: double.infinity,
@@ -422,8 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: isClickable
                                 ? GestureDetector(
                                     onTap: () async {
-                                      bool alreadySubmitted = await checkIfSubmitted(context);
-                                      //print(alreadySubmitted);
+                                      bool alreadySubmitted = await checkIfSubmitted(context, uid);
                                       if (alreadySubmitted) {
                                         showDialog(
                                           context: context,
