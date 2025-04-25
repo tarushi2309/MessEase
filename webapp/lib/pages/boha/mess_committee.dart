@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/models/mess_committee.dart';
 import 'package:webapp/components/header_boha.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 class MessCommittePageBoha extends StatefulWidget {
   const MessCommittePageBoha({super.key});
@@ -111,6 +112,27 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
       print("Error fetching batches: $e");
     }
   }
+
+  void _releaseHostelLeavingForm() async {
+      await FirebaseFirestore.instance
+        .collection('hostel_leaving')
+        .doc(mess) 
+        .update({
+          'isReleased': true,
+          'releasedAt': FieldValue.serverTimestamp(),
+          'message': "Form is now live for ${mess.toUpperCase()}!",
+      });
+
+      String currentDateTime = DateTime.now().toString();
+      List<String> selectedMesses = [mess];
+      String message = "Hostel leaving form is now live for ${mess.toUpperCase()}!";
+
+      await FirebaseFirestore.instance.collection("announcements").add({
+        'announcement': message,
+        'date': currentDateTime,
+        'mess': selectedMesses,
+      });
+    }
 
   void _showAddMemberDialog() {
     TextEditingController nameController = TextEditingController();
@@ -298,18 +320,23 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
         ],
       ),
 
-      // Floating Button Replacing Top-right "+"
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddMemberDialog,
-        label: const Text("Add Committee Member",
-            style: TextStyle(color: Colors.white)),
-        icon: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: SpeedDial(
+        icon: Icons.add,
         backgroundColor: Color(0xFFFF7643),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-        elevation: 4, // Matches your desired UI
-      ),
+        children: [
+          SpeedDialChild(
+            child: Icon(Icons.person_add),
+            label: 'Add Committee Member',
+            onTap: _showAddMemberDialog,
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.rocket_launch),
+            label: 'Release Hostel Leaving Form',
+            onTap: _releaseHostelLeavingForm,
+          ),
+        ],
+      )
+ 
     );
   }
 

@@ -91,6 +91,111 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> addHostelLeavingData(BuildContext context, DateTime selectedDate) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+
+      if (uid == null) {
+        throw Exception("User not logged in");
+      }
+
+      DocumentSnapshot studentDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(uid)
+          .get();
+
+      if (!studentDoc.exists) {
+        throw Exception("Student data not found");
+      }
+
+      String name = studentDoc['name'];
+      String entryNum = studentDoc['entryNumber'];
+      String messName = studentDoc['mess'];
+
+      await FirebaseFirestore.instance.collection('hostel_leaving_data').add({
+        'uid': uid,
+        'name': name,
+        'entryNumber': entryNum,
+        'mess': messName,
+        'selectedDate': selectedDate,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      print("Hostel leaving data added successfully");
+
+    } catch (e) {
+      print("Error adding hostel leaving data: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to submit leaving date: $e")),
+      );
+    }
+  }
+
+
+  void _showLeavingDatePopup(BuildContext context, String messName) async {
+    final DateTime today = DateTime.now();
+    final DateTime firstDate = DateTime(today.year, today.month, today.day); // Set time to midnight
+
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: firstDate,
+      firstDate: firstDate,
+      lastDate: today.add(Duration(days: 60)), // up to 2 months ahead
+      helpText: 'Select Leaving Date',
+      confirmText: 'Submit',
+      cancelText: 'Cancel',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.deepPurple, // your theme color
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (selectedDate != null) {
+
+      print("Student selected date: ${selectedDate.toString()}");
+      await addHostelLeavingData(context, selectedDate);
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Leaving Date Confirmed'),
+          content: Text("You're set to leave on ${selectedDate.day}/${selectedDate.month}/${selectedDate.year} from $messName mess. Please submit your messId card to the manager"),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // User canceled or dismissed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No date selected.")),
+      );
+    }
+  }
+
+  Future<bool> checkIfSubmitted(BuildContext context) async {
+
+    final doc = await FirebaseFirestore.instance
+        .collection('hostel_leaving_data')
+        .where('uid', isEqualTo: uid)
+        .get();
+
+    return doc.docs.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -301,20 +406,59 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: announcements
-                    .map(
-                      (a) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('➤', style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(a.announcement)),
-                          ],
-                        ),
+                .map(
+                  (a) {
+                    final text = a.announcement;
+                    final isClickable = text.toLowerCase().contains("hostel leaving form is now live");
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('➤', style: TextStyle(fontSize: 18)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: isClickable
+                                ? GestureDetector(
+                                    onTap: () async {
+                                      bool alreadySubmitted = await checkIfSubmitted(context);
+                                      //print(alreadySubmitted);
+                                      if (alreadySubmitted) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => AlertDialog(
+                                            title: Text("Already Submitted"),
+                                            content: Text("You've already submitted the hostel leaving form."),
+                                            actions: [
+                                              TextButton(
+                                                child: Text("OK"),
+                                                onPressed: () => Navigator.of(context).pop(),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      } else {
+                                        _showLeavingDatePopup(context, messName);
+                                      }
+                                    },
+                                    child: Text(
+                                      text,
+                                      style: const TextStyle(
+                                        color: Colors.blueAccent,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  )
+                                : Text(text),
+                          ),
+                        ],
                       ),
-                    )
-                    .toList(),
+                    );
+                  },
+                )
+                .toList(),
               ),
             ),
           );
