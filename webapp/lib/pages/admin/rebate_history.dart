@@ -255,10 +255,10 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
                     ),
                     style: ButtonStyle(
                       backgroundColor:
-                          MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
-                      padding: MaterialStateProperty.all<EdgeInsets>(
+                          WidgetStateProperty.all<Color>(Color(0xFFF0753C)),
+                      padding: WidgetStateProperty.all<EdgeInsets>(
                           const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                      shape: WidgetStateProperty.all<OutlinedBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -289,10 +289,10 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
                     ),
                     style: ButtonStyle(
                       backgroundColor:
-                          MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
-                      padding: MaterialStateProperty.all<EdgeInsets>(
+                          WidgetStateProperty.all<Color>(Color(0xFFF0753C)),
+                      padding: WidgetStateProperty.all<EdgeInsets>(
                           const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                      shape: WidgetStateProperty.all<OutlinedBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -308,19 +308,41 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
                         );
 
                         if (selectedDate == null) return;
-
                         final String formattedDate =
-                            "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                          "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
 
-                        final String message =
-                            "The rebate for this semester has been processed. Please check you bank accounts and report any discrepancy to admin by $formattedDate";
+                        if (_rows.isEmpty) {
+                       ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text('No students to notify')));
+                          return;
+                      }
 
-                        // await NotificationService.sendNotificationToApp(message);
+                      final emails = _rows.map((r) => r.email).toList();
+                      final subject = 'MessEase: Rebate Refund Processed Successfully';
+                      final body = '''
+Dear Student,
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Notification sent to app')),
-                        );
-                    },
+"The rebate for this semester has been processed. Please check you bank accounts and report any discrepancy to admin by $formattedDate.";
+
+Thanks,
+MessEase Admin
+                  ''';
+
+                      var successCount = 0;
+                        try {
+                          print('Sending notification to ${emails}');
+                          await sendMailViaGAS(to: emails, subject: subject, body: body);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Notification sent to ${emails.length} students')),
+                          );
+                        } catch (e) {
+                          print('Batch send error: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to send notifications')),
+                          );
+                        }
+                      
+                    }
                   ),
                 ],
               ),
@@ -337,7 +359,7 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
     return LayoutBuilder(builder: (context, constraints) {
       final tableWidth = MediaQuery.of(context).size.width * 0.95;
       return Center(
-        child: Container(
+        child: SizedBox(
           width: tableWidth,
           child: Card(
             color: Colors.white,

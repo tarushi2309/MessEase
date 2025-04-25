@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/components/header_admin.dart';
 import 'package:webapp/services/notification.dart';
 import 'package:webapp/models/processed_rebate.dart';
-import 'package:webapp/models/rebate_days.dart';
 import 'package:excel/excel.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:universal_html/html.dart' as html;
@@ -280,10 +279,10 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                     ),
                     style: ButtonStyle(
                       backgroundColor:
-                          MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
-                      padding: MaterialStateProperty.all<EdgeInsets>(
+                          WidgetStateProperty.all<Color>(Color(0xFFF0753C)),
+                      padding: WidgetStateProperty.all<EdgeInsets>(
                           const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                      shape: WidgetStateProperty.all<OutlinedBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -314,17 +313,17 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                     ),
                     style: ButtonStyle(
                       backgroundColor:
-                          MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
-                      padding: MaterialStateProperty.all<EdgeInsets>(
+                          WidgetStateProperty.all<Color>(Color(0xFFF0753C)),
+                      padding: WidgetStateProperty.all<EdgeInsets>(
                           const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                      shape: WidgetStateProperty.all<OutlinedBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
                     onPressed: () async {
-                      final DateTime? selectedDate = await showDatePicker(
+                        final DateTime? selectedDate = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime.now(),
@@ -336,16 +335,38 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                       final String formattedDate =
                           "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
 
-                      final String message =
-                          "We are processing the rebates for this semester, check your bank details and change them before this $formattedDate. No requests will be entertained later.";
+                      if (_rows.isEmpty) {
+                       ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text('No students to notify')));
+                          return;
+                      }
 
-                      // TODO: Call your backend API or Firebase function here to send notification
-                      // await NotificationService.sendNotificationToApp(message);
+                      final emails = _rows.map((r) => r.email).toList();
+                      final subject = 'MessEase: Reminder to update your payment details';
+                      final body = '''
+Dear Student,
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Notification sent to app')),
-                      );
-                    },
+"We are processing the rebates for this semester, check your bank details and change them before this $formattedDate. No requests will be entertained later.";
+
+Thanks,
+MessEase Admin
+                  ''';
+
+                      var successCount = 0;
+                        try {
+                          print('Sending notification to ${emails}');
+                          await sendMailViaGAS(to: emails, subject: subject, body: body);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Notification sent to ${emails.length} students')),
+                          );
+                        } catch (e) {
+                          print('Batch send error: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to send notifications')),
+                          );
+                        }
+                      
+                    }
                   ),
                 ],
               ),
@@ -442,115 +463,50 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
                                           ),
                                           
                                           onPressed: () async {
-                                            try{
-                                              // get the rebates of that student
-                                              final studentId = r.studentId;
+                                          try {
+                                            // Create a ProcessedRebate object from RebateData
+                                            final processedRebate = ProcessedRebate(
+                                              docId: r.docId,
+                                              studentId: r.studentId,
+                                              name: r.name,
+                                              entryNumber: r.entryNumber,
+                                              year: r.year,
+                                              mess: messName,
+                                              degree: r.degree,
+                                              numberOfDays: r.numberOfDays,
+                                              bankAccountNumber: r.bankAccountNumber,
+                                              ifscCode: r.ifscCode,
+                                              refund: r.refund,
+                                              email: r.email,
+                                              status: 'processed',
+                                            );
 
-                                              final rebatesQuery = await FirebaseFirestore.instance
-                                                                  .collection('rebates')
-                                                                  .where('student_id', isEqualTo: FirebaseFirestore.instance
-                                                                                                    .collection('students')
-                                                                                                    .doc(studentId))
-                                                                  .get();
+                                            // Add to processed_rebates collection
+                                            await FirebaseFirestore.instance
+                                                .collection('processed_rebates')
+                                                .doc(r.docId)
+                                                .set(processedRebate.toJson());
 
-                                              //print('/students/${studentId}');
-                                              //print(rebatesQuery.docs);
-                                              
-                                              //get the start and end dates of all the rebates for the student
-                                              final rebatePeriods = <RebatePeriod>[];
-                                              for(final rebateDoc in rebatesQuery.docs){
-                                                final data = rebateDoc.data();
-                                                //print(data);
-                                                final startDate = data['start_date'] as Timestamp?;
-                                                final endDate = data['end_date'] as Timestamp?;
-                                                //print("startDate ${startDate}");
-                                                //print("endDate ${endDate}");
-                                                if (startDate != null && endDate != null) {
-                                                  //print("Entering in adding");
-                                                  rebatePeriods.add(RebatePeriod(
-                                                    startDate: startDate,
-                                                    endDate: endDate,
-                                                  ));
-                                                  //print("added");
-                                                }
-                                              }
-                                              
-                                              // add this to the rebateDate model
-                                              final rebateDates = RebateDates(
-                                                studentId: studentId,
-                                                rebatePeriods: rebatePeriods,
-                                                totalNumDays: r.numberOfDays,
-                                              );
+                                            // Optionally delete from the original students collection (uncomment if needed)
+                                            // await FirebaseFirestore.instance
+                                            //     .collection('students')
+                                            //     .doc(r.docId)
+                                            //     .delete();
 
-                                              await FirebaseFirestore.instance
-                                                    .collection('rebate_dates')
-                                                    .doc(studentId)
-                                                    .set(rebateDates.toJson(), SetOptions(merge: true));
-                                              
-                                              // delete these rebates from the rebate collection
-                                              for (final rebateDoc in rebatesQuery.docs) {
-                                                await FirebaseFirestore.instance
-                                                    .collection('rebates')
-                                                    .doc(rebateDoc.id)
-                                                    .delete();
-                                              }
+                                            // Update the UI
+                                            setState(() {
+                                              _rows.removeWhere((e) => e.docId == r.docId);
+                                            });
 
-                                            } catch(e){
-                                              print("Error deleting the rebates");
-                                            }
-
-                                            // add these details to the processedRebates table
-                                    
-                                            try {
-                                              // Create a ProcessedRebate object from RebateData
-                                              final processedRebate = ProcessedRebate(
-                                                docId: r.docId,
-                                                studentId: r.studentId,
-                                                name: r.name,
-                                                entryNumber: r.entryNumber,
-                                                year: r.year,
-                                                mess: messName,
-                                                degree: r.degree,
-                                                numberOfDays: r.numberOfDays,
-                                                bankAccountNumber: r.bankAccountNumber,
-                                                ifscCode: r.ifscCode,
-                                                refund: r.refund,
-                                                email: r.email,
-                                                status: 'processed',
-                                              );
-
-                                              // Add to processed_rebates collection
-                                              await FirebaseFirestore.instance
-                                                  .collection('processed_rebates')
-                                                  .doc(r.docId)
-                                                  .set(processedRebate.toJson());
-
-                                              // update refund and number of days in student collection
-                                              const int newRefund = 0;
-                                              const int newDays = 0;
-                                              await FirebaseFirestore.instance
-                                                        .collection('students')
-                                                        .doc(r.studentId)
-                                                        .update({
-                                                          'refund': newRefund,
-                                                          'days_of_rebate': newDays, 
-                                                        });
-                                              
-
-                                              // Update the UI
-                                              setState(() {
-                                                _rows.removeWhere((e) => e.docId == r.docId);
-                                              });
-
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Rebate marked as processed')),
-                                              );
-                                            } catch (e) {
-                                              print('Error while processing rebate: $e');
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Failed to process rebate')),
-                                              );
-                                            }
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Rebate marked as processed')),
+                                            );
+                                          } catch (e) {
+                                            print('Error while processing rebate: $e');
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Failed to process rebate')),
+                                            );
+                                          }
                                         },
 
                                           child: const Text('Process'),

@@ -1,40 +1,40 @@
-import 'package:http/http.dart' as http;
+import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'dart:html';
 
-class NotificationService {
-  static const String _serverKey = 'YOUR_SERVER_KEY_FROM_FIREBASE';
-  static const String _topic = 'allUsers';
+Future<void> sendMailViaGAS({
+  required List<String> to,
+  required String subject,
+  required String body,
+}) async {
+  final completer = Completer<void>();
+  const url = 'https://script.google.com/macros/s/AKfycbyKS1QbMArU7Hw7WcbZC9XfTfe3bdxF3EH4nJbqiQidXvDC02op-tL1t3WJWi-ywg61vA/exec';
+  final request = HttpRequest();
 
-  static Future<void> sendNotificationToApp(String message) async {
-    final notificationPayload = {
-      "to": "/topics/$_topic",
-      "notification": {
-        "title": "Mess Rebate Update",
-        "body": message,
-        "sound": "default"
-      },
-      "data": {
-        "click_action": "FLUTTER_NOTIFICATION_CLICK",
-        "message": message
-      }
-    };
-
-    final response = await http.post(
-      Uri.parse('https://fcm.googleapis.com/fcm/send'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'key=$_serverKey',
-      },
-      body: jsonEncode(notificationPayload),
-    );
-
-    if (response.statusCode == 200) {
-      debugPrint('Notification sent successfully 💌');
+  request.onLoad.listen((_) {
+    if (request.status == 200) {
+      print('Emails sent: ${request.responseText}');
+      completer.complete();
     } else {
-      debugPrint('Failed to send notification 😓');
-      debugPrint('Status Code: ${response.statusCode}');
-      debugPrint('Body: ${response.body}');
+      completer.completeError('Error ${request.status}: ${request.responseText}');
     }
+  });
+
+  request.onError.listen((e) => completer.completeError('Network error: $e'));
+
+  try {
+    request.open('POST', url);
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+    final params = {
+      'to': to.join(','), // Comma-separated string
+      'subject': subject,
+      'body': body,
+    };
+    request.send(Uri(queryParameters: params).query);
+  } catch (e) {
+    completer.completeError('Request error: $e');
   }
+
+  return completer.future;
 }
