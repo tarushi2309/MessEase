@@ -132,7 +132,7 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
       body: Column(
         children: [
           // Header remains unchanged
-          const Header(currentPage: 'Mess Committee'),
+          const Header(currentPage: 'Mess Details'),
 
           Expanded(
             child: LayoutBuilder(
@@ -147,7 +147,7 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
                         Padding(
                           padding: const EdgeInsets.only(left: 16),
                           child: Text(
-                            "$messName Mess Committee",
+                            "${messName[0].toUpperCase()}${messName.substring(1).toLowerCase()} Mess Committee",
                             style: const TextStyle(
                                 fontSize: 22, fontWeight: FontWeight.bold),
                           ),

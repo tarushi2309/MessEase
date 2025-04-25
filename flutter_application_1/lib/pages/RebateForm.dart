@@ -139,31 +139,43 @@ class _RebateFormPageState extends State<RebateFormPage> {
       );
       return;
     }
-    DateTime lastRebateDate = (studentRef!['last_rebate'] as Timestamp).toDate();
-    print(lastRebateDate);
-    if (rebateFrom .isBefore(lastRebateDate)||rebateFrom.isAtSameMomentAs(lastRebateDate)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("The rebate for this period already exists.")),
-      );
-      return;
-    }
-    print("check1");
     if (difference > (20-studentRef!['days_of_rebate'])) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Required days exceed the allowed limit of 20 days per semester. You only have ${20-studentRef!['days_of_rebate']} days left.")),
       );
       return;
     }
-    if ((difference + studentRef!['days_of_rebate']) > 20) {
+    final existingRebates = await _firestore
+      .collection('rebates')
+      .where('student_id', isEqualTo: studentRef!.reference)
+      .get();
+
+    
+    for (var doc in existingRebates.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final DateTime existingStart = (data['start_date'] as Timestamp).toDate();
+      final DateTime existingEnd   = (data['end_date']   as Timestamp).toDate();
+
+      
+      if (!(rebateTo.isBefore(existingStart) || rebateFrom.isAfter(existingEnd))) {
+        final fmtStart = DateFormat('dd/MM/yyyy').format(existingStart);
+        final fmtEnd   = DateFormat('dd/MM/yyyy').format(existingEnd);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(
-                  "Adding current rebate will make you exceed the current 20 day limit per semester. Rebate request denied.")),
+            content: Text(
+              "Your requested period overlaps with an existing rebate\n"
+              "from $fmtStart to $fmtEnd. You can delete a pending rebate if you want any change"
+            )
+          )
         );
         return;
       }
+    }
+    print("check1");
+    
     print("submit rebate");
     submitRebateForm();
+    
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Invalid date format. Please select valid dates.")),

@@ -22,46 +22,33 @@ class RebateHistoryScreen extends StatefulWidget {
 
 class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
   late DatabaseModel dbService;
+  List<QueryDocumentSnapshot> rebateDocs = [];
   List<Rebate> rebateHistory = [];
   List<Rebate> approvedRebates = [];
   bool isLoading = true;
 
   @override
-  
   Future<void> _fetchRebateHistory(String uid) async {
-   
-
     dbService = DatabaseModel(uid: uid);
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-          .collection('rebates')
-          .where('student_id', isEqualTo: FirebaseFirestore.instance.collection('students').doc(uid))
-          .orderBy('start_date', descending: true)
-          .get();
-      //print("StudentID : $uid");
-      //print("QuerySnapshot: $querySnapshot");
-      if (querySnapshot.docs.isEmpty) {
-        print("No rebate history found for the user.");
-      } else {
-        print("First rebate record: ${querySnapshot.docs[0].data()}");
-      }
+        .collection('rebates')
+        .where('student_id', isEqualTo: FirebaseFirestore.instance.collection('students').doc(uid))
+        .orderBy('start_date', descending: true)
+        .get();
+
       setState(() {
-        rebateHistory = querySnapshot.docs
-          .map((doc) {
-            // Print the status of each rebate for debugging
-            var rebate = Rebate.fromJson(doc);
-            print("Rebate Status: ${rebate.status_.toString().toLowerCase()}");
-            //print("Req_id: ${rebate.req_id}");
-            return rebate;
-          })
+        rebateDocs = querySnapshot.docs;
+        rebateHistory = rebateDocs.map((doc) {
+          var rebate = Rebate.fromJson(doc);
+          return rebate;
+        }).toList();
+
+        approvedRebates = rebateHistory
+          .where((r) => r.status_.toString().split('.').last.toLowerCase() == 'approve')
           .toList();
 
-        // get the approved requests to show in the pie chart
-        approvedRebates = rebateHistory
-                .where((rebate) => rebate.status_.toString().toLowerCase() == "status.approve")
-                .toList();
-
-        isLoading = false;        
+        isLoading = false;
       });
     } catch (e) {
       print("Error fetching rebate history: $e");
@@ -71,24 +58,47 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
     }
   }
 
+  /// Deletes the rebate document both in Firestore and locally.
+  Future<void> _deleteRebate(int index) async {
+    final doc = rebateDocs[index];
+    try {
+      await FirebaseFirestore.instance
+        .collection('rebates')
+        .doc(doc.id)
+        .delete();
+
+      setState(() {
+        rebateDocs.removeAt(index);
+        rebateHistory.removeAt(index);
+        approvedRebates = rebateHistory
+          .where((r) => r.status_.toString().split('.').last.toLowerCase() == 'approve')
+          .toList();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pending rebate deleted')),
+      );
+    } catch (e) {
+      print("Error deleting rebate: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete rebate')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-     String? uid = Provider.of<UserProvider>(context).uid;
-
-    // If the UID is null, show an error message or loading indicator
+    String? uid = Provider.of<UserProvider>(context).uid;
     if (uid == null) {
       return Scaffold(
         appBar: AppBar(title: Text('User Page')),
-        body: Center(
-          child: Text("No user found. Please log in."),
-        ),
+        body: Center(child: Text("No user found. Please log in.")),
       );
     }
-
-    // Fetch data if UID is available and not already loaded
     if (isLoading) {
       _fetchRebateHistory(uid);
     }
+
     return Scaffold(
       key: widget.scaffoldKey,
       backgroundColor: Colors.white,
@@ -97,57 +107,81 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
         child: Header(scaffoldKey: widget.scaffoldKey),
       ),
       drawer: Navbar(),
-      body: Container(
-        color: Colors.white,
+      body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              Text(
-                "REBATE TRACKER",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
+            Text("REBATE TRACKER", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
             const SizedBox(height: 10),
-
-            RebateSummaryCard(rebateDays: approvedRebates.fold(0, (sum, rebate) => sum + ((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400) + 1)),
-               
-            const SizedBox(height: 20),
-            Center(
-              child: Text(
-                "Rebate History",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black87,
-                ),
+            RebateSummaryCard(
+              rebateDays: approvedRebates.fold(
+                0,
+                (sum, r) => sum + ((r.end_date.seconds - r.start_date.seconds) ~/ 86400) + 1,
               ),
             ),
+            const SizedBox(height: 20),
+            Center(child: Text("Rebate History", style: TextStyle(fontSize: 30))),
             const SizedBox(height: 10),
-
             Expanded(
               child: isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : rebateHistory.isEmpty
-                      ? Center(child: Text("No rebate history available."))
-                      : ListView.builder(
-                          itemCount: rebateHistory.length,
-                          itemBuilder: (context, index) {
-                            String formattedStatus = rebateHistory[index].status_.toString().split('.').last;
-                            formattedStatus = formattedStatus[0].toUpperCase() + formattedStatus.substring(1);
-                            return _buildRebateCard(
-                              DateFormat('dd-MM-yyyy').format(rebateHistory[index].start_date.toDate()),
-                              DateFormat('dd-MM-yyyy').format(rebateHistory[index].end_date.toDate()), 
-                              ((rebateHistory[index].end_date.seconds - rebateHistory[index].start_date.seconds) ~/ 86400) + 1,
-                              //actual status fetched form the database
-                              //rebateHistory[index].status_.toString().split('.').last,
-                              formattedStatus,
-                            );
-                          },
-                        ),
+                ? Center(child: CircularProgressIndicator())
+                : rebateHistory.isEmpty
+                  ? Center(child: Text("No rebate history available."))
+                  : ListView.builder(
+                      itemCount: rebateHistory.length,
+                      itemBuilder: (context, index) {
+                        final rebate = rebateHistory[index];
+                        String statusText = rebate.status_.toString().split('.').last;
+                        statusText = statusText[0].toUpperCase() + statusText.substring(1);
+                        final isPending = statusText.toLowerCase() == 'pending';
+
+                        return Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(8),
+                            title: Text(
+                              'From: ${DateFormat('dd-MM-yyyy').format(rebate.start_date.toDate())}\n'
+                              'To:   ${DateFormat('dd-MM-yyyy').format(rebate.end_date.toDate())}',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            subtitle: Text(
+                              'Days: ${((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400) + 1}',
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // status pill
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: (statusText == 'Approve' ? Colors.green : Colors.red)
+                                      .withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    statusText,
+                                    style: TextStyle(
+                                      color: statusText == 'Approve' ? Colors.green : Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                // delete button for pending
+                                if (isPending)
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: Colors.red),
+                                    tooltip: 'Delete pending request',
+                                    onPressed: () => _deleteRebate(index),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -155,40 +189,8 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
       bottomNavigationBar: CustomNavigationBar(),
     );
   }
-
-  Widget _buildRebateCard(String from, String to, int days, String status) {
-    Color statusColor = status == 'Approve' ? Colors.green : Colors.red;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      elevation: 2,
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListTile(
-          title: Text(
-            'From: $from \nTo: $to',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          subtitle: Text('Number of days: $days'),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              status,
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  
 }
+
 
 class RebateSummaryCard extends StatelessWidget {
   final int rebateDays;

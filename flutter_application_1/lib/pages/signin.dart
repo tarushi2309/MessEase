@@ -213,7 +213,6 @@ class _SignInFormState extends State<SignInForm> {
                         bank_account_number: studentDetails['bankAccount'] ?? '',
                         ifsc_code: studentDetails['ifsc'] ?? '',
                         mess: studentDetails['mess']!.toLowerCase(),
-                        last_rebate: DateTime.now(),
                       );
                       await dbService.addStudentDetails(student);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
