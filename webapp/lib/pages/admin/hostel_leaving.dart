@@ -5,6 +5,7 @@ import 'package:webapp/services/notification.dart';
 import 'package:webapp/models/processed_rebate.dart';
 import 'package:webapp/models/rebate_days.dart';
 import 'package:excel/excel.dart';
+import 'package:intl/intl.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:typed_data';
@@ -305,26 +306,40 @@ Future<List<HostelLeavingData>> fetchHostelLeaving() async {
                             padding: EdgeInsets.zero,
                             itemCount: rows.length,
                             itemBuilder: (context, index) {
-                              final r = rows[index];
-                              final rowColor = index.isEven
-                                  ? Colors.grey[50]
-                                  : Colors.grey[100];
-                              return Container(
-                                color: rowColor,
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 8),
-                                child: Row(
-                                  children: [
-                                    _buildBodyCell(r.name),
-                                    _buildBodyCell(r.entryNumber),
-                                    _buildBodyCell(r.mess),
-                                    _buildBodyCell(r.selectedDate),
-                                    _buildBodyCell(r.numberOfDays),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                                final r = rows[index];
+                                Timestamp ts = r.selectedDate;
+                                DateTime date = ts.toDate();
+                                String formattedDate = DateFormat('dd MMM yyyy').format(date);
+                                String mess = r.mess;
+                                mess = mess[0].toUpperCase() + mess.substring(1);
+                                int numOfDays = 0;
+                                if(date.month == 11 || date.month == 12){
+                                    DateTime endDate = DateTime(date.year, 12, 31);
+                                    numOfDays = endDate.difference(date).inDays + 1;
+                                } else if (date.month == 4 || date.month == 5) {
+                                    DateTime endDate = DateTime(date.year, 5, 31);
+                                    numOfDays = endDate.difference(date).inDays + 1;
+                                }
+
+                                final rowColor = index.isEven
+                                    ? Colors.grey[50]
+                                    : Colors.grey[100];
+                                return Container(
+                                    color: rowColor,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12, horizontal: 8),
+                                    child: Row(
+                                    children: [
+                                        _buildBodyCell(r.name),
+                                        _buildBodyCell(r.entryNumber),
+                                        _buildBodyCell(mess),
+                                        _buildBodyCell(formattedDate),
+                                        _buildBodyCell(numOfDays),
+                                    ],
+                                    ),
+                                );
+                                },
+                            ),
                   ),
                 ),
               ],

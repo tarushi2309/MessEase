@@ -4,6 +4,7 @@ class HostelLeavingModel {
   final String entryNumber;
   final String mess;
   final Timestamp selectedDate;
+  final int numberOfRebateDaysAdded;
   final Timestamp timestamp;
 
   HostelLeavingModel({
@@ -12,6 +13,7 @@ class HostelLeavingModel {
     required this.entryNumber,
     required this.mess,
     required this.selectedDate,
+    required this.numberOfRebateDaysAdded,
     required this.timestamp,
   }) ;
 
@@ -22,6 +24,7 @@ class HostelLeavingModel {
         'entryNumber': entryNumber,
         'mess': mess,
         'selectedDate': selectedDate,
+        'numberOfRebateDaysAdded': numberOfRebateDaysAdded,
         'timestamp': timestamp,
       };
 
@@ -32,6 +35,7 @@ class HostelLeavingModel {
         entryNumber: json['entryNumber'] as String,
         mess:json['mess'] as String,
         selectedDate: json['selectedDate'] as Timestamp,
+        numberOfRebateDaysAdded: json['numberOfRebateDaysAdded'] as int,
         timestamp: json['timestamp'] as Timestamp,
       );
 }

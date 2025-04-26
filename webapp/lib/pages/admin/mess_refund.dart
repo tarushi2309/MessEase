@@ -15,7 +15,9 @@ class RebateData {
   final String entryNumber;
   final String year;
   final String degree;
-  final int numberOfDays;
+  final int totalNumberOfDays;
+  final int rebateDays;
+  final int hostelLeavingDays;
   String bankAccountNumber;
   final String ifscCode;
   final int refund;
@@ -29,7 +31,9 @@ class RebateData {
     required this.entryNumber,
     required this.year,
     required this.degree,
-    required this.numberOfDays,
+    required this.totalNumberOfDays,
+    required this.rebateDays,
+    required this.hostelLeavingDays,
     required this.bankAccountNumber,
     required this.ifscCode,
     required this.refund,
@@ -48,7 +52,9 @@ Future<void> _exportToExcel(List<RebateData> rebateList) async {
     'Entry Number',
     'Year',
     'Degree',
-    'Days',
+    'Rebate Days',
+    'Hostel Leaving Days',
+    'Total Days',
     'Refund (₹)',
     'Bank Account Number',
     'IFSC Code',
@@ -63,7 +69,9 @@ Future<void> _exportToExcel(List<RebateData> rebateList) async {
       r.entryNumber,
       r.year,
       r.degree,
-      r.numberOfDays,
+      r.rebateDays,
+      r.hostelLeavingDays,
+      r.totalNumberOfDays,
       r.refund,
       r.bankAccountNumber,
       r.ifscCode,
@@ -142,9 +150,24 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
           .collection('students')
           .where('uid', isEqualTo: studentId)
           .get();
+      
+      final hostelLeavingQuery = await FirebaseFirestore.instance
+          .collection('hostel_leaving_data')
+          .where('uid', isEqualTo: studentId)
+          .get();
 
       final studentData =
           studentSnap.docs.isNotEmpty ? studentSnap.docs.first.data() : {};
+
+      final hostelLeavingData =
+          hostelLeavingQuery.docs.isNotEmpty ? hostelLeavingQuery.docs.first.data() : {};
+      
+      int rebateDays = studentData['days_of_rebate'];
+      int hostelLeavingDays = hostelLeavingData['numberOfRebateDaysAdded'];
+      print(rebateDays);
+      print(hostelLeavingDays);
+
+      int totalNumberOfDays = rebateDays + hostelLeavingDays;
 
       rebateList.add(RebateData(
         docId: docId,
@@ -153,7 +176,9 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
         entryNumber: studentData['entryNumber']?.toString() ?? 'Unknown',
         year: studentData['year']?.toString() ?? 'Unknown',
         degree: studentData['degree']?.toString() ?? 'Unknown',
-        numberOfDays: studentData['days_of_rebate'] ?? 0,
+        rebateDays: studentData['days_of_rebate'] ?? 0,
+        hostelLeavingDays: hostelLeavingData['numberOfRebateDaysAdded'] ?? 0,
+        totalNumberOfDays: totalNumberOfDays,
         bankAccountNumber:
             studentData['bank_account_number']?.toString() ?? 'Unknown',
         ifscCode: studentData['ifsc_code']?.toString() ?? 'Unknown',
@@ -171,14 +196,14 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
       final okQ = r.name.toLowerCase().contains(q) ||
           r.entryNumber.toLowerCase().contains(q);
       final okY = selectedYear == 'All' || r.year == selectedYear;
-      final okMin = minDays == null || r.numberOfDays >= minDays!;
-      final okMax = maxDays == null || r.numberOfDays <= maxDays!;
+      final okMin = minDays == null || r.totalNumberOfDays >= minDays!;
+      final okMax = maxDays == null || r.totalNumberOfDays <= maxDays!;
       return okQ && okY && okMin && okMax;
     }).toList();
 
     rows.sort((a, b) => sortDir == 'Asc'
-        ? a.numberOfDays.compareTo(b.numberOfDays)
-        : b.numberOfDays.compareTo(a.numberOfDays));
+        ? a.totalNumberOfDays.compareTo(b.totalNumberOfDays)
+        : b.totalNumberOfDays.compareTo(a.totalNumberOfDays));
     return rows;
   }
 
@@ -409,7 +434,9 @@ MessEase Admin
                       _buildHeaderCell('Name'),
                       _buildHeaderCell('Entry Number'),
                       _buildHeaderCell('Year'),
-                      _buildHeaderCell('Days'),
+                      _buildHeaderCell('Rebate Days'),
+                      _buildHeaderCell('Hostel Leaving Days'),
+                      _buildHeaderCell('Total Days'),
                       _buildHeaderCell('Amount'),
                       _buildHeaderCell('Account Number'),
                       _buildHeaderCell('IFSC Code'),
@@ -448,7 +475,9 @@ MessEase Admin
                                     _buildBodyCell(r.name),
                                     _buildBodyCell(r.entryNumber),
                                     _buildBodyCell(r.year),
-                                    _buildBodyCell(r.numberOfDays),
+                                    _buildBodyCell(r.rebateDays),
+                                    _buildBodyCell(r.hostelLeavingDays),
+                                    _buildBodyCell(r.totalNumberOfDays),
                                     _buildBodyCell('₹${r.refund}'),
                                     _buildBodyCell(r.bankAccountNumber),
                                     _buildBodyCell(r.ifscCode),
@@ -474,7 +503,7 @@ MessEase Admin
                                               year: r.year,
                                               mess: messName,
                                               degree: r.degree,
-                                              numberOfDays: r.numberOfDays,
+                                              numberOfDays: r.totalNumberOfDays,
                                               bankAccountNumber: r.bankAccountNumber,
                                               ifscCode: r.ifscCode,
                                               refund: r.refund,

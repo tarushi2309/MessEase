@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isError = false;
   String? errorMessage;
   String messNameAnnouncement = "";
+  String formAnnouncement = "";
   Future<List<AnnouncementModel>>? announcementFuture;
 
   @override
@@ -98,12 +99,23 @@ class _HomeScreenState extends State<HomeScreen> {
       String entryNum = studentDoc['entryNumber'];
       String messName = studentDoc['mess'];
 
+      
+      int numOfDays = 0;
+      if(selectedDate.month == 11 || selectedDate.month == 12){
+          DateTime endDate = DateTime(selectedDate.year, 12, 31);
+          numOfDays = endDate.difference(selectedDate).inDays + 1;
+      } else if (selectedDate.month == 4 || selectedDate.month == 5) {
+          DateTime endDate = DateTime(selectedDate.year, 5, 31);
+          numOfDays = endDate.difference(selectedDate).inDays + 1;
+      }
+
       await FirebaseFirestore.instance.collection('hostel_leaving_data').add({
         'uid': uid,
         'name': name,
         'entryNumber': entryNum,
         'mess': messName,
         'selectedDate': selectedDate,
+        'numberOfRebateDaysAdded': numOfDays,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
@@ -169,41 +181,46 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<bool> checkIfSubmitted(BuildContext context, String? uid) async {
+  Future<bool> checkForm(BuildContext context, String? uid) async {
     if (uid == null) return false;
+    bool closed = false;
     final doc = await FirebaseFirestore.instance
         .collection('hostel_leaving_data')
         .where('uid', isEqualTo: uid)
         .get();
 
-    return doc.docs.isNotEmpty;
-  }
-
-  Future<bool> checkIfClosed(BuildContext context, String? uid) async {
-    if (uid == null) return false;
-    final doc = await FirebaseFirestore.instance
-        .collection('hostel_leaving_data')
-        .where('uid', isEqualTo: uid)
-        .get();
-      
     String mess = "";
     if(doc.docs.isNotEmpty){
       mess = doc.docs[0]['mess'];
+      formAnnouncement = "You've already submitted the hostel leaving form.";
+      return true;
+    } else{
+      final studentdoc = await FirebaseFirestore.instance
+        .collection('students')
+        .where('uid', isEqualTo: uid)
+        .get();
+
+      if(studentdoc.docs.isNotEmpty){
+        mess = studentdoc.docs[0]['mess'];
+      }
     }
-    print(mess);
+    mess = mess[0].toUpperCase() + mess.substring(1);
 
     final data = await FirebaseFirestore.instance
             .collection('hostel_leaving')
             .doc(mess)
             .get();
     
-    bool closed = false;
     if(data.exists){
-      closed = data['isReleased'];
+      closed = !data['isReleased'];
+      //isReleased = true - form exists
+      if(closed == true){
+        formAnnouncement = "This form has been closed. Please contact BOHA for any discrepancy.";
+        return true;
+      }
     }
 
-    print("checking flag ${closed}");
-    return closed;
+    return false;
   }
 
   @override
@@ -444,29 +461,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? GestureDetector(
                                     onTap: () async {
                                       try{
-                                        bool alreadySubmitted = await checkIfSubmitted(context, uid);
-                                        //bool ifClosed = await checkIfClosed(context, uid);
-                                        bool ifClosed = false;
+                                        bool alreadySubmitted = await checkForm(context, uid);
                                         if (alreadySubmitted) {
                                           showDialog(
                                             context: context,
                                             builder: (_) => AlertDialog(
-                                              title: Text("Already Submitted"),
-                                              content: Text("You've already submitted the hostel leaving form."),
-                                              actions: [
-                                                TextButton(
-                                                  child: Text("OK"),
-                                                  onPressed: () => Navigator.of(context).pop(),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        } else if(ifClosed){
-                                          showDialog(
-                                            context: context,
-                                            builder: (_) => AlertDialog(
-                                              title: Text("Form Closed"),
-                                              content: Text("This form has been closed. Please contact BOHA for any discrepancy."),
+                                              title: Text("Sorry!"),
+                                              content: Text(formAnnouncement),
                                               actions: [
                                                 TextButton(
                                                   child: Text("OK"),
