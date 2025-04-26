@@ -46,15 +46,31 @@ Future<List<AddonModel>> fetchAddons(String messId) async {
         .toList();
   }
 
-  Future<void> removePrevAddons(String messId) async{
-    QuerySnapshot querySnapshot =
-          await _firestore
-              .collection('addons').where('date', isLessThan: Timestamp.fromDate(DateTime.now())).get();
-    print(querySnapshot.docs);
-    for (var doc in querySnapshot.docs) {
-      await doc.reference.delete();
-    }
+  Future<void> removePrevAddons(String messId) async {
+  if (messId.isEmpty) return;
+
+  
+  final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+  final cutoff = Timestamp.fromDate(todayStart);
+  final query = await _firestore
+      .collection('addons')
+      .where('mess', isEqualTo: messId)
+      .where('date', isLessThan: cutoff)
+      .get();
+
+  if (query.docs.isEmpty) {
+    print("No old add-ons to remove for mess $messId");
+    return;
   }
+  final batch = _firestore.batch();
+  for (final doc in query.docs) {
+    batch.delete(doc.reference);
+    print("Scheduling delete of addon ${doc.id}");
+  }
+  await batch.commit();
+}
+
   
   Future<void> addRebateFormDetails({
     required String hostelName,

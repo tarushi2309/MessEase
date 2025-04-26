@@ -4,6 +4,7 @@ import 'package:webapp/models/mess_committee.dart';
 import 'package:webapp/components/header_manager.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MessCommitteeMessManagerPage extends StatefulWidget {
   const MessCommitteeMessManagerPage({super.key});
@@ -19,42 +20,66 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
   String mess = "";
   int totalStudents = 0;
   List<String> batches = [];
-  final ScrollController _scrollController = ScrollController(); // Added scroll controller
-
+  final ScrollController _scrollController = ScrollController();
   late Future<void> _initialLoad;
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   @override
   void initState() {
     super.initState();
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    _initialLoad = _initPageData();
+    _loadPersistedData();
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose(); // Dispose the controller
-    super.dispose();
+  Future<void> _loadPersistedData() async {
+    final SharedPreferences prefs = await _prefs;
+    setState(() {
+      uid = Provider.of<UserProvider>(context, listen: false).uid ?? 
+           prefs.getString('uid');
+      messName = prefs.getString('mess') ?? '';
+    });
+    
+    if (uid != null && uid!.isNotEmpty) {
+      _initialLoad = _initPageData();
+      await _initialLoad;
+      _persistData();
+    }
+  }
+
+  Future<void> _persistData() async {
+    final SharedPreferences prefs = await _prefs;
+    await prefs.setString('uid', uid ?? '');
+    await prefs.setString('mess', messName);
   }
 
   Future<void> _initPageData() async {
     try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('user').doc(uid).get();
+      if (uid == null || uid!.isEmpty) {
+        throw Exception("User ID is missing");
+      }
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('user')
+          .doc(uid!)
+          .get();
 
       if (userDoc.exists) {
-        messName = userDoc['name'];
-        mess = messName[0].toUpperCase() + messName.substring(1).toLowerCase();
-        //print("Mess name: $messName");
-        //print("Mess: $mess");
-
-        await fetchTotalStudents();
-        await fetchBatches();
-      } else {
-        print("User not found");
+        setState(() {
+          messName = userDoc['name'];
+          mess = _formatMessName(messName);
+        });
+        
+        await Future.wait([fetchTotalStudents(), fetchBatches()]);
       }
     } catch (e) {
-      print("Error during page data init: $e");
+      print("Error initializing page data: $e");
       rethrow;
     }
+  }
+
+  String _formatMessName(String name) {
+    return name.isNotEmpty 
+        ? name[0].toUpperCase() + name.substring(1).toLowerCase()
+        : '';
   }
 
   Future<void> fetchTotalStudents() async {
@@ -66,10 +91,10 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
 
       setState(() {
         totalStudents = querySnapshot.docs.length;
-        //print("Total students in $messName: $totalStudents");
       });
     } catch (e) {
-      print("Error fetching total students: $e");
+      print("Error fetching students: $e");
+      throw Exception("Failed to load student data");
     }
   }
 
@@ -77,43 +102,45 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
     try {
       DocumentSnapshot messAllotDoc = await FirebaseFirestore.instance
           .collection("mess")
-          .doc("messAllotment") 
+          .doc("messAllotment")
           .get();
-      //print("Mess allotment document: ${messAllotDoc.data()}");
-      if (messAllotDoc.exists) {
-        Map<String, dynamic>? messAllotData = messAllotDoc.data() as Map<String, dynamic>?;
-        List<String> matchingBatches = [];
-        
-        if (messAllotData != null && messAllotData.containsKey('messAllot')) {
-          Map<String, dynamic> messAllotMap = messAllotData['messAllot'] as Map<String, dynamic>;
-          messAllotMap.forEach((batch, assignedMess) {
-            if (assignedMess == mess) {
-              matchingBatches.add(batch);
-            }
-          });
-        }
 
-        setState(() {
-          batches = matchingBatches;
+      if (messAllotDoc.exists) {
+        Map<String, dynamic>? data = messAllotDoc.data() as Map<String, dynamic>?;
+        List<String> matches = [];
+
+        data?['messAllot']?.forEach((batch, mess) {
+          if (mess == mess) matches.add(batch);
         });
-      } else {
-        print("messAllot document not found");
+
+        setState(() => batches = matches);
       }
     } catch (e) {
       print("Error fetching batches: $e");
+      throw Exception("Failed to load batch data");
     }
   }
 
-  Future<List<MessCommitteeModel>> fetchCommitteeMembers(String messName) async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection("mess_committee")
-        .where('messName', isEqualTo: messName)
-        .get();
+  Future<List<MessCommitteeModel>> fetchCommitteeMembers() async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection("mess_committee")
+          .where('messName', isEqualTo: messName)
+          .get();
 
-    return querySnapshot.docs.map((doc) {
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      return MessCommitteeModel.fromJson(data);
-    }).toList();
+      return querySnapshot.docs.map((doc) {
+        return MessCommitteeModel.fromJson(doc.data() as Map<String, dynamic>);
+      }).toList();
+    } catch (e) {
+      print("Error fetching committee: $e");
+      throw Exception("Failed to load committee members");
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -128,117 +155,11 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
               future: _initialLoad,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return _buildLoading();
                 } else if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      "Error: ${snapshot.error}",
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  );
-                } else {
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        controller: _scrollController,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 16),
-                                child: Text(
-                                  "$mess Mess Details",
-                                  style: const TextStyle(
-                                      fontSize: 22, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildInfoRow("Total Number of Students", "$totalStudents"),
-                                    const SizedBox(height: 12),
-                                    _buildInfoRow("Batches", batches.join(", ")),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 16),
-                                child: const Text(
-                                  "Mess Committee",
-                                  style: TextStyle(
-                                      fontSize: 20, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Container(
-                                constraints: BoxConstraints(
-                                  minHeight: 200,
-                                ),
-                                child: FutureBuilder<List<MessCommitteeModel>>(
-                                  future: fetchCommitteeMembers(messName),
-                                  builder: (context, snapshot) {
-                                    int crossAxisCount;
-                                    double screenWidth = constraints.maxWidth;
-
-                                    if (screenWidth > 1000) {
-                                      crossAxisCount = 3;
-                                    } else if (screenWidth > 600) {
-                                      crossAxisCount = 2;
-                                    } else {
-                                      crossAxisCount = 1;
-                                    }
-
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
-                                      //print("in waiting state");
-                                      return const Center(child: CircularProgressIndicator());
-                                    } else if (snapshot.hasError) {
-                                      return Column(
-                                        children: [
-                                          const Text("Error loading committee members"),
-                                          Text(snapshot.error.toString(),
-                                              style: const TextStyle(color: Colors.red)),
-                                        ],
-                                      );
-                                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                                      return const Center(child: Text("No committee members found"));
-                                    }
-
-                                    List<MessCommitteeModel> members = snapshot.data!;
-                                    return GridView.builder(
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
-                                      padding: const EdgeInsets.all(16),
-                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: crossAxisCount,
-                                        crossAxisSpacing: 24,
-                                        mainAxisSpacing: 24,
-                                        childAspectRatio: 2,
-                                      ),
-                                      itemCount: members.length,
-                                      itemBuilder: (context, index) {
-                                        return _buildCommitteeCard(context, members[index]);
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
+                  return _buildError(snapshot.error.toString());
                 }
+                return _buildMainContent();
               },
             ),
           ),
@@ -247,40 +168,110 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
     );
   }
 
-  Widget _buildInfoRow(String title, String value) {
+  Widget _buildMainContent() {
+    return Scrollbar(
+      controller: _scrollController,
+      thumbVisibility: true,
+      interactive: true,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 16),
+              _buildInfoCard(),
+              const SizedBox(height: 32),
+              _buildCommitteeSection(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16),
+      child: Text(
+        "$mess Mess Details",
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInfoRow("Total Students", "$totalStudents"),
+          const SizedBox(height: 12),
+          _buildInfoRow("Batches", batches.join(", ")),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommitteeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 200,
-              child: Text(
-                title,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.blueGrey),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                value,
-                style: const TextStyle(fontSize: 16, color: Colors.black),
-              ),
-            ),
-          ],
+        const Padding(
+          padding: EdgeInsets.only(left: 16),
+          child: Text(
+            "Mess Committee",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
         ),
-        const Divider(thickness: 1),
+        const SizedBox(height: 16),
+        FutureBuilder<List<MessCommitteeModel>>(
+          future: fetchCommitteeMembers(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return _buildError(snapshot.error.toString());
+            }
+            return _buildCommitteeGrid(snapshot.data ?? []);
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildCommitteeCard(BuildContext context, MessCommitteeModel member) {
+  Widget _buildCommitteeGrid(List<MessCommitteeModel> members) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = constraints.maxWidth > 1000 ? 3 : 
+                           constraints.maxWidth > 600 ? 2 : 1;
+        
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 24,
+            mainAxisSpacing: 24,
+            childAspectRatio: 2,
+          ),
+          itemCount: members.length,
+          itemBuilder: (context, index) => _buildCommitteeCard(members[index]),
+        );
+      },
+    );
+  }
+
+  Widget _buildCommitteeCard(MessCommitteeModel member) {
     return Card(
-      color: Colors.white,
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -300,18 +291,10 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.person, size: 40, color: Colors.grey),
-                    ),
+                    _buildMemberIcon(),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -368,4 +351,80 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
       ),
     );
   }
+
+  Widget _buildMemberIcon() {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.person, size: 40, color: Colors.grey),
+    );
+  }
+
+  Widget _buildMemberInfo(MessCommitteeModel member) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(member.name, style: _boldStyle),
+          const SizedBox(height: 6),
+          Text("Entry: ${member.entryNumber}", style: _greyStyle),
+          Text("Email: ${member.email}", style: _greyStyle),
+          Text("Phone: ${member.phoneNumber}", style: _greyStyle),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String title, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 200,
+              child: Text(title, style: _boldGreyStyle),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(value, style: _blackStyle)),
+          ],
+        ),
+        const Divider(thickness: 1),
+      ],
+    );
+  }
+
+  Widget _buildLoading() => const Center(child: CircularProgressIndicator());
+  
+  Widget _buildError(String error) => Center(
+    child: Text("Error: $error", style: const TextStyle(color: Colors.red)),
+  );
+
+  final TextStyle _boldStyle = const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.black,
+  );
+
+  final TextStyle _greyStyle = const TextStyle(
+    color: Colors.grey,
+    fontSize: 14,
+  );
+
+  final TextStyle _boldGreyStyle = const TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 16,
+    color: Colors.blueGrey,
+  );
+
+  final TextStyle _blackStyle = const TextStyle(
+    fontSize: 16,
+    color: Colors.black,
+  );
 }

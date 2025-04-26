@@ -97,8 +97,8 @@ class _MessDetailsPageBohaState extends State<MessDetailsPageBoha> {
                       final messName = _messOptions[index];
                       return _buildMessCard(
                         context,
-                        messName,
-                        "Manager Name", // Replace with actual manager data
+                        messName
+                        // Replace with actual manager data
                       );
                     },
                   );
@@ -112,7 +112,7 @@ class _MessDetailsPageBohaState extends State<MessDetailsPageBoha> {
   }
 
   Widget _buildMessCard(
-      BuildContext context, String messName, String managerName) {
+      BuildContext context, String messName) {
     return Card(
       color: Colors.white,
       elevation: 2,
@@ -144,11 +144,7 @@ class _MessDetailsPageBohaState extends State<MessDetailsPageBoha> {
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    "Manager: $managerName",
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
+                  
                   const Spacer(),
                   Align(
                     alignment: Alignment.bottomRight,
