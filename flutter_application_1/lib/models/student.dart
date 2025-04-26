@@ -10,6 +10,8 @@ class StudentModel {
   int refund=0;
   int monthly_refund;
   int days_of_rebate;
+  int hostel_leaving_days;
+  int pending_rebate_days;
   String bank_account_number;
   String ifsc_code;
 
@@ -24,6 +26,8 @@ class StudentModel {
     refund=0,
     this.monthly_refund=0,
     this.days_of_rebate=0,
+    this.hostel_leaving_days=0,
+    this.pending_rebate_days=0,
     required this.bank_account_number,
     required this.ifsc_code,
     required this.mess,
@@ -42,6 +46,8 @@ class StudentModel {
         'refund':0,
         'monthly_refund':0,
         'days_of_rebate':0,
+        'hostel_leaving_days':0,
+        'pending_rebate_days':0,
         'bank_account_number':bank_account_number,
         'ifsc_code':ifsc_code,
 
@@ -59,6 +65,8 @@ class StudentModel {
         refund: json['refund'] as int,
         monthly_refund: json['monthly_refund'] as int,
         days_of_rebate: json['days_of_rebate'] as int,
+        hostel_leaving_days: json['hostel_leaving_days'] as int,
+        pending_rebate_days: json['pending_rebate_days'] as int,
         bank_account_number: json['bank_account_number'] as String,
         ifsc_code: json['ifsc_code'] as String,
         mess:json['mess'] as String,
