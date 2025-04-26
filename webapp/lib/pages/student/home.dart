@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? errorMessage;
   String messNameAnnouncement = "";
   String formAnnouncement = "";
-  Future<List<AnnouncementModel>>? announcementFuture = Future.value([]);
+  Future<List<AnnouncementModel>>? announcementFuture;
 
   @override
   void initState() {
@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
           await FirebaseFirestore.instance.collection('students').doc(uid).get();
       if (studentDoc.exists) {
         messName = studentDoc['mess'];
+        print(messName);
         messNameAnnouncement = messName[0].toUpperCase() +
             messName.substring(1).toLowerCase();
       } else {
@@ -105,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
       String name = studentDoc['name'];
       String entryNum = studentDoc['entryNumber'];
       String messName = studentDoc['mess'];
-
+      print("Mess Name: $messName");
       
       int numOfDays = 0;
       if(selectedDate.month == 11 || selectedDate.month == 12){
@@ -235,6 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<UserProvider>(
       builder: (context, userProvider, _) {
         final uid = userProvider.uid;
+        print("Current UID: $uid");
         if (uid == null) {
           // Show loading or login prompt until UID is available
           return const Scaffold(
@@ -243,6 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         // Only initialize data when UID changes
         if (announcementFuture == null) {
+          print("Initializing fetch for UID: $uid");
           _initFetch(uid);
         }
         return FutureBuilder(
