@@ -63,12 +63,23 @@ class _RebateFormPageState extends State<RebateFormPage> {
       List<String> startParts = rebateFromController.text.split('/');
       List<String> endParts = rebateToController.text.split('/');
 
-      Timestamp startDate = Timestamp.fromDate(
-        DateTime(int.parse(startParts[2]), int.parse(startParts[1]), int.parse(startParts[0])),
+      DateTime startDateTime = DateTime(
+        int.parse(startParts[2]),
+        int.parse(startParts[1]),
+        int.parse(startParts[0]),
       );
-      Timestamp endDate = Timestamp.fromDate(
-        DateTime(int.parse(endParts[2]), int.parse(endParts[1]), int.parse(endParts[0])),
+      DateTime endDateTime = DateTime(
+        int.parse(endParts[2]),
+        int.parse(endParts[1]),
+        int.parse(endParts[0]),
       );
+
+      Timestamp startDate = Timestamp.fromDate(startDateTime);
+      Timestamp endDate = Timestamp.fromDate(endDateTime);
+
+      // Calculate number of days (inclusive)
+      int days = endDateTime.difference(startDateTime).inDays + 1;
+
       print('studentRef: ${studentRef!['mess']}');
       Rebate rebate = Rebate(
         req_id: '',
@@ -83,6 +94,10 @@ class _RebateFormPageState extends State<RebateFormPage> {
       DocumentReference docRef = await _firestore.collection('rebates').add(rebate.toJson());
       await docRef.update({'req_id': docRef.id});
 
+      await studentRef!.reference.update({
+        'pending_rebate_days': FieldValue.increment(days),
+      });
+      
       /*ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Rebate request submitted successfully!')),
       );*/
@@ -139,6 +154,7 @@ class _RebateFormPageState extends State<RebateFormPage> {
       );
       return;
     }
+    print("pending rebates ${studentRef!['pending_rebate_days']}");
     if(difference + studentRef!['pending_rebate_days'] + studentRef!['days_of_rebate'] > 20){
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Required days exceed the allowed limit of 20 days per semester. You currently have taken ${studentRef!['days_of_rebate']} rebates and have ${studentRef!['pending_rebate_days']} of pending rebates. Please delete some already exisiting pending rebate to put new valid request.")),
