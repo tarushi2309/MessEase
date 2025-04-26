@@ -267,7 +267,7 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                             builder: (context, constraints) {
                               int crossAxisCount = constraints.maxWidth > 1000
                                   ? 3
-                                  : constraints.maxWidth > 600
+                                  : constraints.maxWidth > 700
                                       ? 2
                                       : 1;
 
@@ -278,7 +278,7 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                                   crossAxisCount: crossAxisCount,
                                   crossAxisSpacing: 24,
                                   mainAxisSpacing: 24,
-                                  childAspectRatio: 2,
+                                  childAspectRatio: 1.8,
                                 ),
                                 itemCount: filteredRequests.length,
                                 itemBuilder: (context, index) {

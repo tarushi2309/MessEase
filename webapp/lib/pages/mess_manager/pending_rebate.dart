@@ -308,120 +308,111 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                       label: Text("Clear Filters"),
                     ),
                   ),
+                  // --- Begin: Scrollable Table using Previous Logic ---
                   Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        double maxWidth =
-                            MediaQuery.of(context).size.width * 0.95;
-                        return Center(
-                          child: Container(
-                            width: maxWidth,
-                            margin: EdgeInsets.only(bottom: 24),
-                            child: Card(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 2,
-                              child: Column(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(16),
-                                        topRight: Radius.circular(16),
-                                      ),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 14, horizontal: 8),
-                                    child: Row(
-                                      children: [
-                                        _buildHeaderCell("Name"),
-                                        _buildHeaderCell("Entry No"),
-                                        _buildHeaderCell("Hostel"),
-                                        _buildHeaderCell("Rebate From"),
-                                        _buildHeaderCell("Rebate Till"),
-                                        _buildHeaderCell("Actions"),
-                                      ],
+                    child: Center(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: 1200, // Fixed width to enable horizontal scroll
+                          child: Card(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 2,
+                            child: Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      topRight: Radius.circular(16),
                                     ),
                                   ),
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.only(
-                                        bottomLeft: Radius.circular(16),
-                                        bottomRight: Radius.circular(16),
-                                      ),
-                                      child: isLoading
-                                          ? Center(
-                                              child: CircularProgressIndicator(
-                                                color: Colors.grey[300],
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : filteredRequests.isEmpty
-                                              ? Center(
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            24),
-                                                    child: Text(
-                                                      "No pending rebates",
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        color: Colors
-                                                            .grey[600],
-                                                      ),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 14, horizontal: 8),
+                                  child: Row(
+                                    children: [
+                                      _buildHeaderCell("Name"),
+                                      _buildHeaderCell("Entry No"),
+                                      _buildHeaderCell("Hostel"),
+                                      _buildHeaderCell("Rebate From"),
+                                      _buildHeaderCell("Rebate Till"),
+                                      _buildHeaderCell("Actions"),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.only(
+                                      bottomLeft: Radius.circular(16),
+                                      bottomRight: Radius.circular(16),
+                                    ),
+                                    child: isLoading
+                                        ? Center(
+                                            child: CircularProgressIndicator(
+                                              color: Colors.grey[300],
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : filteredRequests.isEmpty
+                                            ? Center(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(24),
+                                                  child: Text(
+                                                    "No pending rebates",
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      color: Colors.grey[600],
                                                     ),
                                                   ),
-                                                )
-                                              : ListView.builder(
-                                                  padding: EdgeInsets.zero,
-                                                  itemCount:
-                                                      filteredRequests.length,
-                                                  itemBuilder:
-                                                      (context, index) {
-                                                    final rebate = filteredRequests[index];
-                                                    final numberOfDays = rebate.endDate.difference(rebate.startDate).inDays + 1;
-                                                    return Container(
-                                                      padding: EdgeInsets.symmetric(
-                                                          vertical: 12,
-                                                          horizontal: 8),
-                                                      decoration: BoxDecoration(
-                                                        color: index % 2 == 0
-                                                            ? Colors.grey[50]
-                                                            : Colors.grey[100],
-                                                        border: Border(
-                                                          bottom: BorderSide(
-                                                              color: Colors
-                                                                  .grey[300]!),
-                                                        ),
-                                                      ),
-                                                      child: Row(
-                                                        children: [
-                                                          _buildBodyCell(rebate.studentName),
-                                                          _buildBodyCell(rebate.entryNumber),
-                                                          _buildBodyCell(rebate.hostel),
-                                                          _buildBodyCell(DateFormat('yyyy-MM-dd').format(rebate.startDate)),
-                                                          _buildBodyCell(DateFormat('yyyy-MM-dd').format(rebate.endDate)),
-                                                          _buildBodyCell(
-                                                            buildActionsMenu(rebate, numberOfDays),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
                                                 ),
-                                    ),
+                                              )
+                                            : ListView.builder(
+                                                padding: EdgeInsets.zero,
+                                                itemCount: filteredRequests.length,
+                                                itemBuilder: (context, index) {
+                                                  final rebate = filteredRequests[index];
+                                                  final numberOfDays = rebate.endDate.difference(rebate.startDate).inDays + 1;
+                                                  return Container(
+                                                    padding: EdgeInsets.symmetric(
+                                                        vertical: 12, horizontal: 8),
+                                                    decoration: BoxDecoration(
+                                                      color: index % 2 == 0
+                                                          ? Colors.grey[50]
+                                                          : Colors.grey[100],
+                                                      border: Border(
+                                                        bottom: BorderSide(
+                                                            color: Colors.grey[300]!),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        _buildBodyCell(rebate.studentName),
+                                                        _buildBodyCell(rebate.entryNumber),
+                                                        _buildBodyCell(rebate.hostel),
+                                                        _buildBodyCell(DateFormat('yyyy-MM-dd').format(rebate.startDate)),
+                                                        _buildBodyCell(DateFormat('yyyy-MM-dd').format(rebate.endDate)),
+                                                        _buildBodyCell(
+                                                          buildActionsMenu(rebate, numberOfDays),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
                   ),
+                  // --- End: Scrollable Table using Previous Logic ---
                 ],
               ),
             ),
