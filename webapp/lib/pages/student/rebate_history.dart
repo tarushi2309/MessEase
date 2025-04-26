@@ -23,7 +23,35 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
   late DatabaseModel dbService;
   List<Rebate> rebateHistory = [];
   List<Rebate> approvedRebates = [];
+  List<QueryDocumentSnapshot> rebateDocs = [];
   bool isLoading = true;
+
+  Future<void> _deleteRebate(int index) async {
+    final doc = rebateDocs[index];
+    try {
+      await FirebaseFirestore.instance
+        .collection('rebates')
+        .doc(doc.id)
+        .delete();
+
+      setState(() {
+        rebateDocs.removeAt(index);
+        rebateHistory.removeAt(index);
+        approvedRebates = rebateHistory
+          .where((r) => r.status_.toString().split('.').last.toLowerCase() == 'approve')
+          .toList();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pending rebate deleted')),
+      );
+    } catch (e) {
+      print("Error deleting rebate: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete rebate')),
+      );
+    }
+  }
 
   Future<void> _fetchRebateHistory(String uid) async {
     dbService = DatabaseModel();
@@ -43,6 +71,7 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
         print("First rebate record: ${querySnapshot.docs[0].data()}");
       }
       setState(() {
+        rebateDocs = querySnapshot.docs;
         rebateHistory = querySnapshot.docs.map((doc) {
           // Print the status of each rebate for debugging
           var rebate = Rebate.fromJson(doc);
@@ -76,7 +105,7 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
   }
 
     if (isLoading) {
-      _fetchRebateHistory(uid!);
+      _fetchRebateHistory(uid);
     }
 
     return Scaffold(
@@ -146,10 +175,20 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Row(
                         children: [
-                          _buildHeaderCell('From'),
-                          _buildHeaderCell('To'),
-                          _buildHeaderCell('Number of Days'),
-                          _buildHeaderCell('Status'),
+                          Flexible(
+                            flex:2,
+                            child: _buildHeaderCell('From')),
+                          Flexible(
+                            flex:2,
+                            child: _buildHeaderCell('To')),
+                          Flexible(
+                            flex:2,
+                            child: _buildHeaderCell('Number of Days')),
+                          Flexible(flex:2,
+                          child: _buildHeaderCell('Status')),
+                          Flexible(
+                            flex:1,
+                            child: _buildHeaderCell('')),
                         ],
                       ),
                     ),
@@ -179,57 +218,85 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             child: Row(
                               children: [
-                                _buildBodyCell(
-                                    "${fromDate.day}/${fromDate.month}/${fromDate.year}"),
-                                _buildBodyCell(
-                                    "${toDate.day}/${toDate.month}/${toDate.year}"),
-                                _buildBodyCell(days.toString()),
-                                _buildBodyCell(
-                                  TextButton(
-                                    onPressed: () {},
-                                    style: ButtonStyle(
-                                      backgroundColor:
-                                          MaterialStateProperty.all(
-                                        rebate.status_
-                                                    .toString()
-                                                    .split('.')
-                                                    .last
-                                                    .toLowerCase() ==
-                                                "approve"
-                                            ? Colors.green.withOpacity(0.2)
-                                            : Colors.red.withOpacity(0.2),
-                                      ),
-                                      shape: MaterialStateProperty.all(
-                                        RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
+                                Flexible(
+                                  flex:2,
+                                  child: _buildBodyCell(
+                                      "${fromDate.day}/${fromDate.month}/${fromDate.year}"),
+                                ),
+                                Flexible(
+                                  flex:2,
+                                  child: _buildBodyCell(
+                                      "${toDate.day}/${toDate.month}/${toDate.year}"),
+                                ),
+                                Flexible(
+                                  flex:2,
+                                  child: _buildBodyCell(days.toString())),
+                                Flexible(
+                                  flex:2,
+                                  child: _buildBodyCell(
+                                    TextButton(
+                                      onPressed: () {},
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.all(
+                                          rebate.status_
+                                                      .toString()
+                                                      .split('.')
+                                                      .last
+                                                      .toLowerCase() ==
+                                                  "approve"
+                                              ? Colors.green.withOpacity(0.2)
+                                              : Colors.red.withOpacity(0.2),
+                                        ),
+                                        shape: MaterialStateProperty.all(
+                                          RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        padding: MaterialStateProperty.all(
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
                                         ),
                                       ),
-                                      padding: MaterialStateProperty.all(
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 8),
+                                      child: Text(
+                                        rebate.status_
+                                            .toString()
+                                            .split('.')
+                                            .last
+                                            .toUpperCase(),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: rebate.status_
+                                                      .toString()
+                                                      .split('.')
+                                                      .last
+                                                      .toLowerCase() ==
+                                                  "approve"
+                                              ? Colors.green
+                                              : Colors.red,
+                                        ),
                                       ),
                                     ),
-                                    child: Text(
-                                      rebate.status_
-                                          .toString()
-                                          .split('.')
-                                          .last
-                                          .toUpperCase(),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: rebate.status_
-                                                    .toString()
-                                                    .split('.')
-                                                    .last
-                                                    .toLowerCase() ==
-                                                "approve"
-                                            ? Colors.green
-                                            : Colors.red,
-                                      ),
-                                    ),
+                                    
                                   ),
                                 ),
+                                Flexible(
+                                  flex:1,
+                                  child: _buildBodyCell(
+                                    rebate.status_
+                                            .toString()
+                                            .split('.')
+                                            .last
+                                            .toLowerCase() != "approve"
+                                        ? IconButton(
+                                            icon: Icon(Icons.delete, color: Color(0xFFF0753C)),
+                                            tooltip: 'Delete pending request',
+                                            onPressed: () => _deleteRebate(index),
+                                          )
+                                        : SizedBox.shrink(),
+                                  ),
+                                )
                               ],
                             ),
                           );

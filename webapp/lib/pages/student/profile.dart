@@ -93,10 +93,11 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                             radius: 60,
                             backgroundColor: Colors.grey[200],
                             backgroundImage:
-                                _image != null ? FileImage(_image!) : null,
-                            child: _image == null
+                                student?.url != null ? NetworkImage(student!.url) : null,
+                            child: student?.url == null
                                 ? const Icon(Icons.person, size: 50)
                                 : null,
+                            
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -136,7 +137,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                           _buildInfoRow("Year", student?.year ?? "N/A"),
                           _buildInfoRow("Bank Account", student?.bank_account_number ?? "N/A"),
                           _buildInfoRow("IFSC Code", student?.ifsc_code ?? "N/A"),
-                          _buildInfoRow("Mess", student?.mess ?? "N/A"),
+                          _buildInfoRow("Mess", student?.mess != null ? student!.mess[0].toUpperCase() + student!.mess.substring(1) : "N/A"),
                         ],
                       ),
                     ),
@@ -163,133 +164,12 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                       style: TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 16),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Color(0xFFF0753C),
-                  ),
-                  onPressed: () {
-                    _showMessCardIssueDialog();
-                  },
-                  child: const Text("ISSUE NEW MESS CARD", 
-                      style: TextStyle(color: Colors.white)),
-                ),
+                
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  void _showMessCardIssueDialog() {
-    File? selectedImage;
-    final ImagePicker picker = ImagePicker();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            Future<void> pickImage() async {
-              final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-              if (pickedFile != null) {
-                String extension = path.extension(pickedFile.path).toLowerCase();
-                if (extension == '.jpg' || extension == '.jpeg' || extension == '.png') {
-                  setState(() {
-                    selectedImage = File(pickedFile.path);
-                  });
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Only JPG, JPEG, and PNG files are allowed.')),
-                  );
-                }
-              }
-            }
-
-            Future<void> uploadImage() async {
-              if (selectedImage == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please select an image first.')),
-                );
-                return;
-              }
-
-              try {
-                var request = http.MultipartRequest(
-                  'POST',
-                  Uri.parse('https://your-backend-url.com/upload'),
-                );
-                request.files.add(await http.MultipartFile.fromPath('file', selectedImage!.path));
-                var response = await request.send();
-
-                if (response.statusCode == 200) {
-                  Navigator.of(context).pop(); // Close the dialog
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Upload Successful'),
-                      content: const Text(
-                          'Photo uploaded successfully. You can collect your ID card from the mess manager in 2-3 days.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  throw Exception("Failed to upload");
-                }
-              } catch (e) {
-                print('Error uploading image: $e');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Upload failed. Please try again.')),
-                );
-              }
-            }
-
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              title: const Text('Issue New Mess ID Card'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  selectedImage == null
-                      ? const Text("No image selected.")
-                      : Image.file(selectedImage!, height: 100),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: pickImage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6F2B),
-                    ),
-                    child: const Text(
-                      "Upload Photo",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: uploadImage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6F2B),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Submit'),
-                ),
-              ],
-            );
-          },
-        );
-      },
     );
   }
 

@@ -10,6 +10,14 @@ import 'package:webapp/models/announcement.dart';
 import 'package:webapp/models/mess_menu.dart';
 import 'package:webapp/services/database.dart';
 
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:webapp/models/feedback.dart';
+import 'package:image_picker_web/image_picker_web.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -28,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String messNameAnnouncement = "";
   String formAnnouncement = "";
   Future<List<AnnouncementModel>>? announcementFuture;
+  final String _imgbbApiKey = "321e92bce52209a8c6c4f1271bbec58f";
 
   @override
   void initState() {
@@ -45,13 +54,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> fetchUserName(String uid) async {
     try {
-      DocumentSnapshot studentDoc =
-          await FirebaseFirestore.instance.collection('students').doc(uid).get();
+      DocumentSnapshot studentDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(uid)
+          .get();
       if (studentDoc.exists) {
         messName = studentDoc['mess'];
-        print(messName);
-        messNameAnnouncement = messName[0].toUpperCase() +
-            messName.substring(1).toLowerCase();
+        messNameAnnouncement =
+            messName[0].toUpperCase() + messName.substring(1).toLowerCase();
       } else {
         print("Student not found");
       }
@@ -72,12 +82,13 @@ class _HomeScreenState extends State<HomeScreen> {
           .get();
 
       final List<AnnouncementModel> loadedAnnouncements = snapshot.docs
-          .map((doc) => AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
+          .map((doc) =>
+              AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
           .where((announcement) {
-            final announcementDate = DateTime.parse(announcement.date);
-            return announcementDate.isAfter(startOfDay) && announcementDate.isBefore(startOfDay.add(const Duration(days: 1)));
-          })
-          .toList();
+        final announcementDate = DateTime.parse(announcement.date);
+        return announcementDate.isAfter(startOfDay) &&
+            announcementDate.isBefore(startOfDay.add(const Duration(days: 1)));
+      }).toList();
       //print(loadedAnnouncements);
       return loadedAnnouncements;
     } catch (e) {
@@ -86,7 +97,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> addHostelLeavingData(BuildContext context, DateTime selectedDate) async {
+  Future<void> addHostelLeavingData(
+      BuildContext context, DateTime selectedDate) async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
 
@@ -107,14 +119,14 @@ class _HomeScreenState extends State<HomeScreen> {
       String entryNum = studentDoc['entryNumber'];
       String messName = studentDoc['mess'];
       print("Mess Name: $messName");
-      
+
       int numOfDays = 0;
-      if(selectedDate.month == 11 || selectedDate.month == 12){
-          DateTime endDate = DateTime(selectedDate.year, 12, 31);
-          numOfDays = endDate.difference(selectedDate).inDays + 1;
+      if (selectedDate.month == 11 || selectedDate.month == 12) {
+        DateTime endDate = DateTime(selectedDate.year, 12, 31);
+        numOfDays = endDate.difference(selectedDate).inDays + 1;
       } else if (selectedDate.month == 4 || selectedDate.month == 5) {
-          DateTime endDate = DateTime(selectedDate.year, 5, 31);
-          numOfDays = endDate.difference(selectedDate).inDays + 1;
+        DateTime endDate = DateTime(selectedDate.year, 5, 31);
+        numOfDays = endDate.difference(selectedDate).inDays + 1;
       }
 
       await FirebaseFirestore.instance.collection('hostel_leaving_data').add({
@@ -136,9 +148,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final doc = querySnapshot.docs.first;
         final docId = doc.id;
 
-        int currentHostelLeavingDays = (doc.data()['hostel_leaving_days'] ?? 0) as int;
+        int currentHostelLeavingDays =
+            (doc.data()['hostel_leaving_days'] ?? 0) as int;
         int currentRebateDays = (doc.data()['days_of_rebate'] ?? 0) as int;
-        int updatedHostelLeavingDays = currentHostelLeavingDays + currentRebateDays;
+        int updatedHostelLeavingDays =
+            currentHostelLeavingDays + currentRebateDays;
         int refundAmount = updatedHostelLeavingDays * 133;
 
         // Now update
@@ -155,9 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
         print('No student found with UID: $uid');
       }
 
-
       print("Hostel leaving data added successfully");
-
     } catch (e) {
       print("Error adding hostel leaving data: $e");
 
@@ -202,7 +214,8 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (_) => AlertDialog(
           title: Text('Leaving Date Confirmed'),
-          content: Text("You're set to leave on ${selectedDate.day}/${selectedDate.month}/${selectedDate.year} from $messName mess. Please submit your messId card to the manager"),
+          content: Text(
+              "You're set to leave on ${selectedDate.day}/${selectedDate.month}/${selectedDate.year} from $messName mess. Please submit your messId card to the manager"),
           actions: [
             TextButton(
               child: Text('OK'),
@@ -218,6 +231,254 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // add feedback to the firestore
+  Future<void> submitFeedback({
+    required String uid,
+    required String text,
+    File? image,
+    required String mess,
+    required String meal,
+  }) async {
+    String? imageUrl;
+    print("Submitting feedback: $text");
+
+    try {
+      // Upload image to Firebase Storage if available
+      if (image != null) {
+        final Dio dio = Dio();
+        final formData = FormData.fromMap({
+          'key': _imgbbApiKey,
+          'image': await MultipartFile.fromFile(image.path),
+        });
+
+        final response = await dio.post(
+          "https://api.imgbb.com/1/upload",
+          data: formData,
+        );
+
+        print("Response: ${response.statusCode}");
+
+        if (response.statusCode == 200) {
+          imageUrl = response.data['data']['url'];
+        }
+      }
+      // Create feedback model
+      FeedbackModel feedback = FeedbackModel(
+        uid: uid,
+        text: text,
+        imageUrl: imageUrl,
+        mess: mess,
+        timestamp: DateTime.now(),
+        meal: meal,
+      );
+
+      // Add to Firestore
+      await FirebaseFirestore.instance
+          .collection('feedback')
+          .add(feedback.toJson());
+      print("Feedback successfully submitted to Firestore");
+    } catch (e) {
+      print("Error submitting feedback: $e");
+      rethrow;
+    }
+  }
+
+  bool _isFeedbackAllowed(String mealType) {
+    final now = DateTime.now();
+    switch (mealType) {
+      case 'Breakfast':
+        return now.hour > 7 || (now.hour == 7 && now.minute >= 45);
+      case 'Lunch':
+        return now.hour > 12 || (now.hour == 12 && now.minute >= 45);
+      case 'Dinner':
+        return now.hour > 19 || (now.hour == 19 && now.minute >= 45);
+      default:
+        return false;
+    }
+  }
+
+  void _showFeedbackDialog(BuildContext context, String mealType, String uid) {
+    TextEditingController feedbackController = TextEditingController();
+    File? selectedImage;
+    Uint8List? webImageBytes;
+    // feedback form
+    final ImagePicker _picker = ImagePicker();
+
+    selectedImage = null;
+    webImageBytes = null;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final dialogWidth = constraints.maxWidth * 0.5;
+                  return SizedBox(
+                    height: 380,
+                    width: dialogWidth,
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF0753C),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Feedback Form ! Your input matters :)',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(12),
+                            child: kIsWeb
+                                ? (webImageBytes != null
+                                    ? Stack(
+                                        alignment: Alignment.topRight,
+                                        children: [
+                                          Image.memory(webImageBytes!,
+                                              height: 200),
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: IconButton(
+                                              icon: Icon(Icons.close,
+                                                  color: Color(0xFFF0753C)),
+                                              onPressed: () {
+                                                setState(
+                                                    () => webImageBytes = null);
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const SizedBox.shrink())
+                                : (selectedImage != null
+                                    ? Stack(
+                                        alignment: Alignment.topRight,
+                                        children: [
+                                          Image.file(selectedImage!,
+                                              height: 200),
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: IconButton(
+                                              icon: Icon(Icons.close,
+                                                  color: Color(0xFFF0753C)),
+                                              onPressed: () {
+                                                setState(
+                                                    () => selectedImage = null);
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const SizedBox.shrink()),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            border: Border(
+                                top: BorderSide(color: Colors.grey.shade300)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: feedbackController,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Type your message here',
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Color(0xFFF0753C),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                ),
+                                child: const Text("Attach",
+                                    style: TextStyle(color: Colors.white)),
+                                onPressed: () async {
+                                  if (kIsWeb) {
+                                    Uint8List? bytes =
+                                        await ImagePickerWeb.getImageAsBytes();
+                                    if (bytes != null) {
+                                      setState(() => webImageBytes = bytes);
+                                    }
+                                  } else {
+                                    final XFile? image = await _picker
+                                        .pickImage(source: ImageSource.gallery);
+                                    if (image != null) {
+                                      setState(() =>
+                                          selectedImage = File(image.path));
+                                    }
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Color(0xFFF0753C),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                ),
+                                child: const Text("Send",
+                                    style: TextStyle(color: Colors.white)),
+                                onPressed: () async {
+                                  print("feedback: $uid");
+                                  try {
+                                    await submitFeedback(
+                                      uid: uid,
+                                      text: feedbackController.text.trim(),
+                                      image: kIsWeb ? null : selectedImage,
+                                      meal: mealType,
+                                      mess: messName,
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Feedback submitted!')),
+                                    );
+                                    Navigator.of(context).pop();
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Failed to submit feedback')),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<bool> checkForm(BuildContext context, String? uid) async {
     if (uid == null) return false;
     bool closed = false;
@@ -227,32 +488,33 @@ class _HomeScreenState extends State<HomeScreen> {
         .get();
 
     String mess = "";
-    if(doc.docs.isNotEmpty){
+    if (doc.docs.isNotEmpty) {
       mess = doc.docs[0]['mess'];
       formAnnouncement = "You've already submitted the hostel leaving form.";
       return true;
-    } else{
+    } else {
       final studentdoc = await FirebaseFirestore.instance
-        .collection('students')
-        .where('uid', isEqualTo: uid)
-        .get();
+          .collection('students')
+          .where('uid', isEqualTo: uid)
+          .get();
 
-      if(studentdoc.docs.isNotEmpty){
+      if (studentdoc.docs.isNotEmpty) {
         mess = studentdoc.docs[0]['mess'];
       }
     }
     mess = mess[0].toUpperCase() + mess.substring(1);
 
     final data = await FirebaseFirestore.instance
-            .collection('hostel_leaving')
-            .doc(mess)
-            .get();
-    
-    if(data.exists){
+        .collection('hostel_leaving')
+        .doc(mess)
+        .get();
+
+    if (data.exists) {
       closed = !data['isReleased'];
       //isReleased = true - form exists
-      if(closed == true){
-        formAnnouncement = "This form has been closed. Please contact BOHA for any discrepancy.";
+      if (closed == true) {
+        formAnnouncement =
+            "This form has been closed. Please contact BOHA for any discrepancy.";
         return true;
       }
     }
@@ -299,12 +561,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Header(currentPage: 'Home'),
               ),
               body: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 35),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 35),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('${messNameAnnouncement} mess',
-                        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 32, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     LayoutBuilder(builder: (context, constraints) {
                       final isNarrow = constraints.maxWidth < 600;
@@ -323,16 +587,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Expanded(flex: 3, child: _buildAddOnsSection()),
                           const SizedBox(width: 16),
-                          Expanded(flex: 4, child: _buildAnnouncementsBlock(uid)),
+                          Expanded(
+                              flex: 4, child: _buildAnnouncementsBlock(uid)),
                         ],
                       );
                     }),
                     const SizedBox(height: 16),
                     const Text("Today's Menu",
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    _buildMealSection("Breakfast", menuForDay['Breakfast']!),
-                    _buildMealSection("Lunch", menuForDay['Lunch']!),
-                    _buildMealSection("Dinner", menuForDay['Dinner']!),
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold)),
+                    _buildMealSection(
+                        "Breakfast", menuForDay['Breakfast']!, uid),
+                    _buildMealSection("Lunch", menuForDay['Lunch']!, uid),
+                    _buildMealSection("Dinner", menuForDay['Dinner']!, uid),
                   ],
                 ),
               ),
@@ -343,7 +610,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMealSection(String title, List<String> items) {
+  Widget _buildMealSection(String title, List<String> items, String? uid) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
@@ -351,9 +618,32 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Row(
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.feedback, color: Color(0xFFF0753C)),
+                  onPressed: () {
+                    if (!_isFeedbackAllowed(title)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('Feedback for $title hasn\'t opened yet'),
+                          behavior: SnackBarBehavior.floating,
+                          margin: EdgeInsets.only(bottom: 70),
+                        ),
+                      );
+                      return;
+                    }
+                    _showFeedbackDialog(context, title, uid!);
+                  },
+                  tooltip: 'Give Feedback',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -482,11 +772,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: announcements
-                .map(
+                children: announcements.map(
                   (a) {
                     final text = a.announcement;
-                    final isClickable = text.toLowerCase().contains("hostel leaving form is now live");
+                    final isClickable = text
+                        .toLowerCase()
+                        .contains("hostel leaving form is now live");
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -499,8 +790,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: isClickable
                                 ? GestureDetector(
                                     onTap: () async {
-                                      try{
-                                        bool alreadySubmitted = await checkForm(context, uid);
+                                      try {
+                                        bool alreadySubmitted =
+                                            await checkForm(context, uid);
                                         if (alreadySubmitted) {
                                           showDialog(
                                             context: context,
@@ -510,18 +802,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                               actions: [
                                                 TextButton(
                                                   child: Text("OK"),
-                                                  onPressed: () => Navigator.of(context).pop(),
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(),
                                                 ),
                                               ],
                                             ),
                                           );
                                         } else {
-                                          _showLeavingDatePopup(context, messName);
+                                          _showLeavingDatePopup(
+                                              context, messName);
                                         }
-                                      } catch(e){
+                                      } catch (e) {
                                         print("Error in link");
                                       }
-                                      
                                     },
                                     child: Text(
                                       text,
@@ -538,8 +832,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                   },
-                )
-                .toList(),
+                ).toList(),
               ),
             ),
           );

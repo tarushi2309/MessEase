@@ -1,7 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:webapp/components/user_provider.dart';
 
 class Header extends StatelessWidget {
   final String currentPage; // Receives the current page name
@@ -12,7 +9,7 @@ class Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth > 800) {
+        if (constraints.maxWidth > 950) {
           // Desktop or larger screens
           return _buildDesktopHeader(context);
         } else {
@@ -153,19 +150,8 @@ class Header extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: InkWell(
-        onTap: () async{
-          if (text == "Logout") {
-            // 1. Clear the UID in your provider
-            Provider.of<UserProvider>(context, listen: false).clearUid();
-            await FirebaseAuth.instance.signOut();
-            // 2. Navigate to login and remove all previous routes
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              route,
-              (Route<dynamic> route) => false,
-            );
-          } else {
-            Navigator.pushNamed(context, route);
-          }
+        onTap: () {
+          Navigator.pushNamed(context, route);
         },
         child: Text(
           text,

@@ -17,7 +17,6 @@ class _MessDetailsPageState
     extends State<MessDetailsPage> {
   String? uid;
   late String messName;
-  late String messNameSmall;
   String mess = "";
   int totalStudents = 0;
   List<String> batches = [];
@@ -53,12 +52,9 @@ class _MessDetailsPageState
 
   void fetchTotalStudents() async {
     try {
-      //print("Fetching the students for the mess ${messName}");
-      messNameSmall = messName[0].toLowerCase() + messName.substring(1);
-      //print(messName);
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection("students")
-          .where('mess', isEqualTo: messNameSmall)
+          .where('mess', isEqualTo: messName)
           .get();
 
       setState(() {
@@ -118,7 +114,7 @@ class _MessDetailsPageState
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          const Header(currentPage: 'Home'),
+          const Header(currentPage: 'Mess Details'),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
