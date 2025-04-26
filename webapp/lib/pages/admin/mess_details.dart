@@ -4,31 +4,53 @@ import 'package:webapp/models/mess_committee.dart';
 import 'package:webapp/components/header_admin.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MessDetailsPage extends StatefulWidget {
   const MessDetailsPage({super.key});
 
   @override
-  _MessDetailsPageState createState() =>
-      _MessDetailsPageState();
+  _MessDetailsPageState createState() => _MessDetailsPageState();
 }
 
-class _MessDetailsPageState
-    extends State<MessDetailsPage> {
+class _MessDetailsPageState extends State<MessDetailsPage> {
   String? uid;
-  late String messName;
+  String messName = "";
   String mess = "";
   int totalStudents = 0;
   List<String> batches = [];
-  final ScrollController _scrollController = ScrollController(); // Added scroll controller
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Get mess name from route arguments
-    final args = ModalRoute.of(context)!.settings.arguments as String?;
+    // Try to get mess name from route arguments
+    final args = ModalRoute.of(context)?.settings.arguments as String?;
     if (args != null) {
       messName = args;
+      // Save to shared preferences for persistence
+      _saveMessName(messName);
+      fetchData();
+    } else {
+      // If no argument, try to recover from shared preferences
+      _loadMessName();
+    }
+  }
+
+  // Save messName to shared preferences
+  Future<void> _saveMessName(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('persistedMessName', value);
+  }
+
+  // Load messName from shared preferences
+  Future<void> _loadMessName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final persisted = prefs.getString('persistedMessName');
+    if (persisted != null && persisted.isNotEmpty) {
+      setState(() {
+        messName = persisted;
+      });
       fetchData();
     }
   }
@@ -46,7 +68,7 @@ class _MessDetailsPageState
 
   @override
   void dispose() {
-    _scrollController.dispose(); // Dispose the controller
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -54,7 +76,7 @@ class _MessDetailsPageState
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection("students")
-          .where('mess', isEqualTo: messName)
+          .where('mess', isEqualTo: messName.toLowerCase())
           .get();
 
       setState(() {
@@ -69,17 +91,17 @@ class _MessDetailsPageState
     try {
       DocumentSnapshot messAllotDoc = await FirebaseFirestore.instance
           .collection("mess")
-          .doc("messAllotment") 
+          .doc("messAllotment")
           .get();
-      
+
       if (messAllotDoc.exists) {
         Map<String, dynamic>? messAllotData = messAllotDoc.data() as Map<String, dynamic>?;
         List<String> matchingBatches = [];
-        
+
         if (messAllotData != null && messAllotData.containsKey('messAllot')) {
           Map<String, dynamic> messAllotMap = messAllotData['messAllot'] as Map<String, dynamic>;
           messAllotMap.forEach((batch, assignedMess) {
-            if (assignedMess == mess) {
+            if (assignedMess == messName) {
               matchingBatches.add(batch);
             }
           });
@@ -101,7 +123,6 @@ class _MessDetailsPageState
         .collection("mess_committee")
         .where('messName', isEqualTo: messName.toLowerCase())
         .get();
-
     return querySnapshot.docs.map((doc) {
       Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
       return MessCommitteeModel.fromJson(data);
@@ -119,7 +140,7 @@ class _MessDetailsPageState
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  controller: _scrollController, // Attach controller here
+                  controller: _scrollController,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(

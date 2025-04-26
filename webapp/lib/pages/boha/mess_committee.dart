@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webapp/models/mess_committee.dart';
 import 'package:webapp/components/header_boha.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+
 
 class MessCommittePageBoha extends StatefulWidget {
   const MessCommittePageBoha({super.key});
@@ -12,7 +14,7 @@ class MessCommittePageBoha extends StatefulWidget {
 }
 
 class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
-  late String messName;
+  String messName="";
   late Future<List<MessCommitteeModel>> _committeeMembers;
   String? uid;
   String mess = "";
@@ -23,17 +25,39 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)!.settings.arguments;
-    if (args is String) {
+    final args = ModalRoute.of(context)?.settings.arguments as String?;
+    if (args != null) {
       messName = args.toLowerCase();
       mess = messName[0].toUpperCase() + messName.substring(1).toLowerCase();
-      //print(messName);
+      // Save to shared preferences for persistence
+      _saveMessName(messName);
+      fetchCommitteeMembers(messName);
+      fetchTotalStudents(messName);
+      fetchBatches(messName);
     } else {
-      messName = "Unknown";
+      // If no argument, try to recover from shared preferences
+      _loadMessName();
     }
-    _committeeMembers = fetchCommitteeMembers(messName);
-    fetchTotalStudents(messName);
-    fetchBatches(mess);
+  }
+
+  // Save messName to shared preferences
+  Future<void> _saveMessName(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('persistedMessName', value);
+  }
+
+  // Load messName from shared preferences
+  Future<void> _loadMessName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final persisted = prefs.getString('persistedMessName');
+    if (persisted != null && persisted.isNotEmpty) {
+      setState(() {
+        messName = persisted.toLowerCase();
+      });
+      fetchCommitteeMembers(messName);
+      fetchTotalStudents(messName);
+      fetchBatches(messName);
+    }
   }
 
   Future<List<MessCommitteeModel>> fetchCommitteeMembers(String messName) async {
@@ -81,8 +105,9 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
     }
   }
 
-  Future<void> fetchBatches(String mess) async {
+  Future<void> fetchBatches(String messName) async {
     try {
+      mess = messName[0].toUpperCase() + messName.substring(1).toLowerCase();
       DocumentSnapshot messAllotDoc = await FirebaseFirestore.instance
           .collection("mess")
           .doc("messAllotment") 
