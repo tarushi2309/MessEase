@@ -9,7 +9,7 @@ class Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth > 800) {
+        if (constraints.maxWidth > 1000) {
           // Desktop or larger screens
           return _buildDesktopHeader(context);
         } else {

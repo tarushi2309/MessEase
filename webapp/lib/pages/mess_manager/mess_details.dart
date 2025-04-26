@@ -318,26 +318,44 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            member.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
+                          Flexible(
+                            child: Text(
+                              member.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text("Entry Number: ${member.entryNumber}",
+                          Flexible(
+                            child: Text(
+                              "Entry Number: ${member.entryNumber}",
                               style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
+                                  color: Colors.grey, fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text("Email: ${member.email}",
+                          Flexible(
+                            child: Text(
+                              "Email: ${member.email}",
                               style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
+                                  color: Colors.grey, fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text("Phone: ${member.phoneNumber}",
+                          Flexible(
+                            child: Text(
+                              "Phone: ${member.phoneNumber}",
                               style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
+                                  color: Colors.grey, fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     )

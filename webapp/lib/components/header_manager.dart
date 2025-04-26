@@ -90,9 +90,9 @@ class Header extends StatelessWidget {
                       ),
                     ),
                     DropdownMenuItem(
-                      value: "Menu Details",
+                      value: "Mess Details",
                       child: Text(
-                        "Menu Details",
+                        "Mess Details",
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
@@ -131,7 +131,7 @@ class Header extends StatelessWidget {
                         Navigator.pushNamed(context, "/home_mess_manager");
                         break;
                       case "Mess Details":
-                        Navigator.pushNamed(context, "/mess_details");
+                        Navigator.pushNamed(context, "/mess_details_mess_manager");
                         break;
                       case "Feedback":
                         Navigator.pushNamed(context, "/feedback_mess");

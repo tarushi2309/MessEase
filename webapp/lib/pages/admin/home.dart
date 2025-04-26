@@ -273,23 +273,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: Padding(
                 padding: const EdgeInsets.only(top: 15.0),
                 child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      ElevatedButton(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.2,
+                      ),
+                      child: ElevatedButton(
                         onPressed: () {
                           _showBatchDialog(context);
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
                               const Color(0xFFF0753C)),
-                          padding: WidgetStateProperty.all<EdgeInsets>(
-                            const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
+                          padding: MaterialStateProperty.all<EdgeInsets>(
+                            EdgeInsets.symmetric(
+                              horizontal:
+                                  MediaQuery.of(context).size.width * 0.01,
+                              vertical:
+                                  MediaQuery.of(context).size.height * 0.02,
+                            ),
                           ),
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
+                          shape: MaterialStateProperty.all<
+                              RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.0)),
                           ),
@@ -302,19 +310,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               color: Colors.white),
                         ),
                       ),
-                      ElevatedButton(
+                    ),
+                    const SizedBox(width: 2),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.2,
+                      ),
+                      child: ElevatedButton(
                         onPressed: () {
                           _showMessDialog(context);
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
                               const Color(0xFFF0753C)),
-                          padding: WidgetStateProperty.all<EdgeInsets>(
-                            const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
+                          padding: MaterialStateProperty.all<EdgeInsets>(
+                            EdgeInsets.symmetric(
+                              horizontal:
+                                  MediaQuery.of(context).size.width * 0.02,
+                              vertical:
+                                  MediaQuery.of(context).size.height * 0.02,
+                            ),
                           ),
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
+                          shape: MaterialStateProperty.all<
+                              RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.0)),
                           ),
@@ -327,7 +345,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               color: Colors.white),
                         ),
                       ),
-                      ElevatedButton(
+                    ),
+                    const SizedBox(width: 2),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.2,
+                      ),
+                      child: ElevatedButton(
                         onPressed: () {
                           allot_mess();
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -336,14 +360,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
                               const Color(0xFFF0753C)),
-                          padding: WidgetStateProperty.all<EdgeInsets>(
-                            const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
+                          padding: MaterialStateProperty.all<EdgeInsets>(
+                            EdgeInsets.symmetric(
+                              horizontal:
+                                  MediaQuery.of(context).size.width * 0.02,
+                              vertical:
+                                  MediaQuery.of(context).size.height * 0.02,
+                            ),
                           ),
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
+                          shape: MaterialStateProperty.all<
+                              RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.0)),
                           ),
@@ -356,7 +384,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               color: Colors.white),
                         ),
                       ),
-                    ]),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -702,9 +732,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     itemCount: _messOptions.length,
                     itemBuilder: (context, index) {
                       final messName = _messOptions[index];
-                      return _buildMessCard(context, messName,
-                          "Manager Name" // Replace with actual manager data if available
-                          );
+                      return _buildMessCard(context, messName);
                     },
                   );
                 },
@@ -717,8 +745,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
 // Builds a single mess detail card.
-  Widget _buildMessCard(
-      BuildContext context, String messName, String managerName) {
+  Widget _buildMessCard(BuildContext context, String messName) {
     return Card(
       color: Colors.white,
       elevation: 2,
@@ -751,12 +778,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Manager: $managerName",
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
                     const Spacer(),
                     Align(
                       alignment: Alignment.bottomRight,
@@ -766,14 +787,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               arguments: messName);
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
                               const Color(0xFFF0753C)),
-                          padding: WidgetStateProperty.all<EdgeInsets>(
-                            const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
+                          padding: MaterialStateProperty.all<EdgeInsets>(
+                            EdgeInsets.symmetric(
+                              horizontal:
+                                  MediaQuery.of(context).size.width * 0.05,
+                              vertical:
+                                  MediaQuery.of(context).size.height * 0.02,
+                            ),
                           ),
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
+                          shape: MaterialStateProperty.all<
+                              RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12.0)),
                           ),
