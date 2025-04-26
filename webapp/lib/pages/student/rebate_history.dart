@@ -24,34 +24,70 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
   List<Rebate> rebateHistory = [];
   List<Rebate> approvedRebates = [];
   List<QueryDocumentSnapshot> rebateDocs = [];
+  String? uid;
   bool isLoading = true;
 
-  Future<void> _deleteRebate(int index) async {
-    final doc = rebateDocs[index];
-    try {
-      await FirebaseFirestore.instance
-        .collection('rebates')
-        .doc(doc.id)
-        .delete();
+  Future<void> _deleteRebate(int index,String uid) async {
+  final doc = rebateDocs[index];
+  try {
+    // Fetch the rebate document to get start and end dates
+    final rebateDocSnapshot = await FirebaseFirestore.instance
+      .collection('rebates')
+      .doc(doc.id)
+      .get();
 
-      setState(() {
-        rebateDocs.removeAt(index);
-        rebateHistory.removeAt(index);
-        approvedRebates = rebateHistory
-          .where((r) => r.status_.toString().split('.').last.toLowerCase() == 'approve')
-          .toList();
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pending rebate deleted')),
-      );
-    } catch (e) {
-      print("Error deleting rebate: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete rebate')),
-      );
+    if (!rebateDocSnapshot.exists) {
+      throw Exception('Rebate document does not exist');
     }
+
+    final data = rebateDocSnapshot.data();
+    if (data == null ) {
+      throw Exception('Rebate document missing required fields');
+    }
+
+    final startDate = (data['start_date'] as Timestamp).toDate();
+    final endDate = (data['end_date'] as Timestamp).toDate();
+
+    // Calculate the number of days between start and end date (inclusive)
+    final days = endDate.difference(startDate).inDays + 1;
+
+    // Delete the rebate document
+    await FirebaseFirestore.instance
+      .collection('rebates')
+      .doc(doc.id)
+      .delete();
+
+    // Update the state
+    setState(() {
+      rebateDocs.removeAt(index);
+      rebateHistory.removeAt(index);
+      approvedRebates = rebateHistory
+        .where((r) => r.status_.toString().split('.').last.toLowerCase() == 'approve')
+        .toList();
+    });
+
+    // Subtract the days from the student's pending rebates count
+    final studentDocRef = FirebaseFirestore.instance.collection('students').doc(uid);
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final studentSnapshot = await transaction.get(studentDocRef);
+      if (!studentSnapshot.exists) {
+        throw Exception('Student document does not exist');
+      }
+      final currentPendingCount = studentSnapshot.data()?['pending_rebate_days'] ?? 0;
+      final newPendingCount = (currentPendingCount - days).clamp(0, double.infinity).toInt();
+      transaction.update(studentDocRef, {'pending_rebate_days': newPendingCount});
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Pending rebate deleted')),
+    );
+  } catch (e) {
+    print("Error deleting rebate: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to delete rebate')),
+    );
   }
+}
 
   Future<void> _fetchRebateHistory(String uid) async {
     dbService = DatabaseModel();
@@ -98,14 +134,14 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
 
   @override
   Widget build(BuildContext context) {
-    String? uid = Provider.of<UserProvider>(context).uid;
+    uid = Provider.of<UserProvider>(context).uid;
 
     if (uid == null) {
     return const Center(child: CircularProgressIndicator()); // Wait until user is ready
   }
 
     if (isLoading) {
-      _fetchRebateHistory(uid);
+      _fetchRebateHistory(uid!);
     }
 
     return Scaffold(
@@ -292,7 +328,7 @@ class _RebateHistoryStudentPageState extends State<RebateHistoryStudentPage> {
                                         ? IconButton(
                                             icon: Icon(Icons.delete, color: Color(0xFFF0753C)),
                                             tooltip: 'Delete pending request',
-                                            onPressed: () => _deleteRebate(index),
+                                            onPressed: () => _deleteRebate(index,uid!),
                                           )
                                         : SizedBox.shrink(),
                                   ),

@@ -170,7 +170,9 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
         DocumentSnapshot doc = querySnapshotStudent.docs.first;
         int currentNumberOfDays = doc["days_of_rebate"] ?? 0;
         int updatedDays = currentNumberOfDays + numberofDaysAdded;
+        int updatedPendingDays = doc["pending_rebate_days"]-numberofDaysAdded;
         await doc.reference.update({"days_of_rebate": updatedDays});
+        await doc.reference.update({"pending_rebate_days":updatedPendingDays });
         await doc.reference.update({"refund": updatedDays * 130});
         await Future.delayed(Duration(seconds: 2));
       } else {
