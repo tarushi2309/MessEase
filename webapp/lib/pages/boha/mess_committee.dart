@@ -345,12 +345,12 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
                                   crossAxisCount: crossAxisCount,
                                   crossAxisSpacing: 24,
                                   mainAxisSpacing: 24,
-                                  childAspectRatio: 2,
+                                  childAspectRatio: 1.8,
                                 ),
                                 itemCount: members.length,
                                 itemBuilder: (context, index) {
                                   return _buildCommitteeCard(
-                                      context, members[index]);
+                                       members[index]);
                                 },
                               );
                             },
@@ -422,7 +422,7 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
     );
   }
 
-  Widget _buildCommitteeCard(BuildContext context, MessCommitteeModel member) {
+   Widget _buildCommitteeCard(MessCommitteeModel member) {
     return Card(
       color: Colors.white,
       elevation: 3,
@@ -444,49 +444,43 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
             ),
             Expanded(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
+                    Text(
+                      member.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
                       ),
-                      child: const Icon(Icons.person,
-                          size: 40, color: Colors.grey),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            member.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text("Entry Number: ${member.entryNumber}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                          const SizedBox(height: 4),
-                          Text("Email: ${member.email}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                          const SizedBox(height: 4),
-                          Text("Phone: ${member.phoneNumber}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                        ],
+                    const SizedBox(height: 6),
+                    Text(
+                      "Entry Number: ${member.entryNumber}",
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
                       ),
-                    )
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Email: ${member.email}",
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Phone: ${member.phoneNumber}",
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -496,4 +490,5 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
       ),
     );
   }
+
 }

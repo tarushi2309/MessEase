@@ -88,10 +88,9 @@ class _MenuPageState extends State<MenuPage> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          border:
-                              selectedIndex == index
-                                  ? Border.all(color: Colors.black, width: 1)
-                                  : null,
+                          border: selectedIndex == index
+                              ? Border.all(color: Colors.black, width: 1)
+                              : null,
                           borderRadius: BorderRadius.circular(12),
                           color: Colors.white,
                         ),
@@ -104,9 +103,7 @@ class _MenuPageState extends State<MenuPage> {
                                 width: 24,
                                 height: 24,
                               ),
-                              const SizedBox(
-                                width: 10,
-                              ), // Space between icon and text
+                              const SizedBox(width: 10),
                               Text(
                                 days[index],
                                 style: TextStyle(
@@ -126,7 +123,7 @@ class _MenuPageState extends State<MenuPage> {
             ),
           ),
 
-          // Main Content Area (Dynamically changing)
+          // Main Content Area with responsive GridView
           Expanded(
             child: Container(
               margin: const EdgeInsets.all(20),
@@ -172,7 +169,6 @@ class _MenuPageState extends State<MenuPage> {
           return Center(child: Text('Error: ${menuSnapshot.error}'));
         }
 
-        // Default to empty menu if data is null
         MessMenuModel messMenu = menuSnapshot.data ?? MessMenuModel(menu: {});
         Map<String, List<String>> menuForDay =
             messMenu.menu[day] ?? {'Breakfast': [], 'Lunch': [], 'Dinner': []};
@@ -180,6 +176,9 @@ class _MenuPageState extends State<MenuPage> {
         if (messMenu.menu.containsKey(day)) {
           menuForDay = messMenu.menu[day]!;
         }
+
+        // List of meal types to display
+        final List<String> mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
 
         return Column(
           children: [
@@ -189,17 +188,36 @@ class _MenuPageState extends State<MenuPage> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildMealCard(
-                    'Breakfast',
-                    menuForDay['Breakfast'] ?? [],
-                    day,
-                  ),
-                  _buildMealCard('Lunch', menuForDay['Lunch'] ?? [], day),
-                  _buildMealCard('Dinner', menuForDay['Dinner'] ?? [], day),
-                ],
+              // Using LayoutBuilder to determine column count based on width
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Determine column count based on available width
+                  int columnCount = 1; // Default to 1 column
+                  if (constraints.maxWidth > 800) {
+                    columnCount = 3; // 3 columns for wide screens
+                  } else if (constraints.maxWidth > 600) {
+                    columnCount = 2; // 2 columns for medium screens
+                  }
+                  
+                  // Using GridView for responsive layout
+                  return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columnCount,
+                      childAspectRatio: 0.85, // Adjust based on your content
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: mealTypes.length,
+                    itemBuilder: (context, index) {
+                      String mealType = mealTypes[index];
+                      return _buildMealCard(
+                        mealType, 
+                        menuForDay[mealType] ?? [], 
+                        day
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
@@ -211,106 +229,103 @@ class _MenuPageState extends State<MenuPage> {
   Widget _buildMealCard(String mealType, List<String> items, String day) {
     TextEditingController addItemInput = TextEditingController();
 
-    return Expanded(
-      child: Card(
-        color: Colors.white,
-        elevation: 3,
-        margin: EdgeInsets.all(20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                mealType,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+    return Card(
+      color: Colors.white,
+      elevation: 3,
+      margin: EdgeInsets.all(10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              mealType,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 5),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: 140,
+                child: Divider(color: Color(0xFFF0753C), thickness: 1),
               ),
-              const SizedBox(height: 5),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: SizedBox(
-                  width: 140,
-                  child: Divider(color: Color(0xFFF0753C), thickness: 1),
-                ),
-              ),
-
-              // List of food items
-              Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        children: [
-                          Image.asset('logos/arrow.png', width: 24, height: 24),
-                          SizedBox(width: 8.0),
-                          Text(
+            ),
+            // List of food items - makes text wrap and list scrollable
+            Expanded(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Image.asset('logos/arrow.png', width: 24, height: 24),
+                        SizedBox(width: 8.0),
+                        // Make text wrap for long item names
+                        Expanded(
+                          child: Text(
                             items[index],
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                             ),
+                            softWrap: true,
+                            overflow: TextOverflow.visible,
                           ),
-                          Spacer(),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.remove_circle,
-                              size: 24,
-                              color: Color(0xFFF0753C),
-                            ),
-                            onPressed: () async {
-                              await db.removeItem(day, mealType, items[index]);
-                              setState(() {}); // Refresh UI
-                            },
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle,
+                            size: 24,
+                            color: Color(0xFFF0753C),
                           ),
-                        ],
-                      ),
-                    );
+                          onPressed: () async {
+                            await db.removeItem(day, mealType, items[index]);
+                            setState(() {}); // Refresh UI
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Add Item Section
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: addItemInput,
+                    decoration: InputDecoration(
+                      labelText: 'Add Item',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(
+                    Icons.add_circle,
+                    size: 24,
+                    color: Color(0xFFF0753C),
+                  ),
+                  onPressed: () async {
+                    if (addItemInput.text.isNotEmpty) {
+                      await db.addItem(day, mealType, addItemInput.text);
+                      setState(() {}); // Refresh UI
+                      addItemInput.clear();
+                    }
                   },
                 ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // Add Item Section (Fixed)
-              Row(
-                children: [
-                  // Fix TextField taking too much space
-                  Expanded(
-                    child: TextField(
-                      controller: addItemInput,
-                      decoration: InputDecoration(
-                        labelText: 'Add Item',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical:8, horizontal: 8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Add Button
-                  IconButton(
-                    icon: const Icon(
-                      Icons.add_circle,
-                      size: 24,
-                      color: Color(0xFFF0753C),
-                    ),
-                    onPressed: () async {
-                      if (addItemInput.text.isNotEmpty) {
-                        await db.addItem(day, mealType, addItemInput.text);
-                        setState(() {}); // Refresh UI
-                        addItemInput.clear();
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
