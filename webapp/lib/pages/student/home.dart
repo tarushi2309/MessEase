@@ -127,6 +127,35 @@ class _HomeScreenState extends State<HomeScreen> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('students')
+          .where('uid', isEqualTo: uid)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        final docId = doc.id;
+
+        int currentHostelLeavingDays = (doc.data()['hostel_leaving_days'] ?? 0) as int;
+        int currentRebateDays = (doc.data()['days_of_rebate'] ?? 0) as int;
+        int updatedHostelLeavingDays = currentHostelLeavingDays + currentRebateDays;
+        int refundAmount = updatedHostelLeavingDays * 133;
+
+        // Now update
+        await FirebaseFirestore.instance
+            .collection('students')
+            .doc(docId)
+            .update({
+          'hostel_leaving_days': updatedHostelLeavingDays,
+          'refund': refundAmount,
+        });
+
+        print('Hostel leaving days and refund updated successfully!');
+      } else {
+        print('No student found with UID: $uid');
+      }
+
+
       print("Hostel leaving data added successfully");
 
     } catch (e) {
@@ -370,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         FutureBuilder<List<AddonModel>>(
-          future: db.fetchAddons(),
+          future: db.fetchAddons(messName),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());

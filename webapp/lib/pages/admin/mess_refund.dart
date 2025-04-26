@@ -150,22 +150,14 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
           .collection('students')
           .where('uid', isEqualTo: studentId)
           .get();
-      
-      final hostelLeavingQuery = await FirebaseFirestore.instance
-          .collection('hostel_leaving_data')
-          .where('uid', isEqualTo: studentId)
-          .get();
 
       final studentData =
           studentSnap.docs.isNotEmpty ? studentSnap.docs.first.data() : {};
-
-      final hostelLeavingData =
-          hostelLeavingQuery.docs.isNotEmpty ? hostelLeavingQuery.docs.first.data() : {};
       
       int rebateDays = studentData['days_of_rebate'];
-      int hostelLeavingDays = hostelLeavingData['numberOfRebateDaysAdded'];
-      print(rebateDays);
-      print(hostelLeavingDays);
+      int hostelLeavingDays = studentData['hostel_leaving_days'];
+      //print(rebateDays);
+      //print(hostelLeavingDays);
 
       int totalNumberOfDays = rebateDays + hostelLeavingDays;
 
@@ -177,7 +169,7 @@ class _RebateHistoryPageState extends State<RebateHistoryPage> {
         year: studentData['year']?.toString() ?? 'Unknown',
         degree: studentData['degree']?.toString() ?? 'Unknown',
         rebateDays: studentData['days_of_rebate'] ?? 0,
-        hostelLeavingDays: hostelLeavingData['numberOfRebateDaysAdded'] ?? 0,
+        hostelLeavingDays: studentData['hostel_leaving_days'] ?? 0,
         totalNumberOfDays: totalNumberOfDays,
         bankAccountNumber:
             studentData['bank_account_number']?.toString() ?? 'Unknown',
@@ -463,6 +455,9 @@ MessEase Admin
                             itemCount: rows.length,
                             itemBuilder: (context, index) {
                               final r = rows[index];
+                              int amount = 0;
+                              int finaldays = r.totalNumberOfDays;
+                              amount = finaldays * 133;
                               final rowColor = index.isEven
                                   ? Colors.grey[50]
                                   : Colors.grey[100];
