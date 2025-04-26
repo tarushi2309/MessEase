@@ -147,6 +147,12 @@ class _RebateformPageState extends State<RebateformPage> {
       );
       return;
     }
+    if(difference + studentRef!['pending_rebate_days'] + studentRef!['days_of_rebate'] > 20){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Required days exceed the allowed limit of 20 days per semester. You currently have taken ${studentRef!['days_of_rebate']} rebates and have ${studentRef!['pending_rebate_days']} of pending rebates. Please delete some already exisiting pending rebate to put new valid request.")),
+      );
+      return;
+    }
     final existingRebates = await _firestore
       .collection('rebates')
       .where('student_id', isEqualTo: studentRef!.reference)

@@ -5,6 +5,7 @@ import 'package:webapp/components/header_admin.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'dart:html' as html;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MessDetailsPage extends StatefulWidget {
   const MessDetailsPage({super.key});

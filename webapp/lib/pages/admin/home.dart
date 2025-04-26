@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webapp/components/header_admin.dart';
 import 'package:webapp/models/batches.dart';
 import 'package:webapp/models/mess.dart';
@@ -23,36 +23,58 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String? _selectedDegreeType;
   final TextEditingController _newMessController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
+
   final List<String> _degreeTypes = ["BTech", "MTech", "MSc", "PhD"];
+  List<String> _messOptions = [];
+  List<String> _batch = [];
+  Map<String, String> _selectedMessMap = {}; // batchName -> messName
+
+  late SharedPreferences _prefs;
+  bool _prefsLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _tabControllerBatch = TabController(length: 2, vsync: this);
     _tabControllerMess = TabController(length: 2, vsync: this);
+    _initPrefsAndData();
+  }
+
+  Future<void> _initPrefsAndData() async {
+    _prefs = await SharedPreferences.getInstance();
+    await get_messOptions();
+    await get_batches();
+    _loadPersistedSelections();
+    setState(() {
+      _prefsLoaded = true;
+    });
+  }
+
+  void _loadPersistedSelections() {
+    for (var batch in _batch) {
+      final mess = _prefs.getString('mess_for_$batch');
+      if (mess != null && _messOptions.contains(mess)) {
+        _selectedMessMap[batch] = mess;
+      }
+    }
     if (_batch.isNotEmpty) _selectedBatchToRemove = _batch[0];
     if (_messOptions.isNotEmpty) _selectedMessToRemove = _messOptions[0];
-    get_messOptions();
-    get_batches();
   }
 
-  @override
-  void dispose() {
-    _tabControllerBatch.dispose();
-    _tabControllerMess.dispose();
-    super.dispose();
+  Future<void> _persistSelection(String batch, String mess) async {
+    await _prefs.setString('mess_for_$batch', mess);
   }
-
-  List<String> _messOptions = [];
-
-  List<String> _batch = [];
-
-  Map<String, String> _selectedMessMap = {};
 
   Future<void> allot_mess() async {
     MessModel mess = MessModel(messAllot: _selectedMessMap);
     DatabaseModel dbservice = DatabaseModel();
     await dbservice.addMessDetails(mess);
+    for (var entry in _selectedMessMap.entries) {
+      await _persistSelection(entry.key, entry.value);
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Mess Allotted Successfully!")),
+    );
   }
 
   Future<void> get_messOptions() async {
@@ -67,10 +89,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             MessOptions.fromJson(doc.data() as Map<String, dynamic>);
         setState(() {
           _messOptions = options.messNames;
-          // Initialize selections for existing batches
           if (_messOptions.isNotEmpty) {
             _selectedMessToRemove = _messOptions[0];
-            // Update all existing batches to use first option
             for (var batch in _batch) {
               _selectedMessMap[batch] ??= _messOptions[0];
             }
@@ -92,7 +112,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (doc.exists) {
         Batches batches = Batches.fromJson(doc.data() as Map<String, dynamic>);
         setState(() {
-          // Update selected mess map with new batches
           List<String> newBatches = batches.batchNames;
           for (var batch in newBatches) {
             if (!_selectedMessMap.containsKey(batch)) {
@@ -100,10 +119,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   _messOptions.isNotEmpty ? _messOptions[0] : "";
             }
           }
-          // Remove deleted batches from the map
           _selectedMessMap
               .removeWhere((key, value) => !newBatches.contains(key));
-
           _batch = newBatches;
           if (_batch.isNotEmpty) {
             _selectedBatchToRemove = _batch[0];
@@ -120,10 +137,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     try {
       final docRef = FirebaseFirestore.instance
-          .collection('messOptions') // Lowercase
+          .collection('messOptions')
           .doc('messOptions');
-
-      // Create document with empty array if it doesn't exist
       await docRef.set({
         'messNames': FieldValue.arrayUnion([_newMessController.text.trim()])
       }, SetOptions(merge: true));
@@ -164,16 +179,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     try {
       final docRef =
           FirebaseFirestore.instance.collection('batches').doc('batches');
-
-      // Create document if it doesn't exist
       if (!(await docRef.get()).exists) {
         await docRef.set({'batchNames': []});
       }
-
       await docRef.update({
         'batchNames': FieldValue.arrayUnion([newBatch])
       });
-
       _yearController.clear();
       await get_batches();
     } catch (e) {
@@ -185,7 +196,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     try {
       final docRef =
           FirebaseFirestore.instance.collection('batches').doc('batches');
-
       if ((await docRef.get()).exists) {
         await docRef.update({
           'batchNames': FieldValue.arrayRemove([_selectedBatchToRemove])
@@ -198,7 +208,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   @override
+  void dispose() {
+    _tabControllerBatch.dispose();
+    _tabControllerMess.dispose();
+    _newMessController.dispose();
+    _yearController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_prefsLoaded) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
@@ -207,12 +231,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // For screens less than 800 pixels wide, use a vertical layout.
           if (constraints.maxWidth < 800) {
             return SingleChildScrollView(
               child: Column(
                 children: [
-                  // Wrap each card in a SizedBox to force a fixed height.
                   SizedBox(height: 600, child: _buildAllotMessesCard()),
                   const SizedBox(height: 16),
                   SizedBox(height: 400, child: _buildViewMessDetailsCard()),
@@ -220,7 +242,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             );
           } else {
-            // For larger screens, display side-by-side.
             return Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -238,7 +259,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Builds the "Allot Messes" card.
   Widget _buildAllotMessesCard() {
     return Card(
       color: Colors.white,
@@ -254,7 +274,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            // Scrollable form fields.
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -267,7 +286,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            // The "Allot" button always remains visible.
             Align(
               alignment: Alignment.centerRight,
               child: Padding(
@@ -354,10 +372,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       child: ElevatedButton(
                         onPressed: () {
                           allot_mess();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text("Mess Allotted Successfully!")),
-                          );
                         },
                         style: ButtonStyle(
                           backgroundColor: MaterialStateProperty.all<Color>(
@@ -408,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               content: SizedBox(
                 width: 300,
-                height: 200, // Reduced height
+                height: 200,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -557,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               content: SizedBox(
                 width: 300,
-                height: 200, // Reduced height
+                height: 200,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -657,7 +671,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Helper method to build a form field row.
   Widget _buildDynamicFieldRow(String batchName) {
     return Row(
       children: [
@@ -684,10 +697,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: Text(mess),
               );
             }).toList(),
-            onChanged: (String? newValue) {
+            onChanged: (String? newValue) async {
               setState(() {
                 _selectedMessMap[batchName] = newValue!;
               });
+              await _persistSelection(batchName, newValue!);
             },
           ),
         ),
@@ -695,7 +709,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Builds the "View Mess Details" card.
   Widget _buildViewMessDetailsCard() {
     return Card(
       color: Colors.white,
@@ -720,7 +733,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           style: TextStyle(fontSize: 16)),
                     );
                   }
-
                   return GridView.builder(
                     padding: const EdgeInsets.only(bottom: 16),
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
@@ -732,6 +744,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     itemCount: _messOptions.length,
                     itemBuilder: (context, index) {
                       final messName = _messOptions[index];
+
                       return _buildMessCard(context, messName);
                     },
                   );
@@ -744,9 +757,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+
 // Builds a single mess detail card.
   Widget _buildMessCard(BuildContext context, String messName) {
-    print(messName);
+
     return Card(
       color: Colors.white,
       elevation: 2,

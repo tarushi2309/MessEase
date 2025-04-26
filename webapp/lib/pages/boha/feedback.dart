@@ -4,6 +4,7 @@ import 'package:webapp/components/header_boha.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FeedbackModelUI {
   final String text;
@@ -13,7 +14,7 @@ class FeedbackModelUI {
   final String studentName;
   final String studentEntryNum;
   final String studentEmail;
-  final String meal; // always lowercase
+  final String meal;
 
   FeedbackModelUI({
     required this.text,
@@ -26,6 +27,7 @@ class FeedbackModelUI {
     required this.meal,
   });
 }
+
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
   @override
@@ -35,52 +37,87 @@ class FeedbackScreen extends StatefulWidget {
 class _FeedbackScreenState extends State<FeedbackScreen> {
   Future<List<FeedbackModelUI>>? _feedbacksFuture;
   bool _loadingRows = true;
-
   String? uid;
   late String messName;
-
   String searchQuery = '';
   String selectedDay = 'All';
   String selectedMeal = 'all';
   DateTimeRange? dateRange;
   bool allTime = false;
 
-  final days = [
-    'All',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday'
-  ];
+  final days = ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   final mealDisplay = ['All', 'Breakfast', 'Lunch', 'Dinner'];
 
   @override
-    void didChangeDependencies() {
-        super.didChangeDependencies();
-        final args = ModalRoute.of(context)!.settings.arguments;
-        if (args is String) {
-            messName = args.toLowerCase();
-            print(messName);
-        } else {
-            messName = "Unknown";
-        }
-        _feedbacksFuture = fetchFeedbacks();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadMessName();
+  }
+
+  Future<void> _loadMessName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    
+    setState(() {
+      messName = prefs.getString('feedback_messName') ?? 
+                (args is String ? args.toLowerCase() : "unknown");
+    });
+    
+    if (args is String) {
+      await prefs.setString('feedback_messName', args.toLowerCase());
     }
+    
+    _feedbacksFuture = fetchFeedbacks();
+    _loadFilters();
+  }
+
+  Future<void> _loadFilters() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      searchQuery = prefs.getString('feedback_searchQuery') ?? '';
+      selectedDay = prefs.getString('feedback_selectedDay') ?? 'All';
+      selectedMeal = prefs.getString('feedback_selectedMeal') ?? 'all';
+      allTime = prefs.getBool('feedback_allTime') ?? false;
+      _loadDateRange(prefs);
+    });
+  }
+
+  void _loadDateRange(SharedPreferences prefs) {
+    final start = prefs.getString('feedback_dateRangeStart');
+    final end = prefs.getString('feedback_dateRangeEnd');
+    if (start != null && end != null) {
+      dateRange = DateTimeRange(
+        start: DateTime.parse(start),
+        end: DateTime.parse(end),
+      );
+    }
+  }
+
+  Future<void> _saveFilters() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('feedback_searchQuery', searchQuery);
+    await prefs.setString('feedback_selectedDay', selectedDay);
+    await prefs.setString('feedback_selectedMeal', selectedMeal);
+    await prefs.setBool('feedback_allTime', allTime);
+    
+    if (dateRange != null) {
+      await prefs.setString('feedback_dateRangeStart', dateRange!.start.toIso8601String());
+      await prefs.setString('feedback_dateRangeEnd', dateRange!.end.toIso8601String());
+    } else {
+      await prefs.remove('feedback_dateRangeStart');
+      await prefs.remove('feedback_dateRangeEnd');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     uid = Provider.of<UserProvider>(context, listen: false).uid;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
-    
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
   }
 
-  Future<void> _load() async {
-    final userDoc =
-        await FirebaseFirestore.instance.collection('user').doc(uid).get();
+  Future<void> _initialize() async {
+    final userDoc = await FirebaseFirestore.instance.collection('user').doc(uid).get();
     await _refresh();
   }
 
@@ -100,15 +137,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final now = DateTime.now();
     final cutoff = now.subtract(const Duration(days: 7));
 
-    final snap = await FirebaseFirestore.instance
+    Query query = FirebaseFirestore.instance
         .collection('feedback')
         .where('mess', isEqualTo: messName)
-        .orderBy('timestamp', descending: true)
-        .get();
+        .orderBy('timestamp', descending: true);
+
+    final snap = await query.get();
 
     final tasks = snap.docs.map((doc) async {
-      final feedback = doc.data();
-      final rawTs = feedback['timestamp'];
+      final feedback = doc.data() as Map<String, dynamic>?;
+      final rawTs = feedback!['timestamp'];
       DateTime ts;
 
       if (rawTs is Timestamp) {
@@ -120,8 +158,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       }
 
       if (!allTime && ts.isBefore(cutoff)) return null;
-      if (dateRange != null &&
-          (ts.isBefore(dateRange!.start) || ts.isAfter(dateRange!.end))) {
+      if (dateRange != null && (ts.isBefore(dateRange!.start) || ts.isAfter(dateRange!.end))) {
         return null;
       }
 
@@ -212,10 +249,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               child: const Text('Cancel')),
           TextButton(
             onPressed: () {
-              setState(() =>
-                  dateRange = DateTimeRange(start: tempStart, end: tempEnd));
+              setState(() => dateRange = DateTimeRange(start: tempStart, end: tempEnd));
+              _saveFilters().then((_) => _refresh());
               Navigator.of(ctx).pop();
-              _refresh();
             },
             child: const Text('OK'),
           ),
@@ -254,289 +290,289 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Widget _buildFilterRow() => LayoutBuilder(builder: (context, constraints) {
-        const gap = SizedBox(width: 12);
-        if (constraints.maxWidth >= 1200) {
-          return Padding(
-              padding: const EdgeInsets.all(15),
-              child: Row(children: [
-                const SizedBox(width: 12),
-                const Expanded(
-                    flex: 3,
-                    child: Text('Feedback',
-                        style: TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold))),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search),
-                        labelText: 'Search Name/Entry',
-                        border: OutlineInputBorder()),
-                    onChanged: (v) {
-                      setState(() => searchQuery = v);
-                      _refresh();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedDay,
-                    items: days
-                        .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                        .toList(),
-                    decoration: const InputDecoration(
-                        labelText: 'Day', border: OutlineInputBorder()),
-                    onChanged: (v) {
-                      setState(() => selectedDay = v!);
-                      _refresh();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedMeal,
-                    items: mealDisplay.map((m) {
-                      final val = m.toLowerCase();
-                      return DropdownMenuItem(value: val, child: Text(m));
-                    }).toList(),
-                    decoration: const InputDecoration(
-                        labelText: 'Meal', border: OutlineInputBorder()),
-                    onChanged: (v) {
-                      setState(() => selectedMeal = v!);
-                      _refresh();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: TextButton.icon(
-                      icon: const Icon(Icons.date_range),
-                      label: Text(dateRange == null
-                          ? 'Pick Range'
-                          : '${DateFormat.yMd().format(dateRange!.start)} – ${DateFormat.yMd().format(dateRange!.end)}'),
-                      onPressed: _pickDateRangeDialog),
-                ),
-                Expanded(
-                    flex: 1,
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Checkbox(
-                          value: allTime,
-                          onChanged: (v) {
-                            setState(() => allTime = v!);
-                            _refresh();
-                          }),
-                      const Text('All time'),
-                    ])),
-                Expanded(
-                  flex: 1,
-                  child: TextButton(
-                      onPressed: () {
-                        setState(() {
-                          searchQuery = '';
-                          selectedDay = 'All';
-                          selectedMeal = 'all';
-                          dateRange = null;
-                          allTime = false;
-                        });
-                        _refresh();
-                      },
-                      child: const Text('Clear')),
-                ),
-              ]));
-        } else {
-          return Padding(
-            padding: const EdgeInsets.all(12),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              alignment: WrapAlignment.start,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Text('Feedback',
-                    style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                SizedBox(
-                  width: 220,
-                  child: TextField(
-                    decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search),
-                        labelText: 'Search Name/Entry',
-                        border: OutlineInputBorder()),
-                    onChanged: (v) {
-                      setState(() => searchQuery = v);
-                      _refresh();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 150,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedDay,
-                    items: days
-                        .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                        .toList(),
-                    decoration: const InputDecoration(
-                        labelText: 'Day', border: OutlineInputBorder()),
-                    onChanged: (v) {
-                      setState(() => selectedDay = v!);
-                      _refresh();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 150,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedMeal,
-                    items: mealDisplay.map((m) {
-                      final val = m.toLowerCase();
-                      return DropdownMenuItem(value: val, child: Text(m));
-                    }).toList(),
-                    decoration: const InputDecoration(
-                        labelText: 'Meal', border: OutlineInputBorder()),
-                    onChanged: (v) {
-                      setState(() => selectedMeal = v!);
-                      _refresh();
-                    },
-                  ),
-                ),
-                TextButton.icon(
+    const gap = SizedBox(width: 12);
+    if (constraints.maxWidth >= 1200) {
+      return Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(children: [
+            const SizedBox(width: 12),
+            const Expanded(
+                flex: 3,
+                child: Text('Feedback',
+                    style: TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold))),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: TextEditingController(text: searchQuery),
+                decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    labelText: 'Search Name/Entry',
+                    border: OutlineInputBorder()),
+                onChanged: (v) {
+                  setState(() => searchQuery = v);
+                  _saveFilters().then((_) => _refresh());
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<String>(
+                value: selectedDay,
+                items: days
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                    .toList(),
+                decoration: const InputDecoration(
+                    labelText: 'Day', border: OutlineInputBorder()),
+                onChanged: (v) {
+                  setState(() => selectedDay = v!);
+                  _saveFilters().then((_) => _refresh());
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<String>(
+                value: selectedMeal,
+                items: mealDisplay.map((m) {
+                  final val = m.toLowerCase();
+                  return DropdownMenuItem(value: val, child: Text(m));
+                }).toList(),
+                decoration: const InputDecoration(
+                    labelText: 'Meal', border: OutlineInputBorder()),
+                onChanged: (v) {
+                  setState(() => selectedMeal = v!);
+                  _saveFilters().then((_) => _refresh());
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: TextButton.icon(
                   icon: const Icon(Icons.date_range),
                   label: Text(dateRange == null
                       ? 'Pick Range'
-                      : '${DateFormat.yMd().format(dateRange!.start)} – '
-                          '${DateFormat.yMd().format(dateRange!.end)}'),
-                  onPressed: _pickDateRangeDialog,
-                ),
-                Row(mainAxisSize: MainAxisSize.min, children: [
+                      : '${DateFormat.yMd().format(dateRange!.start)} – ${DateFormat.yMd().format(dateRange!.end)}'),
+                  onPressed: _pickDateRangeDialog),
+            ),
+            Expanded(
+                flex: 1,
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Checkbox(
                       value: allTime,
                       onChanged: (v) {
                         setState(() => allTime = v!);
-                        _refresh();
+                        _saveFilters().then((_) => _refresh());
                       }),
                   const Text('All time'),
-                ]),
-                TextButton(
-                    onPressed: () {
-                      setState(() {
-                        searchQuery = '';
-                        selectedDay = 'All';
-                        selectedMeal = 'all';
-                        dateRange = null;
-                        allTime = false;
-                      });
-                      _refresh();
-                    },
-                    child: const Text('Clear')),
-              ],
+                ])),
+            Expanded(
+              flex: 1,
+              child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      searchQuery = '';
+                      selectedDay = 'All';
+                      selectedMeal = 'all';
+                      dateRange = null;
+                      allTime = false;
+                    });
+                    _saveFilters().then((_) => _refresh());
+                  },
+                  child: const Text('Clear')),
             ),
-          );
-        }
-      });
+          ]));
+    } else {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.start,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Text('Feedback',
+                style:
+                    TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            SizedBox(
+              width: 220,
+              child: TextField(
+                controller: TextEditingController(text: searchQuery),
+                decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    labelText: 'Search Name/Entry',
+                    border: OutlineInputBorder()),
+                onChanged: (v) {
+                  setState(() => searchQuery = v);
+                  _saveFilters().then((_) => _refresh());
+                },
+              ),
+            ),
+            SizedBox(
+              width: 150,
+              child: DropdownButtonFormField<String>(
+                value: selectedDay,
+                items: days
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                    .toList(),
+                decoration: const InputDecoration(
+                    labelText: 'Day', border: OutlineInputBorder()),
+                onChanged: (v) {
+                  setState(() => selectedDay = v!);
+                  _saveFilters().then((_) => _refresh());
+                },
+              ),
+            ),
+            SizedBox(
+              width: 150,
+              child: DropdownButtonFormField<String>(
+                value: selectedMeal,
+                items: mealDisplay.map((m) {
+                  final val = m.toLowerCase();
+                  return DropdownMenuItem(value: val, child: Text(m));
+                }).toList(),
+                decoration: const InputDecoration(
+                    labelText: 'Meal', border: OutlineInputBorder()),
+                onChanged: (v) {
+                  setState(() => selectedMeal = v!);
+                  _saveFilters().then((_) => _refresh());
+                },
+              ),
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.date_range),
+              label: Text(dateRange == null
+                  ? 'Pick Range'
+                  : '${DateFormat.yMd().format(dateRange!.start)} – '
+                      '${DateFormat.yMd().format(dateRange!.end)}'),
+              onPressed: _pickDateRangeDialog,
+            ),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              Checkbox(
+                  value: allTime,
+                  onChanged: (v) {
+                    setState(() => allTime = v!);
+                    _saveFilters().then((_) => _refresh());
+                  }),
+              const Text('All time'),
+            ]),
+            TextButton(
+                onPressed: () {
+                  setState(() {
+                    searchQuery = '';
+                    selectedDay = 'All';
+                    selectedMeal = 'all';
+                    dateRange = null;
+                    allTime = false;
+                  });
+                  _saveFilters().then((_) => _refresh());
+                },
+                child: const Text('Clear')),
+          ],
+        ),
+      );
+    }
+  });
 
   Widget _buildTable(List<FeedbackModelUI> rows) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: LayoutBuilder(builder: (context, constraints) {
-          final card = Card(
-            color: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 2,
-            child: Column(children: [
-              // header row
-              Container(
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12))),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  child: Row(children: [
-                    _buildHeaderCell('Name'),
-                    _buildHeaderCell('Entry No.'),
-                    _buildHeaderCell('Feedback'),
-                    _buildHeaderCell('Image'),
-                    _buildHeaderCell('Timestamp'),
-                  ])),
-
-              Expanded(
-                  child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12)),
-                child: rows.isEmpty
-                    ? Container(
-                        color: Colors.grey[50],
-                        child: const Center(child: Text('No feedback found')))
-                    : ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: rows.length,
-                        itemBuilder: (c, i) {
-                          final f = rows[i];
-                          final bg =
-                              i.isEven ? Colors.grey[50] : Colors.grey[100];
-                          return Container(
-                            color: bg,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 8),
-                            child: Row(children: [
-                              _buildBodyCell(f.studentName),
-                              _buildBodyCell(f.studentEntryNum),
-                              _buildBodyCell(SizedBox(
-                                  width: 300,
-                                  child: Text(f.text, softWrap: true))),
-                              Expanded(
-                                  child: Center(
-                                child: f.imageUrl != null
-                                    ? TextButton(
-                                        child: const Text("View Image"),
-                                        onPressed: () => showDialog(
-                                            context: context,
-                                            builder: (_) => AlertDialog(
-                                                    content: Image.network(
-                                                  f.imageUrl!,
-                                                  loadingBuilder:
-                                                      (ctx, child, progress) {
-                                                    if (progress == null) {
-                                                      return child;
-                                                    }
-                                                    final v = progress
-                                                                .expectedTotalBytes !=
-                                                            null
-                                                        ? progress
-                                                                .cumulativeBytesLoaded /
-                                                            progress
-                                                                .expectedTotalBytes!
-                                                        : null;
-                                                    return SizedBox(
-                                                        width: 120,
-                                                        height: 120,
-                                                        child: Center(
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                                    value: v)));
-                                                  },
-                                                ))))
-                                    : const Text('No image'),
-                              )),
-                              _buildBodyCell(DateFormat('dd‑MM‑yyyy HH:mm')
-                                  .format(f.timestamp)),
-                            ]),
-                          );
-                        }),
-              )),
-            ]),
-          );
-          return card;
-        }),
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    child: LayoutBuilder(builder: (context, constraints) {
+      final card = Card(
+        color: Colors.white,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        child: Column(children: [
+          Container(
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12))),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              child: Row(children: [
+                _buildHeaderCell('Name'),
+                _buildHeaderCell('Entry No.'),
+                _buildHeaderCell('Feedback'),
+                _buildHeaderCell('Image'),
+                _buildHeaderCell('Timestamp'),
+              ])),
+          Expanded(
+              child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12)),
+            child: rows.isEmpty
+                ? Container(
+                    color: Colors.grey[50],
+                    child: const Center(child: Text('No feedback found')))
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: rows.length,
+                    itemBuilder: (c, i) {
+                      final f = rows[i];
+                      final bg =
+                          i.isEven ? Colors.grey[50] : Colors.grey[100];
+                      return Container(
+                        color: bg,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 8),
+                        child: Row(children: [
+                          _buildBodyCell(f.studentName),
+                          _buildBodyCell(f.studentEntryNum),
+                          _buildBodyCell(SizedBox(
+                              width: 300,
+                              child: Text(f.text, softWrap: true))),
+                          Expanded(
+                              child: Center(
+                            child: f.imageUrl != null
+                                ? TextButton(
+                                    child: const Text("View Image"),
+                                    onPressed: () => showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                                content: Image.network(
+                                              f.imageUrl!,
+                                              loadingBuilder:
+                                                  (ctx, child, progress) {
+                                                if (progress == null) {
+                                                  return child;
+                                                }
+                                                final v = progress
+                                                            .expectedTotalBytes !=
+                                                        null
+                                                    ? progress
+                                                            .cumulativeBytesLoaded /
+                                                        progress
+                                                            .expectedTotalBytes!
+                                                    : null;
+                                                return SizedBox(
+                                                    width: 120,
+                                                    height: 120,
+                                                    child: Center(
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                                value: v)));
+                                              },
+                                            ))))
+                                : const Text('No image'),
+                          )),
+                          _buildBodyCell(DateFormat('dd‑MM‑yyyy HH:mm')
+                              .format(f.timestamp)),
+                        ]),
+                      );
+                    }),
+          )),
+        ]),
       );
+      return card;
+    }),
+  );
 
   Widget _buildHeaderCell(String label) => Expanded(
       child: Center(

@@ -22,13 +22,13 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
 
   StudentModel? student;
   bool isDataLoaded = false;
-
+  String? uid;
   @override
   void initState() {
     super.initState();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
-      _fetchUserData(uid);
+      _fetchUserData(uid!);
     }
   }
 
@@ -50,6 +50,10 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
 
   @override
   Widget build(BuildContext context) {
+    uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      _fetchUserData(uid!);
+    }
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
