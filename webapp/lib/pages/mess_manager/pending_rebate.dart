@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webapp/components/header_manager.dart';
 import '../../models/rebate.dart';
 import '../../models/user.dart';
@@ -35,51 +36,57 @@ class PendingRequestPage extends StatefulWidget {
 }
 
 class _PendingRequestsPageState extends State<PendingRequestPage> {
-  // backend logic to get the rebate requests
-  //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   bool isLoading = true;
   late DatabaseModel db;
   String? uid;
   String messName = "";
+  late SharedPreferences prefs;
+
+  List<PendingRebate> Rebates = [];
+  List<PendingRebate> pendingRebates = [];
+  String reqId = "";
+
+  String searchQuery = "";
+  String selectedHostel = "";
+  String selectedYear = "";
 
   @override
   void initState() {
     super.initState();
-    // Fetch UID in initState instead of the initializer
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    print(uid);
-    print("this is me debugging");
-    fetchUserName();
+    _initPrefsAndLoad();
   }
 
-  // fetch mess name from uid
-  @override
-  void fetchUserName() async {
-    print("I am entering here");
-    try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection('user').doc(uid).get();
-      print(userDoc);
-      print(userDoc['name']);
-      if (userDoc.exists) {
-        messName = userDoc['name']; // Return the name from the document
-      } else {
-        print("User not found");
-      }
-    } catch (e) {
-      print("Error fetching user: $e");
+  Future<void> _initPrefsAndLoad() async {
+    prefs = await SharedPreferences.getInstance();
+    // Try to get uid from Provider, else from SharedPreferences
+    uid = Provider.of<UserProvider>(context, listen: false).uid ?? prefs.getString('uid');
+    if (uid != null) {
+      await prefs.setString('uid', uid!);
+      await fetchUserName();
+      await fetchPendingRebates();
     }
-    print(messName);
+    if (mounted) setState(() => isLoading = false);
   }
 
-  List<PendingRebate> Rebates = [];
-  String reqId = "";
+  Future<void> fetchUserName() async {
+    // Try to load from SharedPreferences first
+    messName = prefs.getString('mess') ?? '';
+    if (messName.isEmpty && uid != null) {
+      try {
+        DocumentSnapshot userDoc =
+            await FirebaseFirestore.instance.collection('user').doc(uid).get();
+        if (userDoc.exists) {
+          messName = userDoc['name'];
+          await prefs.setString('mess', messName);
+        }
+      } catch (e) {
+        print("Error fetching user: $e");
+      }
+    }
+  }
 
   Future<List<PendingRebate>> getPendingRebates(String messName) async {
     List<PendingRebate> pendingRebates = [];
-
-    // Fetch rebates where mess = messName and status = "pending"
     QuerySnapshot rebateSnapshot = await FirebaseFirestore.instance
         .collection('rebates')
         .where('mess', isEqualTo: messName)
@@ -88,26 +95,21 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
 
     for (var doc in rebateSnapshot.docs) {
       Map<String, dynamic> rebate = doc.data() as Map<String, dynamic>;
-
       Timestamp startTimestamp = rebate['start_date'];
       Timestamp endTimestamp = rebate['end_date'];
-      String studentId =
-          rebate['student_id'].path.split('/').last; // Extract document ID
+      // Use robust document reference extraction
+      DocumentReference studentRef = rebate['student_id'] as DocumentReference;
+      String studentId = studentRef.id;
       reqId = rebate['req_id'];
 
-      // Fetch student data using studentId
       DocumentSnapshot studentDoc = await FirebaseFirestore.instance
           .collection('students')
           .doc(studentId)
           .get();
 
-      // Fetch user data using studentId
-      
-
       if (studentDoc.exists) {
-        String entryNumber = studentDoc['entryNumber']; // Get entry number
-        String studentName = studentDoc['name']; // Get student name
-
+        String entryNumber = studentDoc['entryNumber'];
+        String studentName = studentDoc['name'];
         pendingRebates.add(
           PendingRebate(
             startDate: startTimestamp.toDate(),
@@ -121,42 +123,29 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
         );
       }
     }
-
     return pendingRebates;
   }
-
-  List<PendingRebate> pendingRebates = [];
 
   Future<void> fetchPendingRebates() async {
     try {
       Rebates = await getPendingRebates(messName);
-      /*for (var rebate in Rebates) {
-        print("Start Date: ${rebate.startDate}");
-        print("End Date: ${rebate.endDate}");
-        print("Hostel: ${rebate.hostel}");
-        print("Entry Number: ${rebate.entryNumber}");
-        print("Student Name: ${rebate.studentName}");
-        print("---------------------");
-      }*/
-
-      setState(() {
-        pendingRebates = Rebates;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          pendingRebates = Rebates;
+          isLoading = false;
+        });
+      }
     } catch (e) {
       print("Error fetching the rebates $e");
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
-
-  //function to change the status in the firebase of a rebate query
 
   Future<void> updateRebateStatus(
       String studentId, String newStatus, int numberofDaysAdded) async {
     try {
       DocumentReference studentRef =
           FirebaseFirestore.instance.collection("students").doc(studentId);
-      // Query Firestore for rebate where student_id matches
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection("rebates")
           .where("student_id", isEqualTo: studentRef)
@@ -164,52 +153,26 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
           .where("status", isEqualTo: "pending")
           .get();
 
-      print(studentRef);
       QuerySnapshot querySnapshotStudent = await FirebaseFirestore.instance
           .collection("students")
           .where("uid", isEqualTo: studentId)
           .get();
 
-      //update status to approve/reject
       if (querySnapshot.docs.isNotEmpty) {
-        // Get the first matching document (assuming only one rebate per student at a time)
         DocumentSnapshot doc = querySnapshot.docs.first;
-
-        //debugging
-        print("Updating document: ${doc.reference.path}");
-        print("Document data: ${doc.data()}");
-
-        await doc.reference.update({"status": newStatus}); // Update status
-        await Future.delayed(
-            Duration(seconds: 2)); // wait for this change to propogate
-
-        print("Rebate status updated successfully!");
+        await doc.reference.update({"status": newStatus});
+        await Future.delayed(Duration(seconds: 2));
       } else {
         print("No rebate request found for this student.");
       }
 
-      //update the num of days of rebate
       if (querySnapshotStudent.docs.isNotEmpty) {
-        // Get the first matching document (assuming only one rebate per student at a time)
-        print("Entering here");
         DocumentSnapshot doc = querySnapshotStudent.docs.first;
-
-        //debugging
-        print("Updating document: ${doc.reference.path}");
-        print("Document data: ${doc.data()}");
-
         int currentNumberOfDays = doc["days_of_rebate"] ?? 0;
         int updatedDays = currentNumberOfDays + numberofDaysAdded;
-        print(updatedDays);
-
-        await doc.reference
-            .update({"days_of_rebate": updatedDays}); // Update status
-        await doc.reference
-            .update({"refund": updatedDays * 130}); // Update status
-        await Future.delayed(
-            Duration(seconds: 2)); // wait for this change to propogate
-
-        print("Rebate days added successfully!");
+        await doc.reference.update({"days_of_rebate": updatedDays});
+        await doc.reference.update({"refund": updatedDays * 130});
+        await Future.delayed(Duration(seconds: 2));
       } else {
         print("No rebate request found for this student.");
       }
@@ -218,26 +181,17 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
     }
   }
 
-  String searchQuery = "";
-  String selectedHostel = "";
-  String selectedYear = "";
-
   @override
   Widget build(BuildContext context) {
-    fetchPendingRebates();
-
     List<PendingRebate> filteredRequests = pendingRebates.where((rebate) {
       bool matchesSearch = rebate.studentName
               .toLowerCase()
               .contains(searchQuery.toLowerCase()) ||
           rebate.entryNumber.toLowerCase().contains(searchQuery.toLowerCase());
-
       bool matchesHostel = selectedHostel.isEmpty ||
           rebate.hostel.toLowerCase() == selectedHostel.toLowerCase();
-
       bool matchesYear =
           selectedYear.isEmpty || rebate.entryNumber.contains(selectedYear);
-
       return matchesSearch && matchesHostel && matchesYear;
     }).toList();
 
@@ -278,13 +232,11 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                             ),
                           ),
                           SizedBox(width: 12),
-
                           DropdownButtonHideUnderline(
                             child: ButtonTheme(
                               alignedDropdown: true,
                               child: SizedBox(
-                                width:
-                                    180, // controls dropdown popup + field width
+                                width: 180,
                                 child: DropdownButtonFormField<String>(
                                   value: selectedHostel.isEmpty
                                       ? null
@@ -316,15 +268,12 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                                       .map((hostel) => DropdownMenuItem(
                                             value: hostel.toLowerCase(),
                                             child: SizedBox(
-                                              height:
-                                                  20, // 👈 custom height here (default is ~48)
+                                              height: 20,
                                               child: Align(
                                                 alignment: Alignment.centerLeft,
                                                 child: Text(
                                                   hostel,
-                                                  style: TextStyle(
-                                                      fontSize:
-                                                          14), // you can reduce font too
+                                                  style: TextStyle(fontSize: 14),
                                                 ),
                                               ),
                                             ),
@@ -357,14 +306,11 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                       label: Text("Clear Filters"),
                     ),
                   ),
-
-                  // 🧾 Data Table
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         double maxWidth =
                             MediaQuery.of(context).size.width * 0.95;
-
                         return Center(
                           child: Container(
                             width: maxWidth,
@@ -377,7 +323,6 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                               elevation: 2,
                               child: Column(
                                 children: [
-                                  // HEADER
                                   Container(
                                     decoration: BoxDecoration(
                                       color: Colors.grey[300],
@@ -399,8 +344,6 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                                       ],
                                     ),
                                   ),
-
-                                  // BODY
                                   Expanded(
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.only(
@@ -436,27 +379,16 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                                                       filteredRequests.length,
                                                   itemBuilder:
                                                       (context, index) {
-                                                    final rebate =
-                                                        filteredRequests[index];
-                                                    final numberOfDays = ((rebate
-                                                                    .endDate
-                                                                    .millisecondsSinceEpoch -
-                                                                rebate.startDate
-                                                                    .millisecondsSinceEpoch) ~/
-                                                            86400000) +
-                                                        1;
-
+                                                    final rebate = filteredRequests[index];
+                                                    final numberOfDays = rebate.endDate.difference(rebate.startDate).inDays + 1;
                                                     return Container(
-                                                      padding:
-                                                          EdgeInsets.symmetric(
-                                                              vertical: 12,
-                                                              horizontal: 8),
-                                                      decoration:
-                                                          BoxDecoration(
+                                                      padding: EdgeInsets.symmetric(
+                                                          vertical: 12,
+                                                          horizontal: 8),
+                                                      decoration: BoxDecoration(
                                                         color: index % 2 == 0
                                                             ? Colors.grey[50]
-                                                            : Colors.grey[
-                                                                100], // alternating row color
+                                                            : Colors.grey[100],
                                                         border: Border(
                                                           bottom: BorderSide(
                                                               color: Colors
@@ -465,24 +397,14 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
                                                       ),
                                                       child: Row(
                                                         children: [
-                                                          _buildBodyCell(rebate
-                                                              .studentName),
-                                                          _buildBodyCell(rebate
-                                                              .entryNumber),
+                                                          _buildBodyCell(rebate.studentName),
+                                                          _buildBodyCell(rebate.entryNumber),
+                                                          _buildBodyCell(rebate.hostel),
+                                                          _buildBodyCell(DateFormat('yyyy-MM-dd').format(rebate.startDate)),
+                                                          _buildBodyCell(DateFormat('yyyy-MM-dd').format(rebate.endDate)),
                                                           _buildBodyCell(
-                                                              rebate.hostel),
-                                                          _buildBodyCell(DateFormat(
-                                                                  'yyyy-MM-dd')
-                                                              .format(rebate
-                                                                  .startDate)),
-                                                          _buildBodyCell(DateFormat(
-                                                                  'yyyy-MM-dd')
-                                                              .format(rebate
-                                                                  .endDate)),
-                                                          _buildBodyCell(
-                                                              buildActionsMenu(
-                                                                  rebate,
-                                                                  numberOfDays)),
+                                                            buildActionsMenu(rebate, numberOfDays),
+                                                          ),
                                                         ],
                                                       ),
                                                     );
@@ -529,12 +451,12 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
     );
   }
 
-  Widget buildActionsMenu(PendingRebate rebate, int numberofDaysAdded) {
+  Widget buildActionsMenu(PendingRebate rebate, int numberOfDaysAdded) {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert, color: Colors.black),
       onSelected: (value) async {
         if (value == "approve" || value == "reject") {
-          await updateRebateStatus(rebate.studentId, value, numberofDaysAdded);
+          await updateRebateStatus(rebate.studentId, value, numberOfDaysAdded);
           setState(() {
             pendingRebates.removeWhere((r) => r.req_id == rebate.req_id);
           });

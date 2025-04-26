@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webapp/components/header_manager.dart';
 import '../../models/rebate.dart';
-import '../../models/user.dart';
 import '../../services/database.dart';
 import '../../components/user_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -43,72 +43,118 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
   String messName = "";
   List<CurrentRebate> Rebates = [];
   List<CurrentRebate> CurrentRebates = [];
+  late SharedPreferences prefs;
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = "";
+  String selectedHostel = "";
+  String selectedYear = "";
 
   @override
   void initState() {
     super.initState();
-    // Fetch uid from provider
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    print(uid);
-    fetchUserName();
+    _initializePersistedData();
   }
 
-  // Fetch mess name using uid
-  void fetchUserName() async {
+  Future<void> _initializePersistedData() async {
+    prefs = await _prefs;
+    // Load uid from SharedPreferences or Provider
+    uid = Provider.of<UserProvider>(context, listen: false).uid ?? 
+          prefs.getString('uid');
+    
+    if (uid != null) {
+      await _persistUid();
+      await fetchUserName();
+      await fetchCurrentRebates();
+    }
+    
+    if (mounted) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _persistUid() async {
+    if (uid != null && uid!.isNotEmpty) {
+      await prefs.setString('uid', uid!);
+    }
+  }
+
+  Future<void> _persistMessName() async {
+    if (messName.isNotEmpty) {
+      await prefs.setString('mess', messName);
+    }
+  }
+
+  Future<void> fetchUserName() async {
     try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection('user').doc(uid).get();
-      if (userDoc.exists) {
-        messName = userDoc['name'];
-      } else {
-        print("User not found");
+      // Try to load from SharedPreferences first
+      messName = prefs.getString('mess') ?? '';
+      
+      // Fallback to Firestore if not found
+      if (messName.isEmpty && uid != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('user')
+            .doc(uid)
+            .get();
+
+        if (userDoc.exists) {
+          messName = userDoc['name'];
+          await _persistMessName();
+        }
       }
     } catch (e) {
       print("Error fetching user: $e");
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
-    print(messName);
   }
-
-  String reqId = "";
 
   Future<List<CurrentRebate>> getCurrentRebates(String messName) async {
     List<CurrentRebate> currentRebates = [];
-    QuerySnapshot rebateSnapshot = await FirebaseFirestore.instance
-        .collection('rebates')
-        .where('mess', isEqualTo: messName)
-        .where('status', isEqualTo: 'approve')
-        .get();
-    for (var doc in rebateSnapshot.docs) {
-      Map<String, dynamic> rebate = doc.data() as Map<String, dynamic>;
-      Timestamp startTimestamp = rebate['start_date'] as Timestamp;
-      Timestamp endTimestamp = rebate['end_date'] as Timestamp;
-      // Only include rebates active on the current date
-      if (startTimestamp.compareTo(Timestamp.now()) <= 0 &&
-          endTimestamp.compareTo(Timestamp.now()) >= 0) {
-        String studentId = rebate['student_id'].path.split('/').last;
-        reqId = rebate['req_id'];
-        // Fetch student data using studentId
-        DocumentSnapshot studentDoc = await FirebaseFirestore.instance
-            .collection('students')
-            .doc(studentId)
-            .get();
-        if (studentDoc.exists) {
-          String entryNumber = studentDoc['entryNumber'];
-          String studentName = studentDoc['name'];
-          currentRebates.add(
-            CurrentRebate(
-              startDate: startTimestamp.toDate(),
-              endDate: endTimestamp.toDate(),
-              hostel: rebate['hostel'],
-              entryNumber: entryNumber,
-              studentName: studentName,
-              studentId: studentId,
-              req_id: reqId,
-              url: studentDoc['url'],
-            ),
-          );
+    try {
+      QuerySnapshot rebateSnapshot = await FirebaseFirestore.instance
+          .collection('rebates')
+          .where('mess', isEqualTo: messName)
+          .where('status', isEqualTo: 'approve')
+          .get();
+
+      for (var doc in rebateSnapshot.docs) {
+        Map<String, dynamic> rebate = doc.data() as Map<String, dynamic>;
+        Timestamp startTimestamp = rebate['start_date'] as Timestamp;
+        Timestamp endTimestamp = rebate['end_date'] as Timestamp;
+
+        if (startTimestamp.compareTo(Timestamp.now()) <= 0 &&
+            endTimestamp.compareTo(Timestamp.now()) >= 0) {
+          DocumentReference studentRef = rebate['student_id'] as DocumentReference;
+          String studentId = studentRef.id;
+          String reqId = rebate['req_id'];
+
+          DocumentSnapshot studentDoc = await FirebaseFirestore.instance
+              .collection('students')
+              .doc(studentId)
+              .get();
+
+          if (studentDoc.exists) {
+            currentRebates.add(
+              CurrentRebate(
+                startDate: startTimestamp.toDate(),
+                endDate: endTimestamp.toDate(),
+                hostel: rebate['hostel'],
+                entryNumber: studentDoc['entryNumber'],
+                studentName: studentDoc['name'],
+                studentId: studentId,
+                req_id: reqId,
+                url: studentDoc['url'],
+              ),
+            );
+          }
         }
       }
+    } catch (e) {
+      print("Error fetching current rebates: $e");
+      throw Exception("Failed to load current rebates");
     }
     return currentRebates;
   }
@@ -116,29 +162,24 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
   Future<void> fetchCurrentRebates() async {
     try {
       Rebates = await getCurrentRebates(messName);
-      setState(() {
-        CurrentRebates = Rebates;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          CurrentRebates = Rebates;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      print("Error fetching the rebates $e");
-      setState(() => isLoading = false);
+      print("Error fetching rebates: $e");
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
-  String searchQuery = "";
-  String selectedHostel = "";
-  String selectedYear = "";
-
-  TextEditingController searchController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
-    fetchCurrentRebates();
     List<CurrentRebate> filteredRequests = CurrentRebates.where((rebate) {
-      return rebate.studentName
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase()) ||
+      return rebate.studentName.toLowerCase().contains(searchQuery.toLowerCase()) ||
           rebate.entryNumber.toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
 
@@ -180,7 +221,8 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                           hintText: "Search by Name or Entry Number",
                           prefixIcon: Icon(Icons.search),
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onChanged: (value) {
                           setState(() {
@@ -223,14 +265,11 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                               horizontal: 16, vertical: 16),
                           child: LayoutBuilder(
                             builder: (context, constraints) {
-                              int crossAxisCount;
-                              if (constraints.maxWidth > 1000) {
-                                crossAxisCount = 3; // large screens
-                              } else if (constraints.maxWidth > 600) {
-                                crossAxisCount = 2; // medium screens
-                              } else {
-                                crossAxisCount = 1; // small screens
-                              }
+                              int crossAxisCount = constraints.maxWidth > 1000
+                                  ? 3
+                                  : constraints.maxWidth > 600
+                                      ? 2
+                                      : 1;
 
                               return GridView.builder(
                                 padding: const EdgeInsets.all(16),
@@ -264,7 +303,6 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
-          // Orange vertical accent stripe on the left
           Container(
             width: 6,
             height: double.infinity,
@@ -276,13 +314,11 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
               ),
             ),
           ),
-          // Main card content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 children: [
-                  // Student image
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
@@ -299,7 +335,6 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                     ),
                   ),
                   const SizedBox(width: 20),
-                  // Student details
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -321,6 +356,14 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
                             color: Colors.grey,
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${DateFormat('MMM dd').format(rebate.startDate)} - ${DateFormat('MMM dd').format(rebate.endDate)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.blueGrey[700],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -331,5 +374,11 @@ class _CurrentRequestsPageState extends State<CurrentRequestPage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 }

@@ -4,6 +4,7 @@ import 'package:webapp/components/header_manager.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FeedbackModelUI {
   final String text;
@@ -26,6 +27,7 @@ class FeedbackModelUI {
     required this.meal,
   });
 }
+
 class FeedbackMessScreen extends StatefulWidget {
   const FeedbackMessScreen({super.key});
   @override
@@ -57,17 +59,36 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
   ];
   final mealDisplay = ['All', 'Breakfast', 'Lunch', 'Dinner'];
 
+  late SharedPreferences prefs;
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
   @override
   void initState() {
     super.initState();
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    _initPrefsAndLoad();
   }
 
-  Future<void> _load() async {
-    final userDoc =
-        await FirebaseFirestore.instance.collection('user').doc(uid).get();
-    messName = userDoc['name'];
+  Future<void> _initPrefsAndLoad() async {
+    prefs = await _prefs;
+    // Try to get uid from Provider, else from SharedPreferences
+    uid = Provider.of<UserProvider>(context, listen: false).uid ?? prefs.getString('uid');
+    if (uid != null) {
+      await prefs.setString('uid', uid!);
+      await _loadUserAndMess();
+    }
+  }
+
+  Future<void> _loadUserAndMess() async {
+    // Try to load messName from SharedPreferences first
+    messName = prefs.getString('mess') ?? '';
+    if (messName.isEmpty && uid != null) {
+      final userDoc =
+          await FirebaseFirestore.instance.collection('user').doc(uid).get();
+      if (userDoc.exists) {
+        messName = userDoc['name'];
+        await prefs.setString('mess', messName);
+      }
+    }
     await _refresh();
   }
 
@@ -452,7 +473,6 @@ class _FeedbackMessScreenState extends State<FeedbackMessScreen> {
                     _buildHeaderCell('Image'),
                     _buildHeaderCell('Timestamp'),
                   ])),
-
               Expanded(
                   child: ClipRRect(
                 borderRadius: const BorderRadius.only(
