@@ -686,8 +686,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 builder: (context, constraints) {
                   if (_messOptions.isEmpty) {
                     return const Center(
-                      child: Text("No messes available",
-                          style: TextStyle(fontSize: 16)),
+                      child: CircularProgressIndicator(),
                     );
                   }
 

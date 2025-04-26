@@ -118,7 +118,7 @@ class _MessDetailsPageState
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          const Header(currentPage: 'Mess Details'),
+          const Header(currentPage: 'Home'),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
