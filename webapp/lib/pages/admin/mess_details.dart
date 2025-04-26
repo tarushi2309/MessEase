@@ -4,31 +4,48 @@ import 'package:webapp/models/mess_committee.dart';
 import 'package:webapp/components/header_admin.dart';
 import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
+import 'dart:html' as html;
 
 class MessDetailsPage extends StatefulWidget {
   const MessDetailsPage({super.key});
 
   @override
-  _MessDetailsPageState createState() =>
-      _MessDetailsPageState();
+  _MessDetailsPageState createState() => _MessDetailsPageState();
 }
 
-class _MessDetailsPageState
-    extends State<MessDetailsPage> {
+class _MessDetailsPageState extends State<MessDetailsPage> {
   String? uid;
-  late String messName;
-  String mess = "";
+  late String messName = "";
   int totalStudents = 0;
   List<String> batches = [];
-  final ScrollController _scrollController = ScrollController(); // Added scroll controller
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Get mess name from route arguments
-    final args = ModalRoute.of(context)!.settings.arguments as String?;
-    if (args != null) {
-      messName = args;
+    _loadMessName();
+  }
+
+  void _loadMessName() {
+    // Try to get from route arguments first
+    final args = ModalRoute.of(context)?.settings.arguments as String?;
+    if (args != null && args.isNotEmpty) {
+      _setMessName(args);
+    } else {
+      // Fallback to localStorage for refresh persistence
+      final storedName = html.window.localStorage['messName'];
+      if (storedName != null && storedName.isNotEmpty) {
+        _setMessName(storedName);
+      }
+    }
+  }
+
+  void _setMessName(String name) {
+    if (mounted) {
+      setState(() {
+        messName = name;
+        html.window.localStorage['messName'] = name; // Persist
+      });
       fetchData();
     }
   }
@@ -36,6 +53,12 @@ class _MessDetailsPageState
   void fetchData() {
     fetchTotalStudents();
     fetchBatches();
+  }
+
+  String _formatMessName(String name) {
+    return name.isNotEmpty
+        ? name[0].toUpperCase() + name.substring(1).toLowerCase()
+        : '';
   }
 
   @override
@@ -46,7 +69,7 @@ class _MessDetailsPageState
 
   @override
   void dispose() {
-    _scrollController.dispose(); // Dispose the controller
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -54,14 +77,14 @@ class _MessDetailsPageState
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection("students")
-          .where('mess', isEqualTo: messName)
+          .where('mess', isEqualTo: messName.toLowerCase())
           .get();
 
-      setState(() {
-        totalStudents = querySnapshot.docs.length;
-      });
+      if (mounted) {
+        setState(() => totalStudents = querySnapshot.docs.length);
+      }
     } catch (e) {
-      print("Error fetching total students: $e");
+      print("Error fetching students: $e");
     }
   }
 
@@ -69,43 +92,45 @@ class _MessDetailsPageState
     try {
       DocumentSnapshot messAllotDoc = await FirebaseFirestore.instance
           .collection("mess")
-          .doc("messAllotment") 
+          .doc("messAllotment")
           .get();
-      
-      if (messAllotDoc.exists) {
-        Map<String, dynamic>? messAllotData = messAllotDoc.data() as Map<String, dynamic>?;
-        List<String> matchingBatches = [];
-        
-        if (messAllotData != null && messAllotData.containsKey('messAllot')) {
-          Map<String, dynamic> messAllotMap = messAllotData['messAllot'] as Map<String, dynamic>;
-          messAllotMap.forEach((batch, assignedMess) {
-            if (assignedMess == mess) {
-              matchingBatches.add(batch);
-            }
-          });
-        }
 
-        setState(() {
-          batches = matchingBatches;
-        });
-      } else {
-        print("messAllot document not found");
+      if (messAllotDoc.exists) {
+        final data = messAllotDoc.data() as Map<String, dynamic>?;
+        final messAllot = data?['messAllot'] as Map<String, dynamic>? ?? {};
+
+        final matches = messAllot.entries
+            .where((entry) => 
+                entry.value.toString().toLowerCase() == messName.toLowerCase())
+            .map((entry) => entry.key)
+            .toList();
+
+        if (mounted) {
+          setState(() => batches = matches);
+        }
       }
     } catch (e) {
-      print("Error fetching batches: $e");
+      print("Batch fetch error: $e");
+      if (mounted) {
+        setState(() => batches = []);
+      }
     }
   }
 
   Future<List<MessCommitteeModel>> fetchCommitteeMembers() async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection("mess_committee")
-        .where('messName', isEqualTo: messName.toLowerCase())
-        .get();
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection("mess_committee")
+          .where('messName', isEqualTo: messName.toLowerCase())
+          .get();
 
-    return querySnapshot.docs.map((doc) {
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      return MessCommitteeModel.fromJson(data);
-    }).toList();
+      return querySnapshot.docs.map((doc) {
+        return MessCommitteeModel.fromJson(doc.data() as Map<String, dynamic>);
+      }).toList();
+    } catch (e) {
+      print("Committee error: $e");
+      return [];
+    }
   }
 
   @override
@@ -119,7 +144,7 @@ class _MessDetailsPageState
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  controller: _scrollController, // Attach controller here
+                  controller: _scrollController,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -128,7 +153,7 @@ class _MessDetailsPageState
                         Padding(
                           padding: const EdgeInsets.only(left: 16),
                           child: Text(
-                            "$messName Mess Details",
+                            "${_formatMessName(messName)} Mess Details",
                             style: const TextStyle(
                                 fontSize: 22, fontWeight: FontWeight.bold),
                           ),
@@ -143,73 +168,19 @@ class _MessDetailsPageState
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildInfoRow("Total Number of Students", "$totalStudents"),
+                              _buildInfoRow("Total Students", "$totalStudents"),
                               const SizedBox(height: 12),
-                              _buildInfoRow("Batches", batches.join(", ")),
+                              _buildInfoRow(
+                                "Batches",
+                                batches.isNotEmpty 
+                                    ? batches.join(", ")
+                                    : "No batches allocated",
+                              ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 32),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16),
-                          child: const Text(
-                            "Mess Committee",
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          constraints: BoxConstraints(
-                            minHeight: 200,
-                          ),
-                          child: FutureBuilder<List<MessCommitteeModel>>(
-                            future: fetchCommitteeMembers(),
-                            builder: (context, snapshot) {
-                              int crossAxisCount;
-                              double screenWidth = constraints.maxWidth;
-
-                              if (screenWidth > 1000) {
-                                crossAxisCount = 3;
-                              } else if (screenWidth > 600) {
-                                crossAxisCount = 2;
-                              } else {
-                                crossAxisCount = 1;
-                              }
-
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const Center(child: CircularProgressIndicator());
-                              } else if (snapshot.hasError) {
-                                return Column(
-                                  children: [
-                                    const Text("Error loading committee members"),
-                                    Text(snapshot.error.toString(),
-                                        style: const TextStyle(color: Colors.red)),
-                                  ],
-                                );
-                              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                                return const Center(child: Text("No committee members found"));
-                              }
-
-                              List<MessCommitteeModel> members = snapshot.data!;
-                              return GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                padding: const EdgeInsets.all(16),
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxisCount,
-                                  crossAxisSpacing: 24,
-                                  mainAxisSpacing: 24,
-                                  childAspectRatio: 2,
-                                ),
-                                itemCount: members.length,
-                                itemBuilder: (context, index) {
-                                  return _buildCommitteeCard(context, members[index]);
-                                },
-                              );
-                            },
-                          ),
-                        ),
+                        _buildCommitteeSection(constraints),
                       ],
                     ),
                   ),
@@ -219,6 +190,76 @@ class _MessDetailsPageState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCommitteeSection(BoxConstraints constraints) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 16),
+          child: Text(
+            "Mess Committee",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          constraints: const BoxConstraints(minHeight: 200),
+          child: FutureBuilder<List<MessCommitteeModel>>(
+            future: fetchCommitteeMembers(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (snapshot.hasError) {
+                return _buildErrorWidget(snapshot.error.toString());
+              }
+
+              final members = snapshot.data ?? [];
+              if (members.isEmpty) {
+                return const Center(child: Text("No committee members found"));
+              }
+
+              return _buildCommitteeGrid(constraints, members);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCommitteeGrid(BoxConstraints constraints, List<MessCommitteeModel> members) {
+    final crossAxisCount = _calculateGridColumns(constraints.maxWidth);
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 24,
+        mainAxisSpacing: 24,
+        childAspectRatio: 2,
+      ),
+      itemCount: members.length,
+      itemBuilder: (context, index) => _buildCommitteeCard(members[index]),
+    );
+  }
+
+  int _calculateGridColumns(double width) {
+    if (width > 1000) return 3;
+    if (width > 600) return 2;
+    return 1;
+  }
+
+  Widget _buildErrorWidget(String error) {
+    return Column(
+      children: [
+        const Text("Error loading committee"),
+        Text(error, style: const TextStyle(color: Colors.red)),
+      ],
     );
   }
 
@@ -234,9 +275,10 @@ class _MessDetailsPageState
               child: Text(
                 title,
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.blueGrey),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.blueGrey,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -253,7 +295,7 @@ class _MessDetailsPageState
     );
   }
 
-  Widget _buildCommitteeCard(BuildContext context, MessCommitteeModel member) {
+  Widget _buildCommitteeCard(MessCommitteeModel member) {
     return Card(
       color: Colors.white,
       elevation: 3,
@@ -275,53 +317,37 @@ class _MessDetailsPageState
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.person, size: 40, color: Colors.grey),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            member.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text("Entry Number: ${member.entryNumber}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                          const SizedBox(height: 4),
-                          Text("Email: ${member.email}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                          const SizedBox(height: 4),
-                          Text("Phone: ${member.phoneNumber}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                        ],
-                      ),
-                    )
+                    _buildMemberDetail(member.name),
+                    const SizedBox(height: 6),
+                    _buildMemberDetail("Entry: ${member.entryNumber}"),
+                    const SizedBox(height: 4),
+                    _buildMemberDetail("Email: ${member.email}"),
+                    const SizedBox(height: 4),
+                    _buildMemberDetail("Phone: ${member.phoneNumber}"),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMemberDetail(String text) {
+    return Flexible(
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.grey,
+          fontSize: 14,
+        ),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

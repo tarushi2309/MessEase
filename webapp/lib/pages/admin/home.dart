@@ -746,6 +746,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
 // Builds a single mess detail card.
   Widget _buildMessCard(BuildContext context, String messName) {
+    print(messName);
     return Card(
       color: Colors.white,
       elevation: 2,

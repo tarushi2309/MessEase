@@ -45,7 +45,7 @@ class Header extends StatelessWidget {
           //_navLink("Menu Page", "/menu_page", context),
           _navLink("Refund", "/refund", context),
           _navLink("Refund History", "/processed_rebates", context),
-          _navLink("Hostel Leaving Data", "/hostel_leaving", context),
+          _navLink("Hostel Leaving", "/hostel_leaving", context),
           _navLink("Logout", "/login", context),
 
         ],

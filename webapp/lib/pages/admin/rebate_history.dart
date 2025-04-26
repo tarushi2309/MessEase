@@ -86,7 +86,6 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
     fetchProcessedRebateHistory().then((list) {
       setState(() {
         _rows = list;
@@ -96,7 +95,6 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
   }
 
   Future<List<ProcessedRebate>> fetchProcessedRebateHistory() async {
-    //print("fetching rebate history");
     final rebateQuery = await FirebaseFirestore.instance
         .collection('processed_rebates')
         .get();
@@ -114,8 +112,7 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
         mess: data['mess']?.toString() ?? 'Unknown',
         degree: data['degree']?.toString() ?? 'Unknown',
         numberOfDays: data['numberOfDays'] ?? 0,
-        bankAccountNumber:
-            data['bankAccountNumber']?.toString() ?? 'Unknown',
+        bankAccountNumber: data['bankAccountNumber']?.toString() ?? 'Unknown',
         ifscCode: data['ifscCode']?.toString() ?? 'Unknown',
         refund: data['refund'] ?? 0,
         email: data['email']?.toString() ?? 'Unknown',
@@ -163,77 +160,161 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // filter row
-            Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: Text(
-                      'Processed Mess Refunds',
-                      style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search),
-                        labelText: 'Search by Name or Entry Number',
-                        border: OutlineInputBorder()),
-                    onChanged: (v) => setState(() => searchQuery = v),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: DropdownButtonFormField<String>(
-                    value: sortDir,
-                    items: const [
-                      DropdownMenuItem(value: 'Asc', child: Text('Days ↑')),
-                      DropdownMenuItem(value: 'Desc', child: Text('Days ↓')),
-                    ],
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
-                    onChanged: (v) => setState(() => sortDir = v ?? 'Asc'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedMess,
-                    items: messOptions
-                        .map((y) => DropdownMenuItem(value: y, child: Text(y)))
-                        .toList(),
-                    decoration: const InputDecoration(
-                        labelText: 'Mess', border: OutlineInputBorder()),
-                    onChanged: (v) => setState(() => selectedMess = v ?? 'All'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedYear,
-                    items: yearOptions
-                        .map((y) => DropdownMenuItem(value: y, child: Text(y)))
-                        .toList(),
-                    decoration: const InputDecoration(
-                        labelText: 'Year', border: OutlineInputBorder()),
-                    onChanged: (v) => setState(() => selectedYear = v ?? 'All'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                TextButton(onPressed: _clearFilters, child: const Text('Clear')),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isSmallScreen = constraints.maxWidth < 1000;
+                return isSmallScreen
+                    ? Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 20.0),
+                                  child: Text(
+                                    'Processed Mess Refunds',
+                                    style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: TextField(
+                                  decoration: const InputDecoration(
+                                      prefixIcon: Icon(Icons.search),
+                                      labelText: 'Search by Name or Entry Number',
+                                      border: OutlineInputBorder()),
+                                  onChanged: (v) => setState(() => searchQuery = v),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: DropdownButtonFormField<String>(
+                                  value: sortDir,
+                                  items: const [
+                                    DropdownMenuItem(value: 'Asc', child: Text('Days ↑')),
+                                    DropdownMenuItem(value: 'Desc', child: Text('Days ↓')),
+                                  ],
+                                  decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 14)),
+                                  onChanged: (v) => setState(() => sortDir = v ?? 'Asc'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 1,
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedMess,
+                                  items: messOptions
+                                      .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                                      .toList(),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Mess', border: OutlineInputBorder()),
+                                  onChanged: (v) => setState(() => selectedMess = v ?? 'All'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 1,
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedYear,
+                                  items: yearOptions
+                                      .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                                      .toList(),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Year', border: OutlineInputBorder()),
+                                  onChanged: (v) => setState(() => selectedYear = v ?? 'All'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              TextButton(onPressed: _clearFilters, child: const Text('Clear')),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: Text(
+                                'Processed Mess Refunds',
+                                style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                  prefixIcon: Icon(Icons.search),
+                                  labelText: 'Search by Name or Entry Number',
+                                  border: OutlineInputBorder()),
+                              onChanged: (v) => setState(() => searchQuery = v),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 1,
+                            child: DropdownButtonFormField<String>(
+                              value: sortDir,
+                              items: const [
+                                DropdownMenuItem(value: 'Asc', child: Text('Days ↑')),
+                                DropdownMenuItem(value: 'Desc', child: Text('Days ↓')),
+                              ],
+                              decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  contentPadding:
+                                      EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
+                              onChanged: (v) => setState(() => sortDir = v ?? 'Asc'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 1,
+                            child: DropdownButtonFormField<String>(
+                              value: selectedMess,
+                              items: messOptions
+                                  .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                                  .toList(),
+                              decoration: const InputDecoration(
+                                  labelText: 'Mess', border: OutlineInputBorder()),
+                              onChanged: (v) => setState(() => selectedMess = v ?? 'All'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 1,
+                            child: DropdownButtonFormField<String>(
+                              value: selectedYear,
+                              items: yearOptions
+                                  .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                                  .toList(),
+                              decoration: const InputDecoration(
+                                  labelText: 'Year', border: OutlineInputBorder()),
+                              onChanged: (v) => setState(() => selectedYear = v ?? 'All'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          TextButton(onPressed: _clearFilters, child: const Text('Clear')),
+                        ],
+                      );
+              },
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -244,107 +325,199 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.only(right: 20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.download, color: Colors.white),
-                    label: const Text(
-                      'Export to Excel',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                    style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all<Color>(Color(0xFFF0753C)),
-                      padding: WidgetStateProperty.all<EdgeInsets>(
-                          const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
-                      shape: WidgetStateProperty.all<OutlinedBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    onPressed: () async {
-                      final filteredList = _applyFilters(_rows);
-                      if (filteredList.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No data to export')),
-                        );
-                        return;
-                      }
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isSmallScreen = constraints.maxWidth < 600;
+                  return isSmallScreen
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.download, color: Colors.white),
+                              label: const Text(
+                                'Export to Excel',
+                                style: TextStyle(fontSize: 16, color: Colors.white),
+                              ),
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
+                                padding: MaterialStateProperty.all<EdgeInsets>(
+                                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
+                                shape: MaterialStateProperty.all<OutlinedBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final filteredList = _applyFilters(_rows);
+                                if (filteredList.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('No data to export')),
+                                  );
+                                  return;
+                                }
 
-                      await _exportToExcel(filteredList);
+                                await _exportToExcel(filteredList);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Export successful')),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.notifications, color: Colors.white),
-                    label: const Text(
-                      'Send notification to Process payment',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                    style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all<Color>(Color(0xFFF0753C)),
-                      padding: WidgetStateProperty.all<EdgeInsets>(
-                          const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
-                      shape: WidgetStateProperty.all<OutlinedBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    onPressed: () async {
-                        //selecting date till when complain can be made
-                        final DateTime? selectedDate = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days:30)),
-                        );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Export successful')),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.notifications, color: Colors.white),
+                              label: const Text(
+                                'Send notification to Process payment',
+                                style: TextStyle(fontSize: 16, color: Colors.white),
+                              ),
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
+                                padding: MaterialStateProperty.all<EdgeInsets>(
+                                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
+                                shape: MaterialStateProperty.all<OutlinedBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final DateTime? selectedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now().add(const Duration(days: 30)),
+                                );
+                                if (selectedDate == null) return;
+                                final String formattedDate =
+                                    "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
 
-                        if (selectedDate == null) return;
-                        final String formattedDate =
-                          "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                                if (_rows.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('No students to notify')));
+                                  return;
+                                }
 
-                        if (_rows.isEmpty) {
-                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text('No students to notify')));
-                          return;
-                      }
-
-                      final emails = _rows.map((r) => r.email).toList();
-                      final subject = 'MessEase: Rebate Refund Processed Successfully';
-                      final body = '''
+                                final emails = _rows.map((r) => r.email).toList();
+                                final subject = 'MessEase: Rebate Refund Processed Successfully';
+                                final body = '''
 Dear Student,
 
-"The rebate for this semester has been processed. Please check you bank accounts and report any discrepancy to admin by $formattedDate.";
+The rebate for this semester has been processed. Please check your bank accounts and report any discrepancy to admin by $formattedDate.
 
 Thanks,
 MessEase Admin
-                  ''';
+''';
 
-                      var successCount = 0;
-                        try {
-                          print('Sending notification to ${emails}');
-                          await sendMailViaGAS(to: emails, subject: subject, body: body);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Notification sent to ${emails.length} students')),
-                          );
-                        } catch (e) {
-                          print('Batch send error: $e');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to send notifications')),
-                          );
-                        }
-                      
-                    }
-                  ),
-                ],
+                                try {
+                                  await sendMailViaGAS(to: emails, subject: subject, body: body);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Notification sent to ${emails.length} students')),
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Failed to send notifications')),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.download, color: Colors.white),
+                              label: const Text(
+                                'Export to Excel',
+                                style: TextStyle(fontSize: 16, color: Colors.white),
+                              ),
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
+                                padding: MaterialStateProperty.all<EdgeInsets>(
+                                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
+                                shape: MaterialStateProperty.all<OutlinedBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final filteredList = _applyFilters(_rows);
+                                if (filteredList.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('No data to export')),
+                                  );
+                                  return;
+                                }
+
+                                await _exportToExcel(filteredList);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Export successful')),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.notifications, color: Colors.white),
+                              label: const Text(
+                                'Send notification to Process payment',
+                                style: TextStyle(fontSize: 16, color: Colors.white),
+                              ),
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFF0753C)),
+                                padding: MaterialStateProperty.all<EdgeInsets>(
+                                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
+                                shape: MaterialStateProperty.all<OutlinedBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final DateTime? selectedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now().add(const Duration(days: 30)),
+                                );
+                                if (selectedDate == null) return;
+                                final String formattedDate =
+                                    "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+
+                                if (_rows.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('No students to notify')));
+                                  return;
+                                }
+
+                                final emails = _rows.map((r) => r.email).toList();
+                                final subject = 'MessEase: Rebate Refund Processed Successfully';
+                                final body = '''
+Dear Student,
+
+The rebate for this semester has been processed. Please check your bank accounts and report any discrepancy to admin by $formattedDate.
+
+Thanks,
+MessEase Admin
+''';
+
+                                try {
+                                  await sendMailViaGAS(to: emails, subject: subject, body: body);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Notification sent to ${emails.length} students')),
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Failed to send notifications')),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        );
+                },
               ),
             ),
           ],
@@ -357,89 +530,93 @@ MessEase Admin
     final rows = _applyFilters(_rows);
 
     return LayoutBuilder(builder: (context, constraints) {
-      final tableWidth = MediaQuery.of(context).size.width * 0.95;
+      // Set a fixed width for the table to enable horizontal scrolling if needed
+      const double tableWidth = 1200;
       return Center(
-        child: SizedBox(
-          width: tableWidth,
-          child: Card(
-            color: Colors.white,
-            elevation: 2,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              children: [
-                // header strip (always shown)
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: tableWidth,
+            child: Card(
+              color: Colors.white,
+              elevation: 2,
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Column(
+                children: [
+                  // header strip (always shown)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                    child: Row(
+                      children: [
+                        _buildHeaderCell('Name'),
+                        _buildHeaderCell('Entry Number'),
+                        _buildHeaderCell('Year'),
+                        _buildHeaderCell('Mess'),
+                        _buildHeaderCell('Degree'),
+                        _buildHeaderCell('Days'),
+                        _buildHeaderCell('Amount'),
+                        _buildHeaderCell('Account Number'),
+                        _buildHeaderCell('IFSC Code'),
+                        _buildHeaderCell('Status'),
+                      ],
                     ),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                  child: Row(
-                    children: [
-                      _buildHeaderCell('Name'),
-                      _buildHeaderCell('Entry Number'),
-                      _buildHeaderCell('Year'),
-                      _buildHeaderCell('Mess'),
-                      _buildHeaderCell('Degree'),
-                      _buildHeaderCell('Days'),
-                      _buildHeaderCell('Amount'),
-                      _buildHeaderCell('Account Number'),
-                      _buildHeaderCell('IFSC Code'),
-                      _buildHeaderCell('Status'),
-                    ],
-                  ),
-                ),
-                // body (empty state or rows)
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(16),
-                      bottomRight: Radius.circular(16),
-                    ),
-                    child: rows.isEmpty
-                        ? Container(
-                            color: Colors.grey[50],
-                            child: const Center(
-                              child: Text('No rebate records.'),
+                  // body (empty state or rows)
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                      ),
+                      child: rows.isEmpty
+                          ? Container(
+                              color: Colors.grey[50],
+                              child: const Center(
+                                child: Text('No rebate records.'),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.zero,
+                              itemCount: rows.length,
+                              itemBuilder: (context, index) {
+                                final r = rows[index];
+                                final rowColor = index.isEven
+                                    ? Colors.grey[50]
+                                    : Colors.grey[100];
+                                return Container(
+                                  color: rowColor,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 8),
+                                  child: Row(
+                                    children: [
+                                      _buildBodyCell(r.name),
+                                      _buildBodyCell(r.entryNumber),
+                                      _buildBodyCell(r.year),
+                                      _buildBodyCell(r.mess),
+                                      _buildBodyCell(r.degree),
+                                      _buildBodyCell(r.numberOfDays),
+                                      _buildBodyCell('₹${r.refund}'),
+                                      _buildBodyCell(r.bankAccountNumber),
+                                      _buildBodyCell(r.ifscCode),
+                                      _buildBodyCell(r.status),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
-                          )
-                        : ListView.builder(
-                            padding: EdgeInsets.zero,
-                            itemCount: rows.length,
-                            itemBuilder: (context, index) {
-                              final r = rows[index];
-                              final rowColor = index.isEven
-                                  ? Colors.grey[50]
-                                  : Colors.grey[100];
-                              return Container(
-                                color: rowColor,
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 8),
-                                child: Row(
-                                  children: [
-                                    _buildBodyCell(r.name),
-                                    _buildBodyCell(r.entryNumber),
-                                    _buildBodyCell(r.year),
-                                    _buildBodyCell(r.mess),
-                                    _buildBodyCell(r.degree),
-                                    _buildBodyCell(r.numberOfDays),
-                                    _buildBodyCell('₹${r.refund}'),
-                                    _buildBodyCell(r.bankAccountNumber),
-                                    _buildBodyCell(r.ifscCode),
-                                     _buildBodyCell(r.status),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

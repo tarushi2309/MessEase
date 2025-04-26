@@ -272,6 +272,7 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
 
   Widget _buildCommitteeCard(MessCommitteeModel member) {
     return Card(
+      color: Colors.white,
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -292,90 +293,48 @@ class _MessCommitteeMessManagerPageState extends State<MessCommitteeMessManagerP
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildMemberIcon(),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              member.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Flexible(
-                            child: Text(
-                              "Entry Number: ${member.entryNumber}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Flexible(
-                            child: Text(
-                              "Email: ${member.email}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Flexible(
-                            child: Text(
-                              "Phone: ${member.phoneNumber}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      member.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
                       ),
-                    )
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Entry Number: ${member.entryNumber}",
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Email: ${member.email}",
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Phone: ${member.phoneNumber}",
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMemberIcon() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Icon(Icons.person, size: 40, color: Colors.grey),
-    );
-  }
-
-  Widget _buildMemberInfo(MessCommitteeModel member) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(member.name, style: _boldStyle),
-          const SizedBox(height: 6),
-          Text("Entry: ${member.entryNumber}", style: _greyStyle),
-          Text("Email: ${member.email}", style: _greyStyle),
-          Text("Phone: ${member.phoneNumber}", style: _greyStyle),
-        ],
       ),
     );
   }
