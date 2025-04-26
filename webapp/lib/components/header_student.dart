@@ -65,13 +65,14 @@ class Header extends StatelessWidget {
         onTap: () async {
           if (text == "Logout") {
             // 1. Clear the UID in your provider
-            Provider.of<UserProvider>(context, listen: false).clearUid();
+            
             await FirebaseAuth.instance.signOut();
             // 2. Navigate to login and remove all previous routes
             Navigator.of(context).pushNamedAndRemoveUntil(
               route,
               (Route<dynamic> route) => false,
             );
+            Provider.of<UserProvider>(context, listen: false).clearUid();
           } else {
             Navigator.pushNamed(context, route);
           }

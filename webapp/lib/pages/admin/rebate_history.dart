@@ -156,7 +156,7 @@ class _RebateHistoryProcessedPageState extends State<RebateHistoryProcessedPage>
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
-        child: Header(currentPage: 'Processed Refund'),
+        child: Header(currentPage: 'Refund History'),
       ),
       body: Container(
         color: Colors.white,

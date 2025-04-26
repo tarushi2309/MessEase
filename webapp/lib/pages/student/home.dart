@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? errorMessage;
   String messNameAnnouncement = "";
   String formAnnouncement = "";
-  Future<List<AnnouncementModel>>? announcementFuture;
+  Future<List<AnnouncementModel>>? announcementFuture = Future.value([]);
 
   @override
   void initState() {
@@ -62,15 +62,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<AnnouncementModel>> _fetchAnnouncementHistory(
       String messId) async {
     try {
+      final today = DateTime.now();
+      final startOfDay = DateTime(today.year, today.month, today.day);
+
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('announcements')
-          .orderBy('date', descending: true)
+          .where('mess', arrayContains: messId)
           .get();
+
       final List<AnnouncementModel> loadedAnnouncements = snapshot.docs
-          .map((doc) =>
-              AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
-          .where((announcement) => announcement.mess.contains(messId))
+          .map((doc) => AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
+          .where((announcement) {
+            final announcementDate = DateTime.parse(announcement.date);
+            return announcementDate.isAfter(startOfDay) && announcementDate.isBefore(startOfDay.add(const Duration(days: 1)));
+          })
           .toList();
+      //print(loadedAnnouncements);
       return loadedAnnouncements;
     } catch (e) {
       print("Error fetching announcements: $e");
