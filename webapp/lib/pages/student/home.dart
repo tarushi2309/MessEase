@@ -179,6 +179,33 @@ class _HomeScreenState extends State<HomeScreen> {
     return doc.docs.isNotEmpty;
   }
 
+  Future<bool> checkIfClosed(BuildContext context, String? uid) async {
+    if (uid == null) return false;
+    final doc = await FirebaseFirestore.instance
+        .collection('hostel_leaving_data')
+        .where('uid', isEqualTo: uid)
+        .get();
+      
+    String mess = "";
+    if(doc.docs.isNotEmpty){
+      mess = doc.docs[0]['mess'];
+    }
+    print(mess);
+
+    final data = await FirebaseFirestore.instance
+            .collection('hostel_leaving')
+            .doc(mess)
+            .get();
+    
+    bool closed = false;
+    if(data.exists){
+      closed = data['isReleased'];
+    }
+
+    print("checking flag ${closed}");
+    return closed;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<UserProvider>(
@@ -416,24 +443,45 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: isClickable
                                 ? GestureDetector(
                                     onTap: () async {
-                                      bool alreadySubmitted = await checkIfSubmitted(context, uid);
-                                      if (alreadySubmitted) {
-                                        showDialog(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: Text("Already Submitted"),
-                                            content: Text("You've already submitted the hostel leaving form."),
-                                            actions: [
-                                              TextButton(
-                                                child: Text("OK"),
-                                                onPressed: () => Navigator.of(context).pop(),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      } else {
-                                        _showLeavingDatePopup(context, messName);
+                                      try{
+                                        bool alreadySubmitted = await checkIfSubmitted(context, uid);
+                                        //bool ifClosed = await checkIfClosed(context, uid);
+                                        bool ifClosed = false;
+                                        if (alreadySubmitted) {
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title: Text("Already Submitted"),
+                                              content: Text("You've already submitted the hostel leaving form."),
+                                              actions: [
+                                                TextButton(
+                                                  child: Text("OK"),
+                                                  onPressed: () => Navigator.of(context).pop(),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        } else if(ifClosed){
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title: Text("Form Closed"),
+                                              content: Text("This form has been closed. Please contact BOHA for any discrepancy."),
+                                              actions: [
+                                                TextButton(
+                                                  child: Text("OK"),
+                                                  onPressed: () => Navigator.of(context).pop(),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        } else {
+                                          _showLeavingDatePopup(context, messName);
+                                        }
+                                      } catch(e){
+                                        print("Error in link");
                                       }
+                                      
                                     },
                                     child: Text(
                                       text,

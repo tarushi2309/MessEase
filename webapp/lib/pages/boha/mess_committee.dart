@@ -134,6 +134,27 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
       });
     }
 
+    void _closeHostelLeavingForm() async {
+      await FirebaseFirestore.instance
+        .collection('hostel_leaving')
+        .doc(mess) 
+        .update({
+          'isReleased': false,
+          'releasedAt': FieldValue.serverTimestamp(),
+          'message': "Form is now closed for ${mess.toUpperCase()}!",
+      });
+
+      String currentDateTime = DateTime.now().toString();
+      List<String> selectedMesses = [mess];
+      String message = "Hostel leaving form is now closed for ${mess.toUpperCase()}!";
+
+      await FirebaseFirestore.instance.collection("announcements").add({
+        'announcement': message,
+        'date': currentDateTime,
+        'mess': selectedMesses,
+      });
+    }
+
   void _showAddMemberDialog() {
     TextEditingController nameController = TextEditingController();
     TextEditingController entryNumberController = TextEditingController();
@@ -328,6 +349,11 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
             child: Icon(Icons.person_add),
             label: 'Add Committee Member',
             onTap: _showAddMemberDialog,
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.rocket_launch),
+            label: 'Close Hostel Leaving Form',
+            onTap: _closeHostelLeavingForm,
           ),
           SpeedDialChild(
             child: Icon(Icons.rocket_launch),
