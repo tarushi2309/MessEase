@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final DatabaseModel db = DatabaseModel();
   String? uid;
   String messName = "";
+  String messNameAnnouncement = "";
   bool isLoading = true;
   bool isError = false;
   String? errorMessage;
@@ -28,25 +29,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    print("UID: $uid");
-    if (uid == null) {
-      print("UID is null");
-      return;
-    }
-    db.getMessId(uid!);
-    db.removePrevAddons();
-    _initFetch();
+    
   }
 
-  Future<void> _initFetch() async {
-    await fetchUserName();
+  Future<void> _initFetch(String uid) async {
+    await fetchUserName(uid);
     setState(() {
-      announcementFuture = _fetchAnnouncementHistory(messName);
+      announcementFuture = _fetchAnnouncementHistory(messNameAnnouncement);
     });
   }
 
-  Future<void> fetchUserName() async {
+  Future<void> fetchUserName(String uid) async {
     print("Fetching user name");
     try {
       DocumentSnapshot userDoc =
@@ -54,9 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (userDoc.exists) {
         setState(() {
           messName = userDoc['name'];
-          messName = messName[0].toUpperCase() + 
+          messNameAnnouncement = messName[0].toUpperCase() + 
                      messName.substring(1).toLowerCase();
-          print("Mess Name: $messName");  
+          print("Mess Name: $messName");
+          db.removePrevAddons(messName);
         });
       } else {
         print("User not found");
@@ -96,6 +90,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) {
+        final uid = userProvider.uid;
+        if (uid == null) {
+          // Show loading or login prompt until UID is available
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        // Only initialize data when UID changes
+        if (announcementFuture == null) {
+          _initFetch(uid);
+        }
     return FutureBuilder(
       future: db.getMenu(),
       builder: (context, menusnapshot) {
@@ -122,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$messName Mess',
+                Text('$messNameAnnouncement Mess',
                     style: const TextStyle(
                         fontSize: 32, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
@@ -159,6 +166,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
+    );
+      }
     );
   }
 
@@ -227,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         FutureBuilder<List<AddonModel>>(
-          future: db.fetchAddons(),
+          future: db.fetchAddons(messName),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -377,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () async {
                         final msg = await db.addAddon(
                             nameController.text.trim(),
-                            priceController.text.trim());
+                            priceController.text.trim(),messName);
                         if (mounted) {
                           ScaffoldMessenger.of(context)
                               .showSnackBar(SnackBar(content: Text(msg)));
@@ -431,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                       onPressed: () async {
                         final msg =
-                            await db.removeAddon(nameController.text.trim());
+                            await db.removeAddon(nameController.text.trim(),messName);
                         if (mounted) {
                           ScaffoldMessenger.of(context)
                               .showSnackBar(SnackBar(content: Text(msg)));

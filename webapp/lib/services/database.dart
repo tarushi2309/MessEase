@@ -79,42 +79,12 @@ class DatabaseModel {
   }
 
   // to get the messId from the uid
-  Future<void> getMessId(String uid) async {
-    try {
-      DocumentSnapshot messManagerDoc = await getMessManagerInfo(uid);
-      if (messManagerDoc.exists) {
-        messId= messManagerDoc['messId']; //extracted the messId
-        //print("messId: $messId");
-      } else {
-        print("No mess manager found for this uid");
-        return;
-      }
-    } catch (e) {
-      print("Error getting the messId: $e");
-      return;
-    }
-  }
+ 
 
-  // to get the messId from the uid
-  Future<void> getMessIdStudent(String uid) async {
-    try {
-      DocumentSnapshot studentDoc = await getStudentInfo(uid);
-      if (studentDoc.exists) {
-        print('messId: ${studentDoc['mess']}');
-        messId= studentDoc['mess'];
-        //print("messId: $messId");
-      } else {
-        print("No student found for this uid");
-        return;
-      }
-    } catch (e) {
-      print("Error getting the messId: $e");
-      return;
-    }
-  }
+  
 
   //function to add the addon into the database
-  Future<String> addAddon(String name, String price) async {
+  Future<String> addAddon(String name, String price,String messId) async {
     if (name.isEmpty || price.isEmpty) {
       return "Please fill in all fields.";
     }
@@ -162,21 +132,32 @@ class DatabaseModel {
     }
   }
 
-  Future<void> removePrevAddons() async{
-    print("messId: $messId");
-    if (messId == null) {
-      return;
-    }
-    QuerySnapshot querySnapshot =
-          await _firestore
-              .collection('addons').where('date', isLessThan: Timestamp.fromDate(DateTime.now())).get();
-    print(querySnapshot.docs);
-    for (var doc in querySnapshot.docs) {
-      await doc.reference.delete();
-    }
+  Future<void> removePrevAddons(String messId) async {
+  if (messId.isEmpty) return;
+
+  
+  final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+  final cutoff = Timestamp.fromDate(todayStart);
+  final query = await _firestore
+      .collection('addons')
+      .where('mess', isEqualTo: messId)
+      .where('date', isLessThan: cutoff)
+      .get();
+
+  if (query.docs.isEmpty) {
+    print("No old add-ons to remove for mess $messId");
+    return;
   }
-  //function to remove the addon into the database
-  Future<String> removeAddon(String name) async {
+  final batch = _firestore.batch();
+  for (final doc in query.docs) {
+    batch.delete(doc.reference);
+    print("Scheduling delete of addon ${doc.id}");
+  }
+  await batch.commit();
+}
+
+  Future<String> removeAddon(String name,String messId) async {
     if (name.isEmpty) {
       return "Please fill in all fields.";
     }
@@ -208,9 +189,9 @@ class DatabaseModel {
       return "Error: ${e.toString()}";
     }
   }
-  Future<List<AddonModel>> fetchAddons() async {
+  Future<List<AddonModel>> fetchAddons(String mess) async {
 
-    if (messId == null) {
+    if (mess == null) {
       print("No messId found.");
       return [];
     }
@@ -218,7 +199,7 @@ class DatabaseModel {
     QuerySnapshot query =
         await _firestore
             .collection('addons')
-            .where('messId', isEqualTo: messId)
+            .where('messId', isEqualTo: mess)
             .get();
 
     return query.docs

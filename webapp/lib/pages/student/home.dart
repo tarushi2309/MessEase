@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? errorMessage;
   String messNameAnnouncement = "";
   String formAnnouncement = "";
-  Future<List<AnnouncementModel>>? announcementFuture = Future.value([]);
+  Future<List<AnnouncementModel>>? announcementFuture;
 
   @override
   void initState() {
@@ -396,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         FutureBuilder<List<AddonModel>>(
-          future: db.fetchAddons(),
+          future: db.fetchAddons(messName),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
