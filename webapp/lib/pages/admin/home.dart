@@ -44,10 +44,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _prefs = await SharedPreferences.getInstance();
     await get_messOptions();
     await get_batches();
+    await get_messAllotments(); // Add this line to fetch mess allotments from backend
     _loadPersistedSelections();
     setState(() {
       _prefsLoaded = true;
     });
+  }
+
+  // Add new method to fetch mess allotments from Firestore
+  Future<void> get_messAllotments() async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('mess')
+          .doc('messAllotment')
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data.containsKey('messAllot')) {
+          final Map<String, dynamic> allotments = data['messAllot'] as Map<String, dynamic>;
+          setState(() {
+            // Update _selectedMessMap with values from Firestore
+            for (var batch in _batch) {
+              final mess = allotments[batch];
+              if (mess != null && _messOptions.contains(mess)) {
+                _selectedMessMap[batch] = mess;
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {
+      print("Error getting mess allotments: $e");
+    }
   }
 
   void _loadPersistedSelections() {
@@ -85,15 +114,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           .get();
 
       if (doc.exists) {
-        MessOptions options =
-            MessOptions.fromJson(doc.data() as Map<String, dynamic>);
+        MessOptions options = MessOptions.fromJson(doc.data() as Map<String, dynamic>);
         setState(() {
           _messOptions = options.messNames;
           if (_messOptions.isNotEmpty) {
             _selectedMessToRemove = _messOptions[0];
-            for (var batch in _batch) {
-              _selectedMessMap[batch] ??= _messOptions[0];
-            }
+            // Don't set default mess here - we'll get from backend instead
           }
         });
       }
@@ -115,12 +141,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           List<String> newBatches = batches.batchNames;
           for (var batch in newBatches) {
             if (!_selectedMessMap.containsKey(batch)) {
-              _selectedMessMap[batch] =
-                  _messOptions.isNotEmpty ? _messOptions[0] : "";
+              _selectedMessMap[batch] = ""; // Initialize with empty string instead of default
             }
           }
-          _selectedMessMap
-              .removeWhere((key, value) => !newBatches.contains(key));
+          _selectedMessMap.removeWhere((key, value) => !newBatches.contains(key));
           _batch = newBatches;
           if (_batch.isNotEmpty) {
             _selectedBatchToRemove = _batch[0];
@@ -686,7 +710,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         const SizedBox(width: 8),
         Expanded(
           child: DropdownButtonFormField<String>(
-            value: _selectedMessMap[batchName],
+            value: _selectedMessMap[batchName]?.isNotEmpty == true 
+                ? _selectedMessMap[batchName] 
+                : (_messOptions.isNotEmpty ? _messOptions[0] : null),
             decoration: const InputDecoration(
               labelText: "Select Mess",
               border: OutlineInputBorder(),
@@ -757,10 +783,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-
-// Builds a single mess detail card.
+  // Builds a single mess detail card.
   Widget _buildMessCard(BuildContext context, String messName) {
-
     return Card(
       color: Colors.white,
       elevation: 2,
