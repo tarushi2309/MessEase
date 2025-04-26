@@ -16,6 +16,7 @@ import '../../components/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:webapp/pages/admin/home.dart' as admin;
 import 'package:webapp/pages/admin/rebate_history.dart';
+import 'package:webapp/pages/admin/hostel_leaving.dart';
 import 'package:webapp/pages/mess_manager/home.dart' as mess_manager;
 import 'package:webapp/pages/boha/home.dart' as boha;
 import 'package:webapp/pages/common/login.dart';
@@ -37,7 +38,7 @@ void main() async{
   setPathUrlStrategy();
   runApp(
     ChangeNotifierProvider(
-      create: (context) => UserProvider(), // Provide the UserProvider globally
+      create: (_) => UserProvider(), // Provide the UserProvider globally
       child: MyApp(),
     ),
   );
@@ -93,6 +94,7 @@ class MyApp extends StatelessWidget {
         '/profile_student': (context) => ProfileStudentPage(),
         '/rebate_history_student' : (context) => RebateHistoryStudentPage(),
         '/mess_details_admin' : (context, ) => MessDetailsPage(),
+        '/hostel_leaving' : (context, ) => HostelLeavingPage(),
         //'/profile': (context) => MessManagerProfile(),
       },
     );

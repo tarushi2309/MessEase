@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:webapp/models/mess_committee.dart';
 import 'package:webapp/components/header_boha.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 class MessCommittePageBoha extends StatefulWidget {
   const MessCommittePageBoha({super.key});
@@ -25,15 +26,17 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
     final args = ModalRoute.of(context)!.settings.arguments;
     if (args is String) {
       messName = args.toLowerCase();
-      print(messName);
+      mess = messName[0].toUpperCase() + messName.substring(1).toLowerCase();
+      //print(messName);
     } else {
       messName = "Unknown";
     }
     _committeeMembers = fetchCommitteeMembers(messName);
+    fetchTotalStudents(messName);
+    fetchBatches(mess);
   }
 
-  Future<List<MessCommitteeModel>> fetchCommitteeMembers(
-      String messName) async {
+  Future<List<MessCommitteeModel>> fetchCommitteeMembers(String messName) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection("mess_committee")
         .where('messName', isEqualTo: messName)
@@ -61,6 +64,96 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
       }
     });
   }
+
+  Future<void> fetchTotalStudents(String messName) async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection("students")
+          .where('mess', isEqualTo: messName)
+          .get();
+
+      setState(() {
+        totalStudents = querySnapshot.docs.length;
+        print("Total students in $messName: $totalStudents");
+      });
+    } catch (e) {
+      print("Error fetching total students: $e");
+    }
+  }
+
+  Future<void> fetchBatches(String mess) async {
+    try {
+      DocumentSnapshot messAllotDoc = await FirebaseFirestore.instance
+          .collection("mess")
+          .doc("messAllotment") 
+          .get();
+      print("Mess allotment document: ${messAllotDoc.data()}");
+      print(mess);
+      if (messAllotDoc.exists) {
+        Map<String, dynamic>? messAllotData = messAllotDoc.data() as Map<String, dynamic>?;
+        List<String> matchingBatches = [];
+        
+        if (messAllotData != null && messAllotData.containsKey('messAllot')) {
+          Map<String, dynamic> messAllotMap = messAllotData['messAllot'] as Map<String, dynamic>;
+          messAllotMap.forEach((batch, assignedMess) {
+            if (assignedMess == mess) {
+              matchingBatches.add(batch);
+            }
+          });
+        }
+
+        setState(() {
+          batches = matchingBatches;
+        });
+      } else {
+        print("messAllot document not found");
+      }
+    } catch (e) {
+      print("Error fetching batches: $e");
+    }
+  }
+
+  void _releaseHostelLeavingForm() async {
+      await FirebaseFirestore.instance
+        .collection('hostel_leaving')
+        .doc(mess) 
+        .update({
+          'isReleased': true,
+          'releasedAt': FieldValue.serverTimestamp(),
+          'message': "Form is now live for ${mess.toUpperCase()}!",
+      });
+
+      String currentDateTime = DateTime.now().toString();
+      List<String> selectedMesses = [mess];
+      String message = "Hostel leaving form is now live for ${mess.toUpperCase()}!";
+
+      await FirebaseFirestore.instance.collection("announcements").add({
+        'announcement': message,
+        'date': currentDateTime,
+        'mess': selectedMesses,
+      });
+    }
+
+    void _closeHostelLeavingForm() async {
+      await FirebaseFirestore.instance
+        .collection('hostel_leaving')
+        .doc(mess) 
+        .update({
+          'isReleased': false,
+          'releasedAt': FieldValue.serverTimestamp(),
+          'message': "Form is now closed for ${mess.toUpperCase()}!",
+      });
+
+      String currentDateTime = DateTime.now().toString();
+      List<String> selectedMesses = [mess];
+      String message = "Hostel leaving form is now closed for ${mess.toUpperCase()}!";
+
+      await FirebaseFirestore.instance.collection("announcements").add({
+        'announcement': message,
+        'date': currentDateTime,
+        'mess': selectedMesses,
+      });
+    }
 
   void _showAddMemberDialog() {
     TextEditingController nameController = TextEditingController();
@@ -248,18 +341,28 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
         ],
       ),
 
-      // Floating Button Replacing Top-right "+"
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddMemberDialog,
-        label: const Text("Add Committee Member",
-            style: TextStyle(color: Colors.white)),
-        icon: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: SpeedDial(
+        icon: Icons.add,
         backgroundColor: Color(0xFFFF7643),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-        elevation: 4, // Matches your desired UI
-      ),
+        children: [
+          SpeedDialChild(
+            child: Icon(Icons.person_add),
+            label: 'Add Committee Member',
+            onTap: _showAddMemberDialog,
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.rocket_launch),
+            label: 'Close Hostel Leaving Form',
+            onTap: _closeHostelLeavingForm,
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.rocket_launch),
+            label: 'Release Hostel Leaving Form',
+            onTap: _releaseHostelLeavingForm,
+          ),
+        ],
+      )
+ 
     );
   }
 

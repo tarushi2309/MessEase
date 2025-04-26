@@ -100,6 +100,7 @@ class DatabaseModel {
     try {
       DocumentSnapshot studentDoc = await getStudentInfo(uid);
       if (studentDoc.exists) {
+        print('messId: ${studentDoc['mess']}');
         messId= studentDoc['mess'];
         //print("messId: $messId");
       } else {

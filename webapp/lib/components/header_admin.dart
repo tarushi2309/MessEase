@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:webapp/components/user_provider.dart';
 
 class Header extends StatelessWidget {
   final String currentPage; // Receives the current page name
@@ -32,6 +35,7 @@ class Header extends StatelessWidget {
           //_navLink("Menu Page", "/menu_page", context),
           _navLink("Refund", "/refund", context),
           _navLink("Refund History", "/processed_rebates", context),
+          _navLink("Hostel Leaving Data", "/hostel_leaving", context),
           _navLink("Logout", "/login", context),
 
           // Profile Icon (Clickable)
@@ -59,8 +63,19 @@ class Header extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: InkWell(
-        onTap: () {
-          Navigator.pushNamed(context, route);
+        onTap: () async{
+          if (text == "Logout") {
+            // 1. Clear the UID in your provider
+            Provider.of<UserProvider>(context, listen: false).clearUid();
+            await FirebaseAuth.instance.signOut();
+            // 2. Navigate to login and remove all previous routes
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              route,
+              (Route<dynamic> route) => false,
+            );
+          } else {
+            Navigator.pushNamed(context, route);
+          }
         },
         child: Text(
           text,

@@ -26,48 +26,37 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isError = false;
   String? errorMessage;
   String messNameAnnouncement = "";
-  late Future<List<AnnouncementModel>> announcementFuture = Future.value([]);
+  String formAnnouncement = "";
+  Future<List<AnnouncementModel>>? announcementFuture = Future.value([]);
 
   @override
   void initState() {
     super.initState();
-    // Fetch UID using Provider (ensure UserProvider is registered in the widget tree)
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    //print("UID: $uid");
-    if (uid == null) {
-      print("UID is null");
-      return;
-    }
-    db.getMessIdStudent(uid!);
-    db.removePrevAddons();
-    _initFetch();
+    // Do not fetch UID here; wait for the provider in build.
   }
 
-  Future<void> _initFetch() async {
+  Future<void> _initFetch(String uid) async {
     // Wait for the user name to be fetched so that messName is set properly
-    await fetchUserName();
+    await fetchUserName(uid);
     setState(() {
       announcementFuture = _fetchAnnouncementHistory(messNameAnnouncement);
     });
   }
 
-  Future<void> fetchUserName() async {
-    //print("Fetching user name");
+  Future<void> fetchUserName(String uid) async {
     try {
       DocumentSnapshot studentDoc =
           await FirebaseFirestore.instance.collection('students').doc(uid).get();
       if (studentDoc.exists) {
-        messName = studentDoc['mess']; // Sets the mess name from the document
+        messName = studentDoc['mess'];
         messNameAnnouncement = messName[0].toUpperCase() +
-            messName.substring(1).toLowerCase(); // Capitalize the first letter
-        //print("Mess Name: $messName");  
+            messName.substring(1).toLowerCase();
       } else {
         print("Student not found");
       }
     } catch (e) {
       print("Error fetching user: $e");
     }
-    //print("Mess Name: $messNameAnnouncement");
   }
 
   Future<List<AnnouncementModel>> _fetchAnnouncementHistory(
@@ -88,78 +77,235 @@ class _HomeScreenState extends State<HomeScreen> {
             return announcementDate.isAfter(startOfDay) && announcementDate.isBefore(startOfDay.add(const Duration(days: 1)));
           })
           .toList();
-
-      print(loadedAnnouncements);
+      //print(loadedAnnouncements);
       return loadedAnnouncements;
     } catch (e) {
-      print("Error fetching today's announcements: $e");
-      throw Exception("Failed to load today's announcements.");
+      print("Error fetching announcements: $e");
+      throw Exception("Failed to load the announcements.");
     }
+  }
+
+  Future<void> addHostelLeavingData(BuildContext context, DateTime selectedDate) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+
+      if (uid == null) {
+        throw Exception("User not logged in");
+      }
+
+      DocumentSnapshot studentDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(uid)
+          .get();
+
+      if (!studentDoc.exists) {
+        throw Exception("Student data not found");
+      }
+
+      String name = studentDoc['name'];
+      String entryNum = studentDoc['entryNumber'];
+      String messName = studentDoc['mess'];
+
+      
+      int numOfDays = 0;
+      if(selectedDate.month == 11 || selectedDate.month == 12){
+          DateTime endDate = DateTime(selectedDate.year, 12, 31);
+          numOfDays = endDate.difference(selectedDate).inDays + 1;
+      } else if (selectedDate.month == 4 || selectedDate.month == 5) {
+          DateTime endDate = DateTime(selectedDate.year, 5, 31);
+          numOfDays = endDate.difference(selectedDate).inDays + 1;
+      }
+
+      await FirebaseFirestore.instance.collection('hostel_leaving_data').add({
+        'uid': uid,
+        'name': name,
+        'entryNumber': entryNum,
+        'mess': messName,
+        'selectedDate': selectedDate,
+        'numberOfRebateDaysAdded': numOfDays,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      print("Hostel leaving data added successfully");
+
+    } catch (e) {
+      print("Error adding hostel leaving data: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to submit leaving date: $e")),
+      );
+    }
+  }
+
+  void _showLeavingDatePopup(BuildContext context, String messName) async {
+    final DateTime today = DateTime.now();
+    final DateTime firstDate = DateTime(today.year, today.month, today.day);
+
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: firstDate,
+      firstDate: firstDate,
+      lastDate: today.add(Duration(days: 60)),
+      helpText: 'Select Leaving Date',
+      confirmText: 'Submit',
+      cancelText: 'Cancel',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.deepPurple,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (selectedDate != null) {
+      print("Student selected date: ${selectedDate.toString()}");
+      await addHostelLeavingData(context, selectedDate);
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Leaving Date Confirmed'),
+          content: Text("You're set to leave on ${selectedDate.day}/${selectedDate.month}/${selectedDate.year} from $messName mess. Please submit your messId card to the manager"),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No date selected.")),
+      );
+    }
+  }
+
+  Future<bool> checkForm(BuildContext context, String? uid) async {
+    if (uid == null) return false;
+    bool closed = false;
+    final doc = await FirebaseFirestore.instance
+        .collection('hostel_leaving_data')
+        .where('uid', isEqualTo: uid)
+        .get();
+
+    String mess = "";
+    if(doc.docs.isNotEmpty){
+      mess = doc.docs[0]['mess'];
+      formAnnouncement = "You've already submitted the hostel leaving form.";
+      return true;
+    } else{
+      final studentdoc = await FirebaseFirestore.instance
+        .collection('students')
+        .where('uid', isEqualTo: uid)
+        .get();
+
+      if(studentdoc.docs.isNotEmpty){
+        mess = studentdoc.docs[0]['mess'];
+      }
+    }
+    mess = mess[0].toUpperCase() + mess.substring(1);
+
+    final data = await FirebaseFirestore.instance
+            .collection('hostel_leaving')
+            .doc(mess)
+            .get();
+    
+    if(data.exists){
+      closed = !data['isReleased'];
+      //isReleased = true - form exists
+      if(closed == true){
+        formAnnouncement = "This form has been closed. Please contact BOHA for any discrepancy.";
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: db.getMenu(),
-      builder: (context, menusnapshot) {
-        if (menusnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) {
+        final uid = userProvider.uid;
+        if (uid == null) {
+          // Show loading or login prompt until UID is available
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-        if (menusnapshot.hasError) {
-          return Center(child: Text("Error: ${menusnapshot.error}"));
+        // Only initialize data when UID changes
+        if (announcementFuture == null) {
+          _initFetch(uid);
         }
-        final String today = DateFormat('EEEE').format(DateTime.now());
-        final MessMenuModel messMenu =
-            menusnapshot.data ?? MessMenuModel(menu: {});
-        Map<String, List<String>> menuForDay = messMenu.menu[today] ??
-            {'Breakfast': [], 'Lunch': [], 'Dinner': []};
+        return FutureBuilder(
+          future: db.getMenu(),
+          builder: (context, menusnapshot) {
+            if (menusnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (menusnapshot.hasError) {
+              return Center(child: Text("Error: ${menusnapshot.error}"));
+            }
+            final String today = DateFormat('EEEE').format(DateTime.now());
+            final MessMenuModel messMenu =
+                menusnapshot.data ?? MessMenuModel(menu: {});
+            Map<String, List<String>> menuForDay = messMenu.menu[today] ??
+                {'Breakfast': [], 'Lunch': [], 'Dinner': []};
 
-        return Scaffold(
-          backgroundColor: Colors.white,
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(60),
-            child: Header(currentPage: 'Home'),
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 35),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('${messNameAnnouncement} mess',
-                    style:
-                        TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                LayoutBuilder(builder: (context, constraints) {
-                  final isNarrow = constraints.maxWidth < 600;
-                  if (isNarrow) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildAddOnsSection(),
-                        const SizedBox(height: 24),
-                        _buildAnnouncementsBlock(),
-                      ],
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 3, child: _buildAddOnsSection()),
-                      const SizedBox(width: 16),
-                      Expanded(flex: 4, child: _buildAnnouncementsBlock()),
-                    ],
-                  );
-                }),
-                const SizedBox(height: 16),
-                const Text("Today's Menu",
-                    style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                _buildMealSection("Breakfast", menuForDay['Breakfast']!),
-                _buildMealSection("Lunch", menuForDay['Lunch']!),
-                _buildMealSection("Dinner", menuForDay['Dinner']!),
-              ],
-            ),
-          ),
+            return Scaffold(
+              backgroundColor: Colors.white,
+              appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(60),
+                child: Header(currentPage: 'Home'),
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 35),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${messNameAnnouncement} mess',
+                        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    LayoutBuilder(builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 600;
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAddOnsSection(),
+                            const SizedBox(height: 24),
+                            _buildAnnouncementsBlock(uid),
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 3, child: _buildAddOnsSection()),
+                          const SizedBox(width: 16),
+                          Expanded(flex: 4, child: _buildAnnouncementsBlock(uid)),
+                        ],
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                    const Text("Today's Menu",
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    _buildMealSection("Breakfast", menuForDay['Breakfast']!),
+                    _buildMealSection("Lunch", menuForDay['Lunch']!),
+                    _buildMealSection("Dinner", menuForDay['Dinner']!),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -209,8 +355,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  // original
 
   Widget _buildAddOnsSection() {
     return Column(
@@ -268,17 +412,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAnnouncementsBlock() => Column(
+  Widget _buildAnnouncementsBlock(String? uid) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text("Announcements",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          _buildAnnouncementsSection(),
+          _buildAnnouncementsSection(uid),
         ],
       );
 
-  Widget _buildAnnouncementsSection() {
+  Widget _buildAnnouncementsSection(String? uid) {
     return Container(
       height: 150,
       width: double.infinity,
@@ -307,20 +451,63 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: announcements
-                    .map(
-                      (a) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('➤', style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(a.announcement)),
-                          ],
-                        ),
+                .map(
+                  (a) {
+                    final text = a.announcement;
+                    final isClickable = text.toLowerCase().contains("hostel leaving form is now live");
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('➤', style: TextStyle(fontSize: 18)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: isClickable
+                                ? GestureDetector(
+                                    onTap: () async {
+                                      try{
+                                        bool alreadySubmitted = await checkForm(context, uid);
+                                        if (alreadySubmitted) {
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title: Text("Sorry!"),
+                                              content: Text(formAnnouncement),
+                                              actions: [
+                                                TextButton(
+                                                  child: Text("OK"),
+                                                  onPressed: () => Navigator.of(context).pop(),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        } else {
+                                          _showLeavingDatePopup(context, messName);
+                                        }
+                                      } catch(e){
+                                        print("Error in link");
+                                      }
+                                      
+                                    },
+                                    child: Text(
+                                      text,
+                                      style: const TextStyle(
+                                        color: Colors.blueAccent,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  )
+                                : Text(text),
+                          ),
+                        ],
                       ),
-                    )
-                    .toList(),
+                    );
+                  },
+                )
+                .toList(),
               ),
             ),
           );
