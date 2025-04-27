@@ -38,6 +38,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
       DocumentSnapshot studentInfo = await dbService.getStudentInfo(uid);
       setState(() {
         student = StudentModel.fromJson(studentInfo.data() as Map<String, dynamic>);
+        print(student);
         isDataLoaded = true;
       });
     } catch (e) {
