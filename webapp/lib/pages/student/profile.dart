@@ -23,6 +23,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
   StudentModel? student;
   bool isDataLoaded = false;
   String? uid;
+
   @override
   void initState() {
     super.initState();
@@ -55,129 +56,163 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
     if (uid != null) {
       _fetchUserData(uid!);
     }
+
+    // Responsive padding based on width
+    double width = MediaQuery.of(context).size.width;
+    double horizontalPadding = width < 600 ? 12.0 : 40.0;
+    double verticalPadding = width < 600 ? 12.0 : 40.0;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Header(currentPage: 'Profile'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(40.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(10),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
               ),
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Left - Profile image and name
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color:Colors.black, width: 1),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.4),
-                                spreadRadius: 1,
-                                blurRadius: 1,
-                                offset: const Offset(0, 2),
+                  // Responsive Card
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: EdgeInsets.all(width < 600 ? 12 : 20),
+                    child: width < 900
+                        // For small screens, stack vertically
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Profile image and name
+                              _buildProfileImageAndName(),
+                              SizedBox(height: 20),
+                              // Divider
+                              Container(
+                                width: double.infinity,
+                                height: 1,
+                                color: Colors.black,
+                              ),
+                              SizedBox(height: 20),
+                              // Details
+                              _buildDetailsSection(),
+                            ],
+                          )
+                        // For larger screens, use Row
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Left - Profile image and name
+                              Expanded(
+                                flex: 2,
+                                child: _buildProfileImageAndName(),
+                              ),
+                              const SizedBox(width: 20),
+                              // Vertical Divider
+                              Container(
+                                width: 1,
+                                height: _buildInfoHeight(),
+                                color: Colors.black,
+                              ),
+                              const SizedBox(width: 20),
+                              // Right - Details
+                              Expanded(
+                                flex: 5,
+                                child: _buildDetailsSection(),
                               ),
                             ],
                           ),
-                          child: CircleAvatar(
-                            radius: 60,
-                            backgroundColor: Colors.grey[200],
-                            backgroundImage:
-                                student?.url != null ? NetworkImage(student!.url) : null,
-                            child: student?.url == null
-                                ? const Icon(Icons.person, size: 50)
-                                : null,
-                            
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          student?.name ?? "Unknown",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-
-                  const SizedBox(width: 20),
-
-                  // Vertical Divider
-                  Container(
-                    width: 1,
-                    height: _buildInfoHeight(),
-                    color: Colors.black,
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  // Right - Details
-                  Expanded(
-                    flex: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildInfoRow("Entry Number", student?.name ?? "N/A"),
-                          _buildInfoRow("Email", student?.email ?? "N/A"),
-                          _buildInfoRow("Degree", student?.degree ?? "N/A"),
-                          _buildInfoRow("Year", student?.year ?? "N/A"),
-                          _buildInfoRow("Bank Account", student?.bank_account_number ?? "N/A"),
-                          _buildInfoRow("IFSC Code", student?.ifsc_code ?? "N/A"),
-                          _buildInfoRow("Mess", student?.mess != null ? student!.mess[0].toUpperCase() + student!.mess.substring(1) : "N/A"),
-                        ],
+                  const SizedBox(height: 20),
+                  // Bottom Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Color(0xFFF0753C),
+                        ),
+                        onPressed: () {
+                          _showBankDetailsDialog();
+                        },
+                        child: const Text("UPLOAD BANK DETAILS",
+                            style: TextStyle(color: Colors.white)),
                       ),
-                    ),
+                      const SizedBox(width: 16),
+                    ],
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 20),
-
-            // Bottom Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Color(0xFFF0753C),
-                  ),
-                  onPressed: () {
-                    _showBankDetailsDialog();
-                  },
-                  child: const Text("UPLOAD BANK DETAILS", 
-                      style: TextStyle(color: Colors.white)),
-                ),
-                const SizedBox(width: 16),
-                
-              ],
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
+  Widget _buildProfileImageAndName() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.black, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.4),
+                spreadRadius: 1,
+                blurRadius: 1,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 60,
+            backgroundColor: Colors.grey[200],
+            backgroundImage: student?.url != null ? NetworkImage(student!.url) : null,
+            child: student?.url == null
+                ? const Icon(Icons.person, size: 50)
+                : null,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          student?.name ?? "Unknown",
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInfoRow("Entry Number", student?.name ?? "N/A"),
+          _buildInfoRow("Email", student?.email ?? "N/A"),
+          _buildInfoRow("Degree", student?.degree ?? "N/A"),
+          _buildInfoRow("Year", student?.year ?? "N/A"),
+          _buildInfoRow("Bank Account", student?.bank_account_number ?? "N/A"),
+          _buildInfoRow("IFSC Code", student?.ifsc_code ?? "N/A"),
+          _buildInfoRow("Mess", student?.mess != null ? student!.mess[0].toUpperCase() + student!.mess.substring(1) : "N/A"),
+        ],
+      ),
+    );
+  }
 
   void _showBankDetailsDialog() {
     final _formKey = GlobalKey<FormState>();
@@ -204,7 +239,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter account number';
-                    } else if (!RegExp(r'^\d{12}$').hasMatch(value)){
+                    } else if (!RegExp(r'^\d{12}$').hasMatch(value)) {
                       return 'Account number must be exactly 12 digits';
                     }
                     return null;
@@ -222,7 +257,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter IFSC code';
-                    } else if (!RegExp(r'^[A-Za-z]{4}0\d{6}$').hasMatch(value)){
+                    } else if (!RegExp(r'^[A-Za-z]{4}0\d{6}$').hasMatch(value)) {
                       return 'Invalid IFSC code format';
                     }
                     return null;
@@ -263,7 +298,6 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                       print('Bank details updated for $uid');
                       Navigator.of(context).pop();
 
-                      // Optionally show a lil confirmation snackie
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Bank details updated successfully'),
@@ -284,7 +318,6 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                   }
                 }
               },
-
               child: const Text('Save'),
             ),
           ],
@@ -292,7 +325,6 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
       },
     );
   }
-
 
   Widget _buildInfoRow(String title, String value) {
     return Padding(
@@ -312,7 +344,8 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(value,
+                child: Text(
+                  value,
                   style: const TextStyle(fontSize: 16, color: Colors.black),
                 ),
               ),

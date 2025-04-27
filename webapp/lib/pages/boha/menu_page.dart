@@ -11,8 +11,7 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
-  int selectedIndex = 0; // Tracks selected day
-
+  int selectedIndex = 0;
   DatabaseModel db = DatabaseModel();
 
   final List<String> days = [
@@ -33,127 +32,217 @@ class _MenuPageState extends State<MenuPage> {
         preferredSize: const Size.fromHeight(60),
         child: Header(currentPage: 'Menu Page'),
       ),
-      body: Row(
-        children: [
-          // Left Sidebar Menu
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: 180, // Fixed width for sidebar
-              height: MediaQuery.of(context).size.height - 40,
-              margin: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 0.5,
-                    spreadRadius: 1,
-                  ),
-                ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isWide = constraints.maxWidth > 800;
+          // Use SingleChildScrollView to make the whole page scrollable vertically
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(0),
+              child: isWide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSidebar(context, vertical: true),
+                        Expanded(child: _buildMainContentArea(context)),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSidebar(context, vertical: false),
+                        _buildMainContentArea(context),
+                      ],
+                    ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSidebar(BuildContext context, {required bool vertical}) {
+    if (vertical) {
+      // Desktop/tablet: vertical sidebar
+      return Container(
+        width: 180,
+        margin: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 0.5,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 4.0),
+              child: Text(
+                "Days",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text(
-                      "Days",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 140,
+                child: Divider(color: Color(0xFFF0753C), thickness: 1),
+              ),
+            ),
+            ...List.generate(days.length, (index) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedIndex = index;
+                  });
+                },
+                child: Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    border: selectedIndex == index
+                        ? Border.all(color: Colors.black, width: 1)
+                        : null,
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
                   ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      width: 140,
-                      child: Divider(color: Color(0xFFF0753C), thickness: 1),
-                    ),
-                  ),
-                  ...List.generate(days.length, (index) {
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedIndex = index;
-                        });
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 10,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: Row(
+                      children: [
+                        Image.asset(
+                          'logos/${days[index].toLowerCase()}.png',
+                          width: 24,
+                          height: 24,
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          border: selectedIndex == index
-                              ? Border.all(color: Colors.black, width: 1)
-                              : null,
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                'logos/${days[index].toLowerCase()}.png',
-                                width: 24,
-                                height: 24,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                days[index],
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(width: 10),
+                        Text(
+                          days[index],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
                         ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-
-          // Main Content Area with responsive GridView
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.all(20),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 0.5,
-                    spreadRadius: 1,
+                      ],
+                    ),
                   ),
-                ],
-              ),
-              child: FutureBuilder<Widget>(
-                future: _buildMainContent(days[selectedIndex]),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else {
-                    return snapshot.data ?? Center(child: Text('No data'));
-                  }
-                },
-              ),
+                ),
+              );
+            }),
+          ],
+        ),
+      );
+    } else {
+      // Mobile: horizontal scrollable days
+      return Container(
+        margin: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 0.5,
+              spreadRadius: 1,
             ),
+          ],
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 12),
+                child: Text(
+                  "Days",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              ...List.generate(days.length, (index) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedIndex = index;
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: selectedIndex == index
+                          ? Border.all(color: Colors.black, width: 1)
+                          : null,
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                    ),
+                    child: Row(
+                      children: [
+                        Image.asset(
+                          'logos/${days[index].toLowerCase()}.png',
+                          width: 24,
+                          height: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          days[index],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildMainContentArea(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 0.5,
+            spreadRadius: 1,
           ),
         ],
+      ),
+      child: FutureBuilder<Widget>(
+        future: _buildMainContent(days[selectedIndex]),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            return snapshot.data ?? const Center(child: Text('No data'));
+          }
+        },
       ),
     );
   }
@@ -163,7 +252,7 @@ class _MenuPageState extends State<MenuPage> {
       future: db.getMenu(),
       builder: (context, menuSnapshot) {
         if (menuSnapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (menuSnapshot.hasError) {
           return Center(child: Text('Error: ${menuSnapshot.error}'));
@@ -173,52 +262,44 @@ class _MenuPageState extends State<MenuPage> {
         Map<String, List<String>> menuForDay =
             messMenu.menu[day] ?? {'Breakfast': [], 'Lunch': [], 'Dinner': []};
 
-        if (messMenu.menu.containsKey(day)) {
-          menuForDay = messMenu.menu[day]!;
-        }
-
-        // List of meal types to display
         final List<String> mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
 
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'MESS MENU',
               style: TextStyle(fontWeight: FontWeight.normal, fontSize: 24),
             ),
             const SizedBox(height: 20),
-            Expanded(
-              // Using LayoutBuilder to determine column count based on width
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Determine column count based on available width
-                  int columnCount = 1; // Default to 1 column
-                  if (constraints.maxWidth > 800) {
-                    columnCount = 3; // 3 columns for wide screens
-                  } else if (constraints.maxWidth > 600) {
-                    columnCount = 2; // 2 columns for medium screens
-                  }
-                  
-                  // Using GridView for responsive layout
-                  return GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columnCount,
-                      childAspectRatio: 0.85, // Adjust based on your content
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
-                    itemCount: mealTypes.length,
-                    itemBuilder: (context, index) {
-                      String mealType = mealTypes[index];
-                      return _buildMealCard(
-                        mealType, 
-                        menuForDay[mealType] ?? [], 
-                        day
-                      );
-                    },
-                  );
-                },
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                int columnCount = 1;
+                if (constraints.maxWidth > 800) {
+                  columnCount = 3;
+                } else if (constraints.maxWidth > 500) {
+                  columnCount = 2;
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columnCount,
+                    childAspectRatio: 0.85,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: mealTypes.length,
+                  itemBuilder: (context, index) {
+                    String mealType = mealTypes[index];
+                    return _buildMealCard(
+                      mealType,
+                      menuForDay[mealType] ?? [],
+                      day,
+                    );
+                  },
+                );
+              },
             ),
           ],
         );
@@ -232,7 +313,7 @@ class _MenuPageState extends State<MenuPage> {
     return Card(
       color: Colors.white,
       elevation: 3,
-      margin: EdgeInsets.all(10),
+      margin: const EdgeInsets.all(10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -241,7 +322,7 @@ class _MenuPageState extends State<MenuPage> {
           children: [
             Text(
               mealType,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 5),
             Align(
@@ -251,7 +332,7 @@ class _MenuPageState extends State<MenuPage> {
                 child: Divider(color: Color(0xFFF0753C), thickness: 1),
               ),
             ),
-            // List of food items - makes text wrap and list scrollable
+            // List of food items
             Expanded(
               child: ListView.builder(
                 shrinkWrap: true,
@@ -263,12 +344,11 @@ class _MenuPageState extends State<MenuPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Image.asset('logos/arrow.png', width: 24, height: 24),
-                        SizedBox(width: 8.0),
-                        // Make text wrap for long item names
+                        const SizedBox(width: 8.0),
                         Expanded(
                           child: Text(
                             items[index],
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                             ),
@@ -284,7 +364,7 @@ class _MenuPageState extends State<MenuPage> {
                           ),
                           onPressed: () async {
                             await db.removeItem(day, mealType, items[index]);
-                            setState(() {}); // Refresh UI
+                            setState(() {});
                           },
                         ),
                       ],
@@ -300,11 +380,12 @@ class _MenuPageState extends State<MenuPage> {
                 Expanded(
                   child: TextField(
                     controller: addItemInput,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Add Item',
                       border: OutlineInputBorder(),
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                     ),
                   ),
                 ),
@@ -318,7 +399,7 @@ class _MenuPageState extends State<MenuPage> {
                   onPressed: () async {
                     if (addItemInput.text.isNotEmpty) {
                       await db.addItem(day, mealType, addItemInput.text);
-                      setState(() {}); // Refresh UI
+                      setState(() {});
                       addItemInput.clear();
                     }
                   },

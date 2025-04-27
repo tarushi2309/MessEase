@@ -52,7 +52,6 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
   void _showAddAnnouncementDialog() {
     TextEditingController announcementController = TextEditingController();
     List<String> messes = ['Konark', 'Anusha', 'Ideal'];
-
     List<String> selectedMesses = [];
 
     showDialog(
@@ -132,7 +131,6 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
                     });
 
                     await _fetchRecentAnnouncements();
-
                     Navigator.pop(context);
                   },
                 ),
@@ -318,7 +316,6 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
         final matchesQuery = searchQuery.isEmpty ||
             announcement.mess.any((messName) =>
                 messName.toLowerCase().contains(searchQuery.toLowerCase()));
-
         final matchesDateRange = dateRange == null ||
             (DateTime.parse(announcement.date).isAfter(
                     dateRange!.start.subtract(const Duration(days: 1))) &&
@@ -400,87 +397,105 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
     );
   }
 
-  Widget _buildTable(List<AnnouncementModel> rows) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: LayoutBuilder(builder: (context, constraints) {
-          final card = Card(
-            color: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 2,
-            child: Column(children: [
-              // header row
-              Container(
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12))),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  child: Row(children: [
-                    Flexible(
-                      flex: 3,
-                      child: _buildHeaderCell('Announcement'),
+  Widget _buildTable(List<AnnouncementModel> rows) {
+    // Set a minimum width for the table for horizontal scroll
+    const double minTableWidth = 800.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tableWidth = constraints.maxWidth > minTableWidth
+              ? constraints.maxWidth
+              : minTableWidth;
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: Card(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
+                child: Column(
+                  children: [
+                    // header row
+                    Container(
+                        decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12))),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 8),
+                        child: Row(children: [
+                          Flexible(
+                            flex: 3,
+                            child: _buildHeaderCell('Announcement'),
+                          ),
+                          Flexible(
+                            flex: 1,
+                            child: _buildHeaderCell('Mess'),
+                          ),
+                          Flexible(
+                            flex: 1,
+                            child: _buildHeaderCell('Date'),
+                          )
+                        ])),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(12),
+                            bottomRight: Radius.circular(12)),
+                        child: rows.isEmpty
+                            ? Container(
+                                color: Colors.grey[50],
+                                child: const Center(
+                                    child: Text('No announcements found')))
+                            : ListView.builder(
+                                padding: EdgeInsets.zero,
+                                itemCount: rows.length,
+                                itemBuilder: (c, i) {
+                                  final announcement = rows[i];
+                                  final bg = i.isEven
+                                      ? Colors.grey[50]
+                                      : Colors.grey[100];
+                                  return Container(
+                                    color: bg,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8, horizontal: 8),
+                                    child: Row(children: [
+                                      Flexible(
+                                        flex: 3,
+                                        child: _buildBodyCell(SizedBox(
+                                          child: Text(announcement.announcement,
+                                              softWrap: true),
+                                        )),
+                                      ),
+                                      Flexible(
+                                          flex: 1,
+                                          child: _buildBodyCell(
+                                              announcement.mess.join(', '),
+                                              alignment: Alignment.centerLeft)),
+                                      Flexible(
+                                          flex: 1,
+                                          child: _buildBodyCell(
+                                              DateFormat('dd-MM-yyyy').format(
+                                                  DateTime.parse(
+                                                      announcement.date))))
+                                    ]),
+                                  );
+                                }),
+                      ),
                     ),
-                    Flexible(
-                      flex: 1,
-                      child: _buildHeaderCell('Mess'),
-                    ),
-                    Flexible(
-                      flex: 1,
-                      child: _buildHeaderCell('Date'),
-                    )
-                  ])),
-
-              Expanded(
-                  child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12)),
-                child: rows.isEmpty
-                    ? Container(
-                        color: Colors.grey[50],
-                        child:
-                            const Center(child: Text('No announcements found')))
-                    : ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: rows.length,
-                        itemBuilder: (c, i) {
-                          final announcement = rows[i];
-                          final bg =
-                              i.isEven ? Colors.grey[50] : Colors.grey[100];
-                          return Container(
-                            color: bg,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 8),
-                            child: Row(children: [
-                              Flexible(
-                                flex: 3,
-                                child: _buildBodyCell(SizedBox(
-                                  child: Text(announcement.announcement,
-                                      softWrap: true),
-                                )),
-                              ),
-                              Flexible(
-                                  flex: 1,
-                                  child: _buildBodyCell(
-                                      announcement.mess.join(', '),
-                                      alignment: Alignment.centerLeft)),
-                              Flexible(
-                                  flex: 1,
-                                  child: _buildBodyCell(DateFormat('dd-MM-yyyy')
-                                      .format(
-                                          DateTime.parse(announcement.date))))
-                            ]),
-                          );
-                        }),
-              )),
-            ]),
+                  ],
+                ),
+              ),
+            ),
           );
-          return card;
-        }),
-      );
+        },
+      ),
+    );
+  }
 
   Widget _buildHeaderCell(String label) => Align(
       alignment: Alignment.centerLeft,
@@ -490,8 +505,7 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
               fontSize: 14,
               color: Colors.black87)));
 
-  Widget _buildBodyCell(dynamic content,
-          {Alignment alignment = Alignment.centerLeft}) =>
+  Widget _buildBodyCell(dynamic content, {Alignment alignment = Alignment.centerLeft}) =>
       Align(
           alignment: alignment,
           child: content is Widget

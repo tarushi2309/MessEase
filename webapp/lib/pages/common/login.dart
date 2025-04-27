@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 //import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -9,8 +8,6 @@ import 'package:webapp/components/user_provider.dart';
 import 'package:webapp/pages/student/get_details.dart';
 import 'package:webapp/services/database.dart';
 import 'package:webapp/models/student.dart';
-
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,20 +25,16 @@ class _LoginScreenState extends State<LoginScreen>
   String? selectedDegree;
   String? downloadUrl;
   String? uid;
-
   final GoogleSignIn googleSignIn = GoogleSignIn(
-  clientId: "848249088068-ho514oghje4aga9qalj0l1fb65pi4lh9.apps.googleusercontent.com", // Add your Web Client ID here
-  
+    clientId: "848249088068-ho514oghje4aga9qalj0l1fb65pi4lh9.apps.googleusercontent.com", // Add your Web Client ID here
   );
 
-  
-   Future<void> signInGoogle() async {
+  Future<void> signInGoogle() async {
     try {
       await FirebaseAuth.instance.signOut();
       await GoogleSignIn().signOut();
-      
-        GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        googleProvider.setCustomParameters({'prompt': 'select_account'});
+      GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      googleProvider.setCustomParameters({'prompt': 'select_account'});
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithPopup(googleProvider);
 
@@ -51,9 +44,8 @@ class _LoginScreenState extends State<LoginScreen>
       final AdditionalUserInfo? info = userCredential.additionalUserInfo;
       Map<String, dynamic>? userInfo = info?.profile;
       bool newUser = info!.isNewUser;
-      if(newUser)
-      {
-        await userCredential.user!.delete(); 
+      if (newUser) {
+        await userCredential.user!.delete();
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             backgroundColor: Colors.orangeAccent,
             content: Text(
@@ -64,18 +56,15 @@ class _LoginScreenState extends State<LoginScreen>
       if (userInfo != null) {
         String checkIIT = userInfo['hd'];
         if (checkIIT == "iitrpr.ac.in") {
-              final DatabaseModel dbService = DatabaseModel();
-              DocumentSnapshot student=await dbService.getStudentInfo(uid!);
-              if(student.exists)
-              {
+          final DatabaseModel dbService = DatabaseModel();
+          DocumentSnapshot student = await dbService.getStudentInfo(uid!);
+          if (student.exists) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
                 "Sign In Successful",
                 style: TextStyle(fontSize: 20.0),
               ),
             ));
-            // Navigate to your home screen after successful login.
-            // Replace HomeScreen() with your actual home screen widget.
             Navigator.pushReplacementNamed(context, "/home_student");
           } else {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -101,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen>
               style: TextStyle(fontSize: 18.0),
             )));
       }
-      } on FirebaseAuthException {
+    } on FirebaseAuthException {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.orangeAccent,
           content: Text(
@@ -123,56 +112,53 @@ class _LoginScreenState extends State<LoginScreen>
       final AdditionalUserInfo? info = userCredential.additionalUserInfo;
       Map<String, dynamic>? userInfo = info?.profile;
       bool newUser = info!.isNewUser;
-      if(!newUser){
+      if (!newUser) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             backgroundColor: Colors.orangeAccent,
             content: Text(
               "You are already registered.",
               style: TextStyle(fontSize: 18.0),
             )));
-            return;
+        return;
       }
       if (userInfo != null) {
-        String? checkIIT = userInfo['hd'] ??'';
+        String? checkIIT = userInfo['hd'] ?? '';
         if (checkIIT == "iitrpr.ac.in") {
-              final result = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const GetStudentDetails()),
-              );
-              print("Result: $result");
-              Map<String, String?> studentDetails=result as Map<String, String?>;
-              print(studentDetails);
-              String name = userInfo['given_name'] + " " + userInfo['family_name'];
-              String email = userInfo['email'];
-              uid = userCredential.user!.uid;
-              Provider.of<UserProvider>(context, listen: false).setUid(uid!);
-                      final DatabaseModel dbService = DatabaseModel();
-                      StudentModel student = StudentModel(
-                        name: name,
-                        email: email,
-                        uid: uid!,
-                        degree: studentDetails['degree'] ?? '',
-                        entryNumber: studentDetails['entryNo'] ?? '',
-                        year: studentDetails['year'] ?? '',
-                        url: studentDetails['downloadUrl'] ?? '',
-                        bank_account_number: studentDetails['bankAccount'] ?? '',
-                        ifsc_code: studentDetails['ifsc'] ?? '',
-                        mess: studentDetails['mess']!.toLowerCase(),
-                      );
-                      await dbService.addStudentDetails(student,uid!);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text(
-                        "Sign up Successful",
-                        style: TextStyle(fontSize: 20.0),
-                      ),
-                    ));
-                    // Navigate to your home screen after successful login.
-                    // Replace HomeScreen() with your actual home screen widget.
-                   Navigator.pushReplacementNamed(context, "/home_student");
-              }
-                 else {
-                  print("User is not from IIT Ropar");
-                  await userCredential.user!.delete(); 
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const GetStudentDetails()),
+          );
+          print("Result: $result");
+          Map<String, String?> studentDetails = result as Map<String, String?>;
+          print(studentDetails);
+          String name = userInfo['given_name'] + " " + userInfo['family_name'];
+          String email = userInfo['email'];
+          uid = userCredential.user!.uid;
+          Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+          final DatabaseModel dbService = DatabaseModel();
+          StudentModel student = StudentModel(
+            name: name,
+            email: email,
+            uid: uid!,
+            degree: studentDetails['degree'] ?? '',
+            entryNumber: studentDetails['entryNo'] ?? '',
+            year: studentDetails['year'] ?? '',
+            url: studentDetails['downloadUrl'] ?? '',
+            bank_account_number: studentDetails['bankAccount'] ?? '',
+            ifsc_code: studentDetails['ifsc'] ?? '',
+            mess: studentDetails['mess']!.toLowerCase(),
+          );
+          await dbService.addStudentDetails(student, uid!);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+              "Sign up Successful",
+              style: TextStyle(fontSize: 20.0),
+            ),
+          ));
+          Navigator.pushReplacementNamed(context, "/home_student");
+        } else {
+          print("User is not from IIT Ropar");
+          await userCredential.user!.delete();
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               backgroundColor: Colors.orangeAccent,
               content: Text(
@@ -182,18 +168,18 @@ class _LoginScreenState extends State<LoginScreen>
         }
       } else {
         print("User not found");
-        await userCredential.user!.delete(); 
+        await userCredential.user!.delete();
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             backgroundColor: Colors.orangeAccent,
             content: Text(
               "No user found.",
               style: TextStyle(fontSize: 18.0),
             )));
-      }}
-     on FirebaseAuthException {
+      }
+    } on FirebaseAuthException {
       User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
-        await currentUser.delete(); 
+        await currentUser.delete();
       }
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.orangeAccent,
@@ -204,17 +190,15 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  
   Future<void> signIn(String role) async {
     if (_emailController.text.isNotEmpty &&
         _passwordController.text.isNotEmpty) {
       try {
-        // Attempt to sign in using Firebase Authentication.
         UserCredential userCredential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(
-              email: _emailController.text,
-              password: _passwordController.text,
-            );
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -228,10 +212,6 @@ class _LoginScreenState extends State<LoginScreen>
         String uid = userCredential.user!.uid;
         print(uid);
         Provider.of<UserProvider>(context, listen: false).setUid(uid);
-        // Navigate to your home screen after successful login.
-        // Replace HomeScreen() with your actual home screen widget.
-
-        //print(1);
         DatabaseModel db = DatabaseModel();
         DocumentSnapshot doc = await db.getUserInfo(uid);
 
@@ -292,7 +272,6 @@ class _LoginScreenState extends State<LoginScreen>
         }
       }
     } else {
-      // If any of the fields are empty, inform the user.
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Color(0xFFF0753C),
@@ -323,133 +302,149 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Logo at the top
-            Image.asset(
-              "MessEase.png", // Make sure the image is in the assets folder
-              width: 200, // Adjust size as needed
-              height: 100,
-            ),
-            const SizedBox(height: 10), // Space between logo and form
-            // Boxed login form
-            Container(
-              width:
-                  MediaQuery.of(context).size.width > 500
-                      ? 500
-                      : MediaQuery.of(context).size.width * 0.9,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade300,
-                    blurRadius: 2,
-                    spreadRadius: 1,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        "MessEase.png",
+                        width: 200,
+                        height: 100,
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: MediaQuery.of(context).size.width > 500
+                            ? 500
+                            : MediaQuery.of(context).size.width * 0.9,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.shade300,
+                              blurRadius: 2,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TabBar(
+                              controller: _tabController,
+                              tabs: const [
+                                Tab(text: "MANAGER"),
+                                Tab(text: "ADMIN"),
+                                Tab(text: "BOHA"),
+                                Tab(text: "STUDENT")
+                              ],
+                              indicatorColor: Color(0xFFF0753C),
+                              labelColor: Color(0xFFF0753C),
+                              unselectedLabelColor: Colors.grey,
+                            ),
+                            SizedBox(
+                              height: 350,
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  _buildLoginForm("mess_manager"),
+                                  _buildLoginForm("admin"),
+                                  _buildLoginForm("boha"),
+                                  _buildStudentLoginForm()
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TabBar(
-                    controller: _tabController,
-                    tabs: const [Tab(text: "MANAGER"), Tab(text: "ADMIN"), Tab(text: "BOHA"), Tab(text: "STUDENT")],
-                    indicatorColor: Color(0xFFF0753C),
-                    labelColor: Color(0xFFF0753C),
-                    unselectedLabelColor: Colors.grey,
-                  ),
-                  SizedBox(
-                    height: 350,
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [_buildLoginForm("mess_manager"), _buildLoginForm("admin"), _buildLoginForm("boha"), _buildStudentLoginForm()],
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildStudentLoginForm() {
-  return SingleChildScrollView(
-    child: Column(
-      children: [
-        const SizedBox(height: 30),
-        const Text(
-          "Welcome",
-          style: TextStyle(color: Colors.black, fontSize: 20),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          "Login with your Google Account",
-          style: TextStyle(
-            color: Color.fromARGB(255, 133, 131, 131),
-            fontSize: 15,
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 30),
+          const Text(
+            "Welcome",
+            style: TextStyle(color: Colors.black, fontSize: 20),
           ),
-        ),
-        const SizedBox(height: 20),
-        
-        // Sign Up with Google button
-        SizedBox(
-          width: MediaQuery.of(context).size.width > 350
-              ? 300
-              : MediaQuery.of(context).size.width * 0.8,
-          child: ElevatedButton.icon(
-            onPressed: () => signUpGoogle(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFF0753C),
-              padding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-            icon: Image.asset(
-              'assets/google_logo.png', 
-              width: 20,
-            ),
-            label: const Text(
-              "Sign Up with Google",
-              style: TextStyle(color: Colors.white),
+          const SizedBox(height: 10),
+          const Text(
+            "Login with your Google Account",
+            style: TextStyle(
+              color: Color.fromARGB(255, 133, 131, 131),
+              fontSize: 15,
             ),
           ),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          "OR",
-          style: TextStyle(color: Colors.black, fontSize: 20),
-        ),
-        const SizedBox(height: 20),
-
-        // Sign In with Google button
-        SizedBox(
-          width: MediaQuery.of(context).size.width > 350
-              ? 300
-              : MediaQuery.of(context).size.width * 0.8,
-          child: ElevatedButton.icon(
-            onPressed: () => signInGoogle(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFF0753C),
-              padding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-            icon: Image.asset(
-              'assets/google_logo.png', 
-              width: 20, 
-            ),
-            label: const Text(
-              "Sign In with Google",
-              style: TextStyle(color: Colors.white),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: MediaQuery.of(context).size.width > 350
+                ? 300
+                : MediaQuery.of(context).size.width * 0.8,
+            child: ElevatedButton.icon(
+              onPressed: () => signUpGoogle(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFF0753C),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              icon: Image.asset(
+                'assets/google_logo.png',
+                width: 20,
+              ),
+              label: const Text(
+                "Sign Up with Google",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 20),
+          const Text(
+            "OR",
+            style: TextStyle(color: Colors.black, fontSize: 20),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: MediaQuery.of(context).size.width > 350
+                ? 300
+                : MediaQuery.of(context).size.width * 0.8,
+            child: ElevatedButton.icon(
+              onPressed: () => signInGoogle(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFF0753C),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              icon: Image.asset(
+                'assets/google_logo.png',
+                width: 20,
+              ),
+              label: const Text(
+                "Sign In with Google",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildLoginForm(String role) {
     return SingleChildScrollView(
@@ -469,7 +464,6 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
           const SizedBox(height: 20),
-
           _inputField(
             controller: _emailController,
             hintText: "Email or username",
@@ -479,15 +473,13 @@ class _LoginScreenState extends State<LoginScreen>
             hintText: "Password",
             isPassword: true,
           ),
-
           const SizedBox(height: 20),
           SizedBox(
-            width:
-                MediaQuery.of(context).size.width > 350
-                    ? 300
-                    : MediaQuery.of(context).size.width * 0.8,
+            width: MediaQuery.of(context).size.width > 350
+                ? 300
+                : MediaQuery.of(context).size.width * 0.8,
             child: ElevatedButton(
-              onPressed:()=> signIn(role),
+              onPressed: () => signIn(role),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFFF0753C),
                 padding: const EdgeInsets.symmetric(vertical: 15),
@@ -512,7 +504,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: SizedBox(
-        width: 300, // Reduced width for boxed input fields
+        width: 300,
         child: TextField(
           controller: controller,
           obscureText: isPassword,

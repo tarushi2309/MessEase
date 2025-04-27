@@ -49,26 +49,34 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   final mealDisplay = ['All', 'Breakfast', 'Lunch', 'Dinner'];
 
   @override
+  void initState() {
+    super.initState();
+    uid = Provider.of<UserProvider>(context, listen: false).uid;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+  }
+
+  Future<void> _initialize() async {
+    await _loadMessName();
+    await _loadFilters();
+    await _refresh();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadMessName();
+    // Do not call _loadMessName here, handled in _initialize
   }
 
   Future<void> _loadMessName() async {
     final prefs = await SharedPreferences.getInstance();
     final args = ModalRoute.of(context)?.settings.arguments;
-    
-    setState(() {
-      messName = prefs.getString('feedback_messName') ?? 
-                (args is String ? args.toLowerCase() : "unknown");
-    });
-    
+
     if (args is String) {
-      await prefs.setString('feedback_messName', args.toLowerCase());
+      messName = args.toLowerCase();
+      await prefs.setString('feedback_messName', messName);
+    } else {
+      messName = prefs.getString('feedback_messName') ?? "unknown";
     }
-    
-    _feedbacksFuture = fetchFeedbacks();
-    _loadFilters();
   }
 
   Future<void> _loadFilters() async {
@@ -99,7 +107,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     await prefs.setString('feedback_selectedDay', selectedDay);
     await prefs.setString('feedback_selectedMeal', selectedMeal);
     await prefs.setBool('feedback_allTime', allTime);
-    
+
     if (dateRange != null) {
       await prefs.setString('feedback_dateRangeStart', dateRange!.start.toIso8601String());
       await prefs.setString('feedback_dateRangeEnd', dateRange!.end.toIso8601String());
@@ -107,18 +115,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       await prefs.remove('feedback_dateRangeStart');
       await prefs.remove('feedback_dateRangeEnd');
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    uid = Provider.of<UserProvider>(context, listen: false).uid;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
-  }
-
-  Future<void> _initialize() async {
-    final userDoc = await FirebaseFirestore.instance.collection('user').doc(uid).get();
-    await _refresh();
   }
 
   Future<void> _refresh() async {
@@ -156,7 +152,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       } else {
         return null;
       }
-
       if (!allTime && ts.isBefore(cutoff)) return null;
       if (dateRange != null && (ts.isBefore(dateRange!.start) || ts.isAfter(dateRange!.end))) {
         return null;
@@ -480,98 +475,108 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _buildTable(List<FeedbackModelUI> rows) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 12),
-    child: LayoutBuilder(builder: (context, constraints) {
-      final card = Card(
-        color: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
-        child: Column(children: [
-          Container(
-              decoration: BoxDecoration(
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: 1200,
+        child: Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
                   color: Colors.grey[300],
                   borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12))),
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              child: Row(children: [
-                _buildHeaderCell('Name'),
-                _buildHeaderCell('Entry No.'),
-                _buildHeaderCell('Feedback'),
-                _buildHeaderCell('Image'),
-                _buildHeaderCell('Timestamp'),
-              ])),
-          Expanded(
-              child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12)),
-            child: rows.isEmpty
-                ? Container(
-                    color: Colors.grey[50],
-                    child: const Center(child: Text('No feedback found')))
-                : ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: rows.length,
-                    itemBuilder: (c, i) {
-                      final f = rows[i];
-                      final bg =
-                          i.isEven ? Colors.grey[50] : Colors.grey[100];
-                      return Container(
-                        color: bg,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 8),
-                        child: Row(children: [
-                          _buildBodyCell(f.studentName),
-                          _buildBodyCell(f.studentEntryNum),
-                          _buildBodyCell(SizedBox(
-                              width: 300,
-                              child: Text(f.text, softWrap: true))),
-                          Expanded(
-                              child: Center(
-                            child: f.imageUrl != null
-                                ? TextButton(
-                                    child: const Text("View Image"),
-                                    onPressed: () => showDialog(
-                                        context: context,
-                                        builder: (_) => AlertDialog(
-                                                content: Image.network(
-                                              f.imageUrl!,
-                                              loadingBuilder:
-                                                  (ctx, child, progress) {
-                                                if (progress == null) {
-                                                  return child;
-                                                }
-                                                final v = progress
-                                                            .expectedTotalBytes !=
-                                                        null
-                                                    ? progress
-                                                            .cumulativeBytesLoaded /
-                                                        progress
-                                                            .expectedTotalBytes!
-                                                    : null;
-                                                return SizedBox(
-                                                    width: 120,
-                                                    height: 120,
-                                                    child: Center(
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                                value: v)));
-                                              },
-                                            ))))
-                                : const Text('No image'),
-                          )),
-                          _buildBodyCell(DateFormat('dd‑MM‑yyyy HH:mm')
-                              .format(f.timestamp)),
-                        ]),
-                      );
-                    }),
-          )),
-        ]),
-      );
-      return card;
-    }),
+                      topRight: Radius.circular(12)),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                child: Row(
+                  children: [
+                    _buildHeaderCell('Name'),
+                    _buildHeaderCell('Entry No.'),
+                    _buildHeaderCell('Feedback'),
+                    _buildHeaderCell('Image'),
+                    _buildHeaderCell('Timestamp'),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12)),
+                  child: rows.isEmpty
+                      ? Container(
+                          color: Colors.grey[50],
+                          child: const Center(child: Text('No feedback found')))
+                      : ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: rows.length,
+                          itemBuilder: (c, i) {
+                            final f = rows[i];
+                            final bg = i.isEven ? Colors.grey[50] : Colors.grey[100];
+                            return Container(
+                              color: bg,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 8),
+                              child: Row(
+                                children: [
+                                  _buildBodyCell(f.studentName),
+                                  _buildBodyCell(f.studentEntryNum),
+                                  _buildBodyCell(SizedBox(
+                                      width: 300,
+                                      child: Text(f.text, softWrap: true))),
+                                  Expanded(
+                                    child: Center(
+                                      child: f.imageUrl != null
+                                          ? TextButton(
+                                              child: const Text("View Image"),
+                                              onPressed: () => showDialog(
+                                                  context: context,
+                                                  builder: (_) => AlertDialog(
+                                                          content: Image.network(
+                                                        f.imageUrl!,
+                                                        loadingBuilder:
+                                                            (ctx, child, progress) {
+                                                          if (progress == null) {
+                                                            return child;
+                                                          }
+                                                          final v = progress
+                                                                      .expectedTotalBytes !=
+                                                                  null
+                                                              ? progress
+                                                                      .cumulativeBytesLoaded /
+                                                                  progress
+                                                                      .expectedTotalBytes!
+                                                              : null;
+                                                          return SizedBox(
+                                                              width: 120,
+                                                              height: 120,
+                                                              child: Center(
+                                                                  child:
+                                                                      CircularProgressIndicator(
+                                                                          value: v)));
+                                                        },
+                                                      ))))
+                                          : const Text('No image'),
+                                    ),
+                                  ),
+                                  _buildBodyCell(DateFormat('dd‑MM‑yyyy HH:mm')
+                                      .format(f.timestamp)),
+                                ],
+                              ),
+                            );
+                          }),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
   );
 
   Widget _buildHeaderCell(String label) => Expanded(
