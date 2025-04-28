@@ -148,7 +148,7 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("REBATE TRACKER", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+          
             const SizedBox(height: 10),
             RebateSummaryCard(
               rebateDays: approvedRebates.fold(
@@ -173,18 +173,19 @@ class _RebateHistoryScreenState extends State<RebateHistoryScreen> {
                         final isPending = statusText.toLowerCase() == 'pending';
 
                         return Card(
+                          color:Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           elevation: 2,
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           child: ListTile(
-                            contentPadding: const EdgeInsets.all(8),
+                            contentPadding: const EdgeInsets.all(12),
                             title: Text(
-                              'From: ${DateFormat('dd-MM-yyyy').format(rebate.start_date.toDate())}\n'
-                              'To:   ${DateFormat('dd-MM-yyyy').format(rebate.end_date.toDate())}',
+                              '${DateFormat('dd-MM-yyyy').format(rebate.start_date.toDate())} to ${DateFormat('dd-MM-yyyy').format(rebate.end_date.toDate())}',
+                              
                               style: TextStyle(fontWeight: FontWeight.w500),
                             ),
                             subtitle: Text(
-                              'Days: ${((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400) + 1}',
+                              'Number of Days: ${((rebate.end_date.seconds - rebate.start_date.seconds) ~/ 86400) + 1}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,

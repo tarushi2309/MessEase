@@ -125,41 +125,55 @@ class _LoginScreenState extends State<LoginScreen>
       if (userInfo != null) {
         String? checkIIT = userInfo['hd'] ?? '';
         if (checkIIT == "iitrpr.ac.in") {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const GetStudentDetails()),
-          );
-          print("Result: $result");
-          Map<String, String?> studentDetails = result as Map<String, String?>;
-          print(studentDetails);
-          String name = userInfo['given_name'] + " " + userInfo['family_name'];
-          String email = userInfo['email'];
-          uid = userCredential.user!.uid;
-          Provider.of<UserProvider>(context, listen: false).setUid(uid!);
-          final DatabaseModel dbService = DatabaseModel();
-          StudentModel student = StudentModel(
-            name: name,
-            email: email,
-            uid: uid!,
-            degree: studentDetails['degree'] ?? '',
-            entryNumber: studentDetails['entryNo'] ?? '',
-            year: studentDetails['year'] ?? '',
-            url: studentDetails['downloadUrl'] ?? '',
-            bank_account_number: studentDetails['bankAccount'] ?? '',
-            ifsc_code: studentDetails['ifsc'] ?? '',
-            mess: studentDetails['mess']!.toLowerCase(),
-          );
-          await dbService.addStudentDetails(student, uid!);
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-              "Sign up Successful",
-              style: TextStyle(fontSize: 20.0),
-            ),
-          ));
-          Navigator.pushReplacementNamed(context, "/home_student");
-        } else {
-          print("User is not from IIT Ropar");
-          await userCredential.user!.delete();
+              final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const GetStudentDetails()),
+              );
+              print("Result: $result");
+              if(result==null)
+              {
+                await userCredential.user!.delete(); 
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  backgroundColor: Colors.orangeAccent,
+                  content: Text(
+                    "Please fill in all the details.",
+                    style: TextStyle(fontSize: 18.0),
+                  )));
+                  return;
+              }
+              Map<String, String?> studentDetails=result as Map<String, String?>;
+              print(studentDetails);
+              String name = userInfo['given_name'] + " " + userInfo['family_name'];
+              String email = userInfo['email'];
+              uid = userCredential.user!.uid;
+              Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+                      final DatabaseModel dbService = DatabaseModel();
+                      StudentModel student = StudentModel(
+                        name: name,
+                        email: email,
+                        uid: uid!,
+                        degree: studentDetails['degree'] ?? '',
+                        entryNumber: studentDetails['entryNo'] ?? '',
+                        year: studentDetails['year'] ?? '',
+                        url: studentDetails['downloadUrl'] ?? '',
+                        bank_account_number: studentDetails['bankAccount'] ?? '',
+                        ifsc_code: studentDetails['ifsc'] ?? '',
+                        mess: studentDetails['mess']!.toLowerCase(),
+                      );
+                      await dbService.addStudentDetails(student,uid!);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text(
+                        "Sign up Successful",
+                        style: TextStyle(fontSize: 20.0),
+                      ),
+                    ));
+                    // Navigate to your home screen after successful login.
+                    // Replace HomeScreen() with your actual home screen widget.
+                   Navigator.pushReplacementNamed(context, "/home_student");
+              }
+                 else {
+                  print("User is not from IIT Ropar");
+                  await userCredential.user!.delete(); 
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               backgroundColor: Colors.orangeAccent,
               content: Text(

@@ -18,10 +18,10 @@ class _ImageUploadDialogState extends State<ImageUploadDialog> {
   // Replace with your ImgBB API key
   final String _imgbbApiKey = "321e92bce52209a8c6c4f1271bbec58f";
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await picker.pickImage(source: source);
 
       if (image != null) {
         setState(() {
@@ -36,6 +36,34 @@ class _ImageUploadDialogState extends State<ImageUploadDialog> {
     }
   }
 
+  // 2) Bottom sheet to choose source
+  void _showImageSourceActionSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickImage(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Future<void> _uploadImage() async {
     if (_selectedImage == null) {
       setState(() {
@@ -127,7 +155,7 @@ class _ImageUploadDialogState extends State<ImageUploadDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: !_isUploading ? _pickImage : null,
+                  onPressed: !_isUploading ? _showImageSourceActionSheet : null,
                   child: const Text("Select Image"),
                 ),
                 ElevatedButton(

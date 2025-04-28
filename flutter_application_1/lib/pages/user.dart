@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_1/components/navbar.dart';
 import 'package:flutter_application_1/components/user_provider.dart';
 import 'package:flutter_application_1/models/student.dart';
 import 'package:flutter_application_1/services/database.dart';
@@ -16,7 +17,9 @@ import '../components/footer.dart';
 import '../components/header.dart';
 
 class UserPage extends StatefulWidget {
-  const UserPage({super.key});
+  
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  UserPage({super.key});
 
   @override
   _UserPageState createState() => _UserPageState();
@@ -75,56 +78,48 @@ class _UserPageState extends State<UserPage> {
       _fetchUserData(uid);
     }
     return Scaffold(
+      key: widget.scaffoldKey,
       backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(56),
+        child: Header(scaffoldKey: widget.scaffoldKey),
+      ),
+      drawer: Navbar(),
       body: !isDataLoaded
           ? Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      height: 220,
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFF8850),
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(40),
-                          bottomRight: Radius.circular(40),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 60,
-                      left: 20,
-                      child:
-                          Icon(Icons.arrow_back, color: Colors.white, size: 28),
-                    ),
-                    Positioned(
-                      bottom: -50,
-                      left: MediaQuery.of(context).size.width / 2 - 50,
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.grey.shade300,
-                        backgroundImage: student.url != ''
-                            ? NetworkImage(student.url)
-                            : null,
-                        child: student.url == ''
-                            ? Icon(Icons.person, size: 50, color: Colors.white)
-                            : null,
-                      ),
-                    ),
-                  ],
-                ),
+                // Container(
+                //   height: 220,
+                //   decoration: BoxDecoration(
+                //     color: Colors.white,
+                //     borderRadius: BorderRadius.only(
+                //       bottomLeft: Radius.circular(40),
+                //       bottomRight: Radius.circular(40),
+                //     ),
+                //   ),
+                // ),
                 SizedBox(height: 60),
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey.shade300,
+                  backgroundImage: student.url != ''
+                      ? NetworkImage(student.url)
+                      : null,
+                  child: student.url == ''
+                      ? Icon(Icons.person, size: 50, color: Colors.white)
+                      : null,
+                ),
+                SizedBox(height: 20),
                 Text(student.name.toUpperCase(),
                     style:
                         TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
-                SizedBox(height: 10),
+                SizedBox(height: 40),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
                       padding:
-                          const EdgeInsets.symmetric(horizontal: 16.0),
+                          const EdgeInsets.symmetric(horizontal: 32.0),
                       child:
                           Column(crossAxisAlignment:
                               CrossAxisAlignment.start, children:
@@ -133,9 +128,9 @@ class _UserPageState extends State<UserPage> {
                                 infoRow("Degree", student.degree),
                                 infoRow("Year", student.year),
                                 infoRow("Mess", "${student.mess.toUpperCase()} MESS"),
-                             const SizedBox(height: 10),
+                             const SizedBox(height: 30),
                                 _buildBankDetailsTile(),
-                                _buildIssueNewMessIDTile(),
+                                //_buildIssueNewMessIDTile(),
                               ]),
                     ),
                   ),
@@ -216,7 +211,7 @@ Widget _buildIssueNewMessIDTile() {
   Widget _buildBankDetailsTile() {
     return Card(
       color: Colors.white,
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Theme(
         data: ThemeData().copyWith(dividerColor: Colors.transparent),

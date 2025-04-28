@@ -195,6 +195,17 @@ class _SignInFormState extends State<SignInForm> {
               MaterialPageRoute(builder: (context) => const GetStudentDetails()),
               );
               print("Result: $result");
+              if(result==null)
+              {
+                await userCredential.user!.delete(); 
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  backgroundColor: Colors.orangeAccent,
+                  content: Text(
+                    "Please fill in all the details.",
+                    style: TextStyle(fontSize: 18.0),
+                  )));
+                  return;
+              }
               Map<String, String?> studentDetails=result as Map<String, String?>;
               print(studentDetails);
               String name = userInfo['given_name'] + " " + userInfo['family_name'];

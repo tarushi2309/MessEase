@@ -180,17 +180,20 @@ class _HomeScreenState extends State<HomeScreen> {
       return StatefulBuilder(
         builder: (context, setState) {
           return Dialog(
+            backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             child: SizedBox(
               height: 300,
+                
               width: double.infinity,
               child: Column(
                 children: [
                   Container(
+                    
                     padding: const EdgeInsets.all(12),
                     width: double.infinity,
                     decoration: const BoxDecoration(
-                      color: Colors.black87,
+                      color: Color(0xFFF0753C),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(8),
                         topRight: Radius.circular(8),
@@ -210,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Image.file(selectedImage!, height: 100),
                                 IconButton(
-                                  icon: Icon(Icons.close, color: Colors.red),
+                                  icon: Icon(Icons.close, color: Color(0xFFF0753C)),
                                   onPressed: () {
                                     setState(() => selectedImage = null);
                                   },
@@ -239,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 4),
                         TextButton(
                           style: TextButton.styleFrom(
-                            backgroundColor: Colors.black87,
+                            backgroundColor: Color(0xFFF0753C),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                           ),
                           child: const Text("Attach", style: TextStyle(color: Colors.white)),
@@ -253,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 4),
                         TextButton(
                           style: TextButton.styleFrom(
-                            backgroundColor: Colors.black87,
+                            backgroundColor: Color(0xFFF0753C),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                           ),
                           child: const Text("Send", style: TextStyle(color: Colors.white)),
