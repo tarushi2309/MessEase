@@ -19,22 +19,24 @@ class _ImageUploadDialogState extends State<ImageUploadDialog> {
   final String _imgbbApiKey = "321e92bce52209a8c6c4f1271bbec58f";
 
   Future<void> _pickImage(ImageSource source) async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: source);
+  try {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: source);
+    if (!mounted) return; // Prevents setState on disposed widget
 
-      if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-          _errorMessage = null;
-        });
-      }
-    } catch (e) {
+    if (image != null) {
       setState(() {
-        _errorMessage = "Error selecting image: $e";
+        _selectedImage = File(image.path);
+        _errorMessage = null;
       });
     }
+  } catch (e) {
+    if (!mounted) return;
+    setState(() {
+      _errorMessage = "Error selecting image: $e";
+    });
   }
+}
 
   // 2) Bottom sheet to choose source
   void _showImageSourceActionSheet() {

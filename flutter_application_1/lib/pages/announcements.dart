@@ -51,7 +51,7 @@ class _AnnouncementScreenState extends State<AnnouncementScreen> {
     }
     try{
         final studentDoc = await dbService.getStudentInfo(uid);
-        messId = studentDoc['mess'] as String;
+        messId = studentDoc!['mess'] as String;
         messId = messId[0].toUpperCase() + messId.substring(1);
         //print(messId);
         if(messId != null){
@@ -77,15 +77,22 @@ class _AnnouncementScreenState extends State<AnnouncementScreen> {
         });
 
         try{
-            final QuerySnapshot snapshot = await FirebaseFirestore.instance
-                                .collection('announcements')
-                                .orderBy('date', descending: true)
-                                .get();
+             final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('announcements')
+          .where('mess', arrayContains: messId)
+          .get();
+            final today = DateTime.now();
+      final startOfDay = DateTime(today.year, today.month, today.day);
+
             
             final List<AnnouncementModel> loadedAnnouncements = snapshot.docs
-                .map((doc) => AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
-                .where((announcement) => announcement.mess.contains(messId))
-                .toList();
+          .map((doc) =>
+              AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>))
+          .where((announcement) {
+        final announcementDate = DateTime.parse(announcement.date);
+        return announcementDate.isAfter(startOfDay) &&
+            announcementDate.isBefore(startOfDay.add(const Duration(days: 1)));
+      }).toList();
 
             setState(() {
                 announcementHistory = loadedAnnouncements;

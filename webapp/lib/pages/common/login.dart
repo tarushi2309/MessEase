@@ -1,3 +1,5 @@
+
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 //import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -41,8 +43,21 @@ class _LoginScreenState extends State<LoginScreen>
 
       uid = userCredential.user!.uid;
       Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+      if (userCredential.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Firebase authentication failed."),
+      ));
+      return;
+    }
 
       final AdditionalUserInfo? info = userCredential.additionalUserInfo;
+      if (info == null) {
+      await userCredential.user!.delete();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("No additional user info found."),
+      ));
+      return;
+    }
       Map<String, dynamic>? userInfo = info?.profile;
       bool newUser = info!.isNewUser;
       if (newUser) {
@@ -58,8 +73,8 @@ class _LoginScreenState extends State<LoginScreen>
         String checkIIT = userInfo['hd'];
         if (checkIIT == "iitrpr.ac.in") {
           final DatabaseModel dbService = DatabaseModel();
-          DocumentSnapshot student = await dbService.getStudentInfo(uid!);
-          if (student.exists) {
+          DocumentSnapshot? student = await dbService.getStudentInfo(uid!);
+          if (student!=null) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
                 "Sign In Successful",
@@ -113,15 +128,23 @@ class _LoginScreenState extends State<LoginScreen>
       final AdditionalUserInfo? info = userCredential.additionalUserInfo;
       Map<String, dynamic>? userInfo = info?.profile;
       bool newUser = info!.isNewUser;
-      if (!newUser) {
+      uid = userCredential.user!.uid;
+    Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+    final DatabaseModel dbService = DatabaseModel();
+    DocumentSnapshot? student = await dbService.getStudentInfo(uid!);
+
+    if (!newUser&&student != null) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            backgroundColor: Colors.orangeAccent,
-            content: Text(
-              "You are already registered.",
-              style: TextStyle(fontSize: 18.0),
-            )));
+          backgroundColor: Colors.orangeAccent,
+          content: Text(
+            "You are already registered.",
+            style: TextStyle(fontSize: 18.0),
+          ),
+        ));
         return;
       }
+    
+     
       if (userInfo != null) {
         String? checkIIT = userInfo['hd'] ?? '';
         if (checkIIT == "iitrpr.ac.in") {
@@ -145,8 +168,7 @@ class _LoginScreenState extends State<LoginScreen>
               print(studentDetails);
               String name = userInfo['given_name'] + " " + userInfo['family_name'];
               String email = userInfo['email'];
-              uid = userCredential.user!.uid;
-              Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+              
                       final DatabaseModel dbService = DatabaseModel();
                       StudentModel student = StudentModel(
                         name: name,

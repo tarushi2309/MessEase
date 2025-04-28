@@ -1,4 +1,4 @@
-import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -113,13 +113,14 @@ class _SignInFormState extends State<SignInForm> {
               "This account does not exist.Please signUp.",
               style: TextStyle(fontSize: 18.0),
             )));
+            return;
       }
       if (userInfo != null) {
         String checkIIT = userInfo['hd'];
         if (checkIIT == "iitrpr.ac.in") {
               final DatabaseModel dbService = DatabaseModel(uid: uid!);
-              DocumentSnapshot student=await dbService.getStudentInfo(uid!);
-              if(student.exists)
+              DocumentSnapshot? student=await dbService.getStudentInfo(uid!);
+              if(student!=null)
               {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
@@ -132,12 +133,14 @@ class _SignInFormState extends State<SignInForm> {
             Navigator.push(
                 context, MaterialPageRoute(builder: (context) => HomeScreen()));
           } else {
+            await userCredential.user!.delete();
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 backgroundColor: Colors.orangeAccent,
                 content: Text(
-                  "This app is for students , please use the website for other stakeholders!!.",
+                  "You are not registered yet. Please sign up.",
                   style: TextStyle(fontSize: 18.0),
                 )));
+                return;
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -146,6 +149,7 @@ class _SignInFormState extends State<SignInForm> {
                 "You are not authorised to use this app.",
                 style: TextStyle(fontSize: 18.0),
               )));
+              return;
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -154,6 +158,7 @@ class _SignInFormState extends State<SignInForm> {
               "No user found.",
               style: TextStyle(fontSize: 18.0),
             )));
+            return;
       }
     } on FirebaseAuthException {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -162,6 +167,7 @@ class _SignInFormState extends State<SignInForm> {
             "Sign In Failed. Please try again.",
             style: TextStyle(fontSize: 18.0),
           )));
+          return;
     }
   }
 
@@ -170,23 +176,63 @@ class _SignInFormState extends State<SignInForm> {
       await FirebaseAuth.instance.signOut();
       await GoogleSignIn().signOut();
       final googleUser = await GoogleSignIn().signIn();
-      final googleAuth = await googleUser?.authentication;
-      final cred = GoogleAuthProvider.credential(
-          idToken: googleAuth?.idToken, accessToken: googleAuth?.accessToken);
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(cred);
+    if (googleUser == null) {
+      // User cancelled Google sign-in
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Google sign-in cancelled."),
+      ));
+      return;
+    }
+    final googleAuth = await googleUser.authentication;
+    if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Failed to retrieve Google authentication tokens."),
+      ));
+      return;
+    }
 
-      final AdditionalUserInfo? info = userCredential.additionalUserInfo;
-      Map<String, dynamic>? userInfo = info?.profile;
-      bool newUser = info!.isNewUser;
-      if(!newUser){
+    final cred = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+      accessToken: googleAuth.accessToken,
+    );
+
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(cred);
+
+    if (userCredential.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Firebase authentication failed."),
+      ));
+      return;
+    }
+
+    final AdditionalUserInfo? info = userCredential.additionalUserInfo;
+    if (info == null) {
+      await userCredential.user!.delete();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("No additional user info found."),
+      ));
+      return;
+    }
+
+    Map<String, dynamic>? userInfo = info.profile;
+    bool newUser = info.isNewUser;
+
+    uid = userCredential.user!.uid;
+    Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+    final DatabaseModel dbService = DatabaseModel(uid: uid!);
+    DocumentSnapshot? student = await dbService.getStudentInfo(uid!);
+
+    if (!newUser&&student != null) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            backgroundColor: Colors.orangeAccent,
-            content: Text(
-              "You are already registered.",
-              style: TextStyle(fontSize: 18.0),
-            )));
+          backgroundColor: Colors.orangeAccent,
+          content: Text(
+            "You are already registered.",
+            style: TextStyle(fontSize: 18.0),
+          ),
+        ));
+        return;
       }
+    
       if (userInfo != null) {
         String? checkIIT = userInfo['hd'] ??'';
         if (checkIIT == "iitrpr.ac.in") {
@@ -210,8 +256,7 @@ class _SignInFormState extends State<SignInForm> {
               print(studentDetails);
               String name = userInfo['given_name'] + " " + userInfo['family_name'];
               String email = userInfo['email'];
-              uid = userCredential.user!.uid;
-              Provider.of<UserProvider>(context, listen: false).setUid(uid!);
+              
                       final DatabaseModel dbService = DatabaseModel(uid: uid!);
                       StudentModel student = StudentModel(
                         name: name,
@@ -246,6 +291,7 @@ class _SignInFormState extends State<SignInForm> {
                 "You are not authorised to use this app.",
                 style: TextStyle(fontSize: 18.0),
               )));
+              return;
         }
       } else {
         print("User not found");
@@ -256,6 +302,7 @@ class _SignInFormState extends State<SignInForm> {
               "No user found.",
               style: TextStyle(fontSize: 18.0),
             )));
+            return;
       }}
      on FirebaseAuthException {
       User? currentUser = FirebaseAuth.instance.currentUser;
@@ -268,6 +315,7 @@ class _SignInFormState extends State<SignInForm> {
             "Sign Up Failed. Please try again.",
             style: TextStyle(fontSize: 18.0),
           )));
+          return;
     }
   }
 
@@ -282,6 +330,7 @@ class _SignInFormState extends State<SignInForm> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Form(
       child: Column(
         children: [

@@ -36,9 +36,9 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
   Future<void> _fetchUserData(String uid) async {
     DatabaseModel dbService = DatabaseModel();
     try {
-      DocumentSnapshot studentInfo = await dbService.getStudentInfo(uid);
+      DocumentSnapshot? studentInfo = await dbService.getStudentInfo(uid);
       setState(() {
-        student = StudentModel.fromJson(studentInfo.data() as Map<String, dynamic>);
+        student = StudentModel.fromJson(studentInfo!.data() as Map<String, dynamic>);
         print(student);
         isDataLoaded = true;
       });

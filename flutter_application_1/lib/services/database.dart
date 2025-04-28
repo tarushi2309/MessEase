@@ -19,7 +19,7 @@ class DatabaseModel{
 
   
 
-  Future<DocumentSnapshot> getStudentInfo(String uid) async {
+  Future<QueryDocumentSnapshot<Object?>?> getStudentInfo(String uid) async {
   QuerySnapshot querySnapshot = await FirebaseFirestore.instance
       .collection("students")
       .where("uid", isEqualTo: uid)
@@ -30,7 +30,8 @@ class DatabaseModel{
   if (querySnapshot.docs.isNotEmpty) {
     return querySnapshot.docs[0];  // Return the DocumentSnapshot
   } else {
-    throw Exception("No student found for the provided uid");
+    print("No student found for the provided uid");
+    return null;
   }
 }
 

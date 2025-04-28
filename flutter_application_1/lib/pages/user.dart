@@ -40,12 +40,12 @@ class _UserPageState extends State<UserPage> {
     DatabaseModel dbService = DatabaseModel(uid: uid);
     try {
       
-      DocumentSnapshot studentInfo = await dbService.getStudentInfo(uid);
+      DocumentSnapshot? studentInfo = await dbService.getStudentInfo(uid);
 
       // Update the user and student models inside setState to rebuild the UI
       setState(() {
         student =
-            StudentModel.fromJson(studentInfo.data() as Map<String, dynamic>);
+            StudentModel.fromJson(studentInfo!.data() as Map<String, dynamic>);
             print("Student data");
             print(studentInfo.data());
         isDataLoaded = true; // Set the loading flag to true
@@ -99,7 +99,7 @@ class _UserPageState extends State<UserPage> {
                 //     ),
                 //   ),
                 // ),
-                SizedBox(height: 60),
+                SizedBox(height: 20),
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.grey.shade300,
@@ -114,7 +114,7 @@ class _UserPageState extends State<UserPage> {
                 Text(student.name.toUpperCase(),
                     style:
                         TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
-                SizedBox(height: 40),
+                SizedBox(height: 10),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
