@@ -367,7 +367,7 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
       ),
 
       floatingActionButton: SpeedDial(
-        icon: Icons.add,
+        icon: Icons.more_vert,
         backgroundColor: Color(0xFFFF7643),
         children: [
           SpeedDialChild(

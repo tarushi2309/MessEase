@@ -9,6 +9,7 @@ import 'package:webapp/pages/student/get_details.dart';
 import 'package:webapp/services/database.dart';
 import 'package:webapp/models/student.dart';
 
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -189,6 +190,32 @@ class _LoginScreenState extends State<LoginScreen>
           )));
     }
   }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFFF0753C),
+          content: Text(
+            "Password reset email sent. Check your inbox!",
+            style: TextStyle(fontSize: 18.0),
+          ),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            e.message ?? "Error occurred. Please try again.",
+            style: const TextStyle(fontSize: 18.0),
+          ),
+        ),
+      );
+    }
+  }
+
 
   Future<void> signIn(String role) async {
     if (_emailController.text.isNotEmpty &&
@@ -447,54 +474,138 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildLoginForm(String role) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 30),
-          const Text(
-            "Welcome Back",
-            style: TextStyle(color: Colors.black, fontSize: 20),
+  return SingleChildScrollView(
+    child: Column(
+      children: [
+        const SizedBox(height: 30),
+        const Text(
+          "Welcome Back",
+          style: TextStyle(color: Colors.black, fontSize: 20),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Login with your email and password",
+          style: TextStyle(
+            color: Color.fromARGB(255, 133, 131, 131),
+            fontSize: 15,
           ),
-          const SizedBox(height: 10),
-          const Text(
-            "Login with your email and password",
-            style: TextStyle(
-              color: Color.fromARGB(255, 133, 131, 131),
-              fontSize: 15,
+        ),
+        const SizedBox(height: 20),
+        _inputField(
+          controller: _emailController,
+          hintText: "Email or username",
+        ),
+        _inputField(
+          controller: _passwordController,
+          hintText: "Password",
+          isPassword: true,
+        ),
+        const SizedBox(height: 10),
+        
+        // 👉 Forgot Password Centered
+        Center(
+          child: TextButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  TextEditingController _resetEmailController = TextEditingController();
+
+                  return AlertDialog(
+                    title: const Text("Forgot Password?"),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "Enter your email and we'll send you a reset link ✉️",
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _resetEmailController,
+                          decoration: const InputDecoration(
+                            hintText: "Email",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Cancel"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          FirebaseAuth.instance
+                              .sendPasswordResetEmail(email: _resetEmailController.text.trim())
+                              .then((value) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    backgroundColor: Color(0xFFF0753C),
+                                    content: Text(
+                                      "Reset link sent! Check your email!",
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                );
+                              })
+                              .catchError((error) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    backgroundColor: Colors.red,
+                                    content: Text(
+                                      "Error sending reset link. Try again!",
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                );
+                              });
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF0753C)),
+                        child: const Text("Send Link"),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: const Text(
+              "Forgot Password?",
+              style: TextStyle(
+                color: Color(0xFFF0753C),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          const SizedBox(height: 20),
-          _inputField(
-            controller: _emailController,
-            hintText: "Email or username",
-          ),
-          _inputField(
-            controller: _passwordController,
-            hintText: "Password",
-            isPassword: true,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: MediaQuery.of(context).size.width > 350
-                ? 300
-                : MediaQuery.of(context).size.width * 0.8,
-            child: ElevatedButton(
-              onPressed: () => signIn(role),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFF0753C),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-              child: const Text(
-                "SIGN IN",
-                style: TextStyle(color: Colors.white),
-              ),
+        ),
+
+        const SizedBox(height: 20),
+        
+        // 👉 Login Button
+        SizedBox(
+          width: MediaQuery.of(context).size.width > 350
+              ? 300
+              : MediaQuery.of(context).size.width * 0.8,
+          child: ElevatedButton(
+            onPressed: () => signIn(role),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFF0753C),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
+            child: const Text(
+              "SIGN IN",
+              style: TextStyle(color: Colors.white),
             ),
           ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
+        ),
+        
+        const SizedBox(height: 20),
+      ],
+    ),
+  );
+}
 
   Widget _inputField({
     TextEditingController? controller,
