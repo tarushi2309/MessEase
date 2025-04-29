@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen>
               context,
               MaterialPageRoute(builder: (context) => const GetStudentDetails()),
               );
-              print("Result: $result");
+              //print("Result: $result");
               if(result==null)
               {
                 await userCredential.user!.delete(); 
@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen>
                   return;
               }
               Map<String, String?> studentDetails=result as Map<String, String?>;
-              print(studentDetails);
+              //print(studentDetails);
               String name = userInfo['given_name'] + " " + userInfo['family_name'];
               String email = userInfo['email'];
               
@@ -194,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen>
                    Navigator.pushReplacementNamed(context, "/home_student");
               }
                  else {
-                  print("User is not from IIT Ropar");
+                  //print("User is not from IIT Ropar");
                   await userCredential.user!.delete(); 
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               backgroundColor: Colors.orangeAccent,
@@ -204,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen>
               )));
         }
       } else {
-        print("User not found");
+        //print("User not found");
         await userCredential.user!.delete();
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             backgroundColor: Colors.orangeAccent,
@@ -273,17 +273,17 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         );
         String uid = userCredential.user!.uid;
-        print(uid);
+        //print(uid);
         Provider.of<UserProvider>(context, listen: false).setUid(uid);
         DatabaseModel db = DatabaseModel();
         DocumentSnapshot doc = await db.getUserInfo(uid);
 
-        print(doc);
+        //print(doc);
 
         if (doc["role"] == role) {
-          print(doc["role"]);
+          //print(doc["role"]);
           if (role == "mess_manager") {
-            print(1);
+            //print(1);
             Navigator.pushReplacementNamed(context, "/home_mess_manager");
           } else if (role == "admin") {
             Navigator.pushReplacementNamed(context, "/home_admin");

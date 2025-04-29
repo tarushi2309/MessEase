@@ -70,7 +70,7 @@ class _RebateformPageState extends State<RebateformPage> {
         DateTime(int.parse(endParts[2]), int.parse(endParts[1]),
             int.parse(endParts[0])),
       );
-      print('studentRef: ${studentRef!['mess']}');
+      //print('studentRef: ${studentRef!['mess']}');
       Rebate rebate = Rebate(
         req_id: '',
         student_id: studentRef!.reference,
@@ -128,12 +128,12 @@ class _RebateformPageState extends State<RebateformPage> {
     // Parse the dates from the controllers
     DateTime rebateFrom = DateFormat('dd/MM/yyyy').parse(rebateFromController.text);
     DateTime rebateTo = DateFormat('dd/MM/yyyy').parse(rebateToController.text);
-    print(rebateFrom);
-    print(rebateTo);
+    //print(rebateFrom);
+    //print(rebateTo);
     studentRef = await _firestore.collection('students').doc(uid).get();
     // Calculate the difference in days
     int difference = rebateTo.difference(rebateFrom).inDays+1;
-    print(difference);
+    //print(difference);
     // Check if the difference is valid
     if (difference < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -179,9 +179,9 @@ class _RebateformPageState extends State<RebateformPage> {
         return;
       }
     }
-    print("check1");
+    //print("check1");
     
-    print("submit rebate");
+    //print("submit rebate");
     submitRebateForm();
     
   } catch (e) {

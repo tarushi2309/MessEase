@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> fetchUserName(String uid) async {
-    print("Fetching user name");
+    //print("Fetching user name");
     try {
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection('user').doc(uid).get();
@@ -49,20 +49,20 @@ class _HomeScreenState extends State<HomeScreen> {
           messName = userDoc['name'];
           messNameAnnouncement = messName[0].toUpperCase() + 
                      messName.substring(1).toLowerCase();
-          print("Mess Name: $messName");
+          //print("Mess Name: $messName");
           db.removePrevAddons(messName);
         });
       } else {
-        print("User not found");
+        //print("User not found");
       }
     } catch (e) {
       print("Error fetching user: $e");
     }
-    print("Mess Name: $messName");
+    //print("Mess Name: $messName");
   }
 
   Future<List<AnnouncementModel>> _fetchAnnouncementHistory(String messId) async {
-    print("Fetching today's announcements for mess: $messId");
+    //print("Fetching today's announcements for mess: $messId");
     try {
       final today = DateTime.now();
       final startOfDay = DateTime(today.year, today.month, today.day);
@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
           })
           .toList();
 
-      print(loadedAnnouncements);
+      //print(loadedAnnouncements);
       return loadedAnnouncements;
     } catch (e) {
       print("Error fetching today's announcements: $e");

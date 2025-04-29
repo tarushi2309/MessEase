@@ -13,7 +13,7 @@ Future<void> sendMailViaGAS({
 
   request.onLoad.listen((_) {
     if (request.status == 200) {
-      print('Emails sent: ${request.responseText}');
+      //print('Emails sent: ${request.responseText}');
       completer.complete();
     } else {
       completer.completeError('Error ${request.status}: ${request.responseText}');

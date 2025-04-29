@@ -31,7 +31,7 @@ class DatabaseModel {
   if (querySnapshot.docs.isNotEmpty) {
     return querySnapshot.docs[0];  // Return the DocumentSnapshot
   } else {
-    print("No student found for the provided uid");
+    //print("No student found for the provided uid");
     return null;
   }
 }
@@ -92,7 +92,7 @@ class DatabaseModel {
 
     try {
       int parsedPrice = int.parse(price); // Convert price to double
-      print("messId: $messId");
+      //print("messId: $messId");
       if (messId == null) {
         return "Error: Mess ID not found";
       }
@@ -147,13 +147,13 @@ class DatabaseModel {
       .get();
 
   if (query.docs.isEmpty) {
-    print("No old add-ons to remove for mess $messId");
+    //print("No old add-ons to remove for mess $messId");
     return;
   }
   final batch = _firestore.batch();
   for (final doc in query.docs) {
     batch.delete(doc.reference);
-    print("Scheduling delete of addon ${doc.id}");
+    //print("Scheduling delete of addon ${doc.id}");
   }
   await batch.commit();
 }
@@ -193,7 +193,7 @@ class DatabaseModel {
   Future<List<AddonModel>> fetchAddons(String mess) async {
 
     if (mess == null) {
-      print("No messId found.");
+     // print("No messId found.");
       return [];
     }
 

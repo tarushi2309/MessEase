@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
         messNameAnnouncement =
             messName[0].toUpperCase() + messName.substring(1).toLowerCase();
       } else {
-        print("Student not found");
+        //print("Student not found");
       }
     } catch (e) {
       print("Error fetching user: $e");
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
       String name = studentDoc['name'];
       String entryNum = studentDoc['entryNumber'];
       String messName = studentDoc['mess'];
-      print("Mess Name: $messName");
+      //print("Mess Name: $messName");
 
       int numOfDays = 0;
       if (selectedDate.month == 11 || selectedDate.month == 12) {
@@ -164,12 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
           'refund': refundAmount,
         });
 
-        print('Hostel leaving days and refund updated successfully!');
+        //print('Hostel leaving days and refund updated successfully!');
       } else {
-        print('No student found with UID: $uid');
+        //print('No student found with UID: $uid');
       }
 
-      print("Hostel leaving data added successfully");
+      //print("Hostel leaving data added successfully");
     } catch (e) {
       print("Error adding hostel leaving data: $e");
 
@@ -207,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (selectedDate != null) {
-      print("Student selected date: ${selectedDate.toString()}");
+      //print("Student selected date: ${selectedDate.toString()}");
       await addHostelLeavingData(context, selectedDate);
 
       showDialog(
@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String meal,
   }) async {
     String? imageUrl;
-    print("Submitting feedback: $text");
+    //print("Submitting feedback: $text");
 
     try {
       // Upload image to Firebase Storage if available
@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
           data: formData,
         );
 
-        print("Response: ${response.statusCode}");
+        //print("Response: ${response.statusCode}");
 
         if (response.statusCode == 200) {
           imageUrl = response.data['data']['url'];
@@ -276,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await FirebaseFirestore.instance
           .collection('feedback')
           .add(feedback.toJson());
-      print("Feedback successfully submitted to Firestore");
+      //print("Feedback successfully submitted to Firestore");
     } catch (e) {
       print("Error submitting feedback: $e");
       rethrow;
@@ -441,7 +441,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: const Text("Send",
                                     style: TextStyle(color: Colors.white)),
                                 onPressed: () async {
-                                  print("feedback: $uid");
+                                  //print("feedback: $uid");
                                   try {
                                     await submitFeedback(
                                       uid: uid,
@@ -527,7 +527,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<UserProvider>(
       builder: (context, userProvider, _) {
         final uid = userProvider.uid;
-        print("Current UID: $uid");
+        //print("Current UID: $uid");
         if (uid == null) {
           // Show loading or login prompt until UID is available
           return const Scaffold(
@@ -536,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         // Only initialize data when UID changes
         if (announcementFuture == null) {
-          print("Initializing fetch for UID: $uid");
+          //print("Initializing fetch for UID: $uid");
           _initFetch(uid);
         }
         return FutureBuilder(

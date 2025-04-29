@@ -39,7 +39,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
       DocumentSnapshot? studentInfo = await dbService.getStudentInfo(uid);
       setState(() {
         student = StudentModel.fromJson(studentInfo!.data() as Map<String, dynamic>);
-        print(student);
+        //print(student);
         isDataLoaded = true;
       });
     } catch (e) {
@@ -295,7 +295,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                         'ifsc_code': ifscCode,
                       });
 
-                      print('Bank details updated for $uid');
+                      //print('Bank details updated for $uid');
                       Navigator.of(context).pop();
 
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -308,7 +308,7 @@ class _ProfileStudentPageState extends State<ProfileStudentPage> {
                       print("User not logged in");
                     }
                   } catch (e) {
-                    print(' Error updating bank details: $e');
+                    //print(' Error updating bank details: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Failed to update bank details'),

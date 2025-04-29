@@ -98,7 +98,7 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
 
       setState(() {
         totalStudents = querySnapshot.docs.length;
-        print("Total students in $messName: $totalStudents");
+        //print("Total students in $messName: $totalStudents");
       });
     } catch (e) {
       print("Error fetching total students: $e");
@@ -112,8 +112,8 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
           .collection("mess")
           .doc("messAllotment") 
           .get();
-      print("Mess allotment document: ${messAllotDoc.data()}");
-      print(mess);
+      //print("Mess allotment document: ${messAllotDoc.data()}");
+      //print(mess);
       if (messAllotDoc.exists) {
         Map<String, dynamic>? messAllotData = messAllotDoc.data() as Map<String, dynamic>?;
         List<String> matchingBatches = [];
@@ -131,7 +131,7 @@ class _MessCommittePageBohaState extends State<MessCommittePageBoha> {
           batches = matchingBatches;
         });
       } else {
-        print("messAllot document not found");
+        //print("messAllot document not found");
       }
     } catch (e) {
       print("Error fetching batches: $e");

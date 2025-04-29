@@ -163,7 +163,7 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
         await doc.reference.update({"status": newStatus});
         await Future.delayed(Duration(seconds: 2));
       } else {
-        print("No rebate request found for this student.");
+        //print("No rebate request found for this student.");
       }
 
       if (querySnapshotStudent.docs.isNotEmpty) {
@@ -176,7 +176,7 @@ class _PendingRequestsPageState extends State<PendingRequestPage> {
         await doc.reference.update({"refund": updatedDays * 130});
         await Future.delayed(Duration(seconds: 2));
       } else {
-        print("No rebate request found for this student.");
+       //print("No rebate request found for this student.");
       }
     } catch (e) {
       print("Error updating rebate status: $e");
